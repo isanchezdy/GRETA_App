@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">GRETA App</string>
+    <string name="back_button">Atrás</string>
+    <string name="welcome">¡Saludos!</string>
+    <string name="login">Iniciar sesión</string>
+    <string name="sign_up">Registrarse</string>
+    <string name="no_user">Continuar sin usuario</string>
+    <string name="menu">Menú</string>
+    <string name="username">Nombre de usuario</string>
+    <string name="password">Contraseña</string>
+    <string name="forgot_password">¿Olvidaste la contraseña?</string>
+    <string name="map">Mapa</string>
+    <string name="logout">Cerrar sesión</string>
+</resources>
