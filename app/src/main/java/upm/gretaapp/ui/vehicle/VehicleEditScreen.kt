@@ -1,4 +1,7 @@
 package upm.gretaapp.ui.vehicle
 
-class VehicleEditScreen {
+import androidx.compose.runtime.Composable
+
+@Composable
+fun VehicleEditScreen() {
 }

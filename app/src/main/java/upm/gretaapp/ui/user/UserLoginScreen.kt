@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Login
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
@@ -28,7 +27,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -44,13 +42,13 @@ import upm.gretaapp.ui.theme.GRETAAppTheme
 object LoginDestination : NavigationDestination {
     override val route = "login"
     override val titleRes = R.string.login
-    override val icon: ImageVector = Icons.Filled.Login
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UserLoginScreen(
     navigateUp: () -> Unit,
+    onLogin: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     var passwordVisible by remember { mutableStateOf(false) }
@@ -77,14 +75,15 @@ fun UserLoginScreen(
             )
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.SpaceAround,
+                verticalArrangement = Arrangement.Center,
                 modifier = modifier.padding(all = 48.dp)
             ) {
                 TextField(
                     value = "",
                     onValueChange = {/*TODO*/},
                     singleLine = true,
-                    placeholder = { Text(stringResource(id = R.string.username)) }
+                    placeholder = { Text(stringResource(id = R.string.username)) },
+                    modifier = Modifier.padding(8.dp)
                 )
                 TextField(
                     value = "",
@@ -103,16 +102,16 @@ fun UserLoginScreen(
                                     Icons.Filled.Visibility
                                 },
                                 contentDescription = if (passwordVisible) {
-                                    "Hide password"
+                                    stringResource(id = R.string.hide_password)
                                 }
                                 else {
-                                    "Show password"
+                                    stringResource(id = R.string.show_password)
                                 }
                             )
                         }
 
-                    }
-
+                    },
+                    modifier = Modifier.padding(8.dp)
                 )
                 Button(
                     onClick = {},
@@ -127,7 +126,7 @@ fun UserLoginScreen(
                     Text(text = stringResource(id = R.string.forgot_password))
                 }
                 Button(
-                    onClick = {},
+                    onClick = onLogin,
                     shape = MaterialTheme.shapes.small,
                     modifier = Modifier
                         .fillMaxWidth()
@@ -145,6 +144,6 @@ fun UserLoginScreen(
 @Composable
 fun UserLoginScreenPreview() {
     GRETAAppTheme {
-        UserLoginScreen(navigateUp = {})
+        UserLoginScreen(navigateUp = {}, onLogin = {})
     }
 }

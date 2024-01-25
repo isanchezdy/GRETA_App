@@ -11,4 +11,23 @@
     <string name="forgot_password">Forgot password?</string>
     <string name="map">Map</string>
     <string name="logout">Log out</string>
+    <string name="first_name">First name</string>
+    <string name="last_name">Last name</string>
+    <string name="gender">Gender (Optional)</string>
+    <string name="birthday">Birthday</string>
+    <string name="experience">Experience (years)</string>
+    <string name="show_password">Show password</string>
+    <string name="hide_password">Hide password</string>
+    <string name="male">Male</string>
+    <string name="female">Female</string>
+    <string name="other">Other</string>
+    <string name="pick_date">Pick date</string>
+    <string name="no_vehicle_description">You have not registered any vehicles yet. Tap + to add.</string>
+    <string name="my_vehicles">My vehicles</string>
+    <string name="add_vehicle">Add vehicle</string>
+    <string name="vehicle_photo">Vehicle photo</string>
+    <string name="delete_vehicle">Delete vehicle</string>
+    <string name="edit_vehicle">Edit vehicle</string>
+    <string name="mark_vehicle">Mark vehicle</string>
+    <string name="save">Save</string>
 </resources>

@@ -1,5 +1,7 @@
 package upm.gretaapp.ui.navigation
 
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Abc
 import androidx.compose.ui.graphics.vector.ImageVector
 
 /**
@@ -20,4 +22,5 @@ interface NavigationDestination {
      * Image resource to be displayed in the navigation drawer
      */
     val icon: ImageVector
+        get() = Icons.Filled.Abc
 }

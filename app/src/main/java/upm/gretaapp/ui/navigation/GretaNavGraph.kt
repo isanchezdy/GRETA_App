@@ -3,15 +3,16 @@ package upm.gretaapp.ui.navigation
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
-import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.navigation.navArgument
 import upm.gretaapp.ui.home.HomeDestination
 import upm.gretaapp.ui.home.HomeScreen
 import upm.gretaapp.ui.user.LoginDestination
 import upm.gretaapp.ui.user.SignupDestination
 import upm.gretaapp.ui.user.UserLoginScreen
+import upm.gretaapp.ui.user.UserSignupScreen
+import upm.gretaapp.ui.vehicle.VehicleListDestination
+import upm.gretaapp.ui.vehicle.VehicleListScreen
 
 /**
  * Provides Navigation graph for the application.
@@ -19,6 +20,7 @@ import upm.gretaapp.ui.user.UserLoginScreen
 @Composable
 fun GretaNavHost(
     navController: NavHostController,
+    openMenu: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     NavHost(
@@ -33,7 +35,22 @@ fun GretaNavHost(
             )
         }
         composable(route = LoginDestination.route) {
-            UserLoginScreen(navigateUp = { navController.navigateUp() })
+            UserLoginScreen(
+                navigateUp = { navController.navigateUp() },
+                onLogin = { navController.navigate(VehicleListDestination.route) }
+            )
+        }
+        composable(route = SignupDestination.route) {
+            UserSignupScreen(navigateUp = { navController.navigateUp() })
+        }
+        composable(route = VehicleListDestination.route) {
+            VehicleListScreen(
+                onVehicleAdd = { /*TODO*/ },
+                onVehicleDelete = { },
+                onVehicleEdit = { },
+                onVehicleFav = { },
+                openMenu = openMenu
+            )
         }
     }
 }

@@ -12,4 +12,23 @@
     <string name="forgot_password">¿Olvidaste la contraseña?</string>
     <string name="map">Mapa</string>
     <string name="logout">Cerrar sesión</string>
+    <string name="first_name">Nombre</string>
+    <string name="last_name">Apellidos</string>
+    <string name="gender">Género (Opcional)</string>
+    <string name="birthday">Cumpleaños</string>
+    <string name="experience">Experiencia (años)</string>
+    <string name="show_password">Mostrar contraseña</string>
+    <string name="hide_password">Ocultar contraseña</string>
+    <string name="male">Masculino</string>
+    <string name="female">Femenino</string>
+    <string name="other">Otro</string>
+    <string name="pick_date">Seleccionar fecha</string>
+    <string name="no_vehicle_description">Aún no has añadido ningún vehículo. Presiona + para añadir uno.</string>
+    <string name="my_vehicles">Mis vehículos</string>
+    <string name="add_vehicle">Añadir vehículo</string>
+    <string name="vehicle_photo">Foto del vehículo</string>
+    <string name="delete_vehicle">Borrar vehículo</string>
+    <string name="edit_vehicle">Editar vehículo</string>
+    <string name="mark_vehicle">Marcar vehículo</string>
+    <string name="save">Guardar</string>
 </resources>
