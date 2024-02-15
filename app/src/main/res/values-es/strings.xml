@@ -31,4 +31,24 @@
     <string name="edit_vehicle">Editar vehículo</string>
     <string name="mark_vehicle">Marcar vehículo</string>
     <string name="save">Guardar</string>
+    <string name="destination">Destino</string>
+    <string name="cancel">Cancelar búsqueda</string>
+    <string name="enable_location">Habilita la localización</string>
+    <string name="enable_location_text">Por favor, habilita el permiso de ubicación SIEMPRE. Esta app lo usa para estimar consumo y mantener seguimiento de las rutas mientras conduces.</string>
+    <string name="close_window">Cerrar ventana</string>
+    <string name="calculate_route">Calcular ruta</string>
+    <string name="logout_text">¿Quieres cerrar sesión?</string>
+    <string name="yes">Sí</string>
+    <string name="no">No</string>
+    <array name="eco_driving_messages">
+        <item>Mantén una velocidad constante</item>
+        <item>Apaga el motor para pausas largas</item>
+        <item>Presta atención a cambios mientras conduces</item>
+        <item>La velocidad óptima para reducir el consumo es alrededor de 80 km/h</item>
+        <item>Recuerda vigilar la presión de los neumáticos</item>
+        <item>Mantén tu vehículo en buen estado</item>
+        <item>Usa la mayor marcha posible</item>
+        <item>Evita el exceso de carga</item>
+        <item>Usa el aire acondicionado con moderación</item>
+    </array>
 </resources>

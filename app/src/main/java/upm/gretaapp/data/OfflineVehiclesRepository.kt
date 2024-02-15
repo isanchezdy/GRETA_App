@@ -1,6 +1,7 @@
 package upm.gretaapp.data
 
 import kotlinx.coroutines.flow.Flow
+import upm.gretaapp.model.Vehicle
 
 class OfflineVehiclesRepository(private val vehicleDao: VehicleDao) : VehiclesRepository {
     override fun getAllVehiclesFromUserStream(user: Int): Flow<List<Vehicle>> = vehicleDao.getAllVehiclesFromUser(user)

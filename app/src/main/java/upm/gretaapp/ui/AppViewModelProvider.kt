@@ -6,6 +6,7 @@ import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import upm.gretaapp.GretaApplication
+import upm.gretaapp.ui.map.MapViewModel
 import upm.gretaapp.ui.vehicle.VehicleListViewModel
 
 /**
@@ -16,6 +17,11 @@ object AppViewModelProvider {
         // Initializer for VehicleListViewModel
         initializer {
             VehicleListViewModel(gretaApplication().container.vehiclesRepository)
+        }
+        // Initializer for MapViewModel
+        initializer {
+            MapViewModel(gretaApplication().container.nominatimRepository,
+                gretaApplication().container.recordingRepository)
         }
     }
 }

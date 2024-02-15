@@ -5,6 +5,9 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
+import upm.gretaapp.model.Converters
+import upm.gretaapp.model.User
+import upm.gretaapp.model.Vehicle
 
 @Database(entities = [User::class, Vehicle::class], version = 1, exportSchema = false)
 @TypeConverters(Converters::class)

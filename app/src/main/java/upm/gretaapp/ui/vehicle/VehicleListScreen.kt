@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
@@ -27,8 +28,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -39,13 +38,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import upm.gretaapp.GretaTopAppBar
 import upm.gretaapp.R
-import upm.gretaapp.data.Vehicle
-import upm.gretaapp.ui.AppViewModelProvider
+import upm.gretaapp.model.Vehicle
 import upm.gretaapp.ui.navigation.NavigationDestination
 import upm.gretaapp.ui.theme.GRETAAppTheme
 
@@ -55,6 +52,9 @@ object VehicleListDestination : NavigationDestination {
     override val icon: ImageVector = Icons.Filled.DirectionsCar
 }
 
+/**
+ * Composable that represents the Vehicle List screen
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun VehicleListScreen(
@@ -152,7 +152,8 @@ private fun VehicleList(
     onVehicleFav: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    LazyColumn(modifier = modifier) {
+    val listState = rememberLazyListState()
+    LazyColumn(state = listState, modifier = modifier) {
         items(items = vehicleList, key = { it.id }) {vehicle ->
             VehicleItem(
                 vehicle = vehicle,

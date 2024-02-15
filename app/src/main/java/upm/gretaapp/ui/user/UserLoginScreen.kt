@@ -11,8 +11,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -44,6 +44,12 @@ object LoginDestination : NavigationDestination {
     override val titleRes = R.string.login
 }
 
+/**
+ * Composable that represents the login screen
+ *
+ * @param navigateUp Function to go to the previous screen when the back arrow button is clicked
+ * @param onLogin Function to go to the next screen when the login is complete
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UserLoginScreen(
@@ -82,14 +88,14 @@ fun UserLoginScreen(
                     value = "",
                     onValueChange = {/*TODO*/},
                     singleLine = true,
-                    placeholder = { Text(stringResource(id = R.string.username)) },
+                    label = { Text(stringResource(id = R.string.username)) },
                     modifier = Modifier.padding(8.dp)
                 )
                 TextField(
                     value = "",
                     onValueChange = {/*TODO*/},
                     singleLine = true,
-                    placeholder = { Text(stringResource(id = R.string.password)) },
+                    label = { Text(stringResource(id = R.string.password)) },
                     visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                     trailingIcon = {
@@ -113,15 +119,12 @@ fun UserLoginScreen(
                     },
                     modifier = Modifier.padding(8.dp)
                 )
-                Button(
+                FilledTonalButton(
                     onClick = {},
                     shape = MaterialTheme.shapes.small,
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(all = 16.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.secondary
-                    )
                 ) {
                     Text(text = stringResource(id = R.string.forgot_password))
                 }

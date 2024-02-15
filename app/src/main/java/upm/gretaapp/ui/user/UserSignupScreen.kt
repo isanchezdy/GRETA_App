@@ -51,6 +51,11 @@ object SignupDestination : NavigationDestination {
     override val titleRes = R.string.sign_up
 }
 
+/**
+ * Composable that represent the signup screen
+ *
+ * @param navigateUp Function to go to the previous screen when the back arrow button is clicked
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UserSignupScreen(

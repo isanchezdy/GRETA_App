@@ -1,6 +1,7 @@
 package upm.gretaapp.data
 
 import kotlinx.coroutines.flow.Flow
+import upm.gretaapp.model.Vehicle
 
 /**
  * Repository that provides CRUD of [Vehicle] from a given data source.

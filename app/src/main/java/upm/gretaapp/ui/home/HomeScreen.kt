@@ -10,7 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Abc
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -27,12 +27,21 @@ import upm.gretaapp.R
 import upm.gretaapp.ui.navigation.NavigationDestination
 import upm.gretaapp.ui.theme.GRETAAppTheme
 
+/**
+ * Object that represents the route of the Home screen
+ */
 object HomeDestination : NavigationDestination {
     override val route = "home"
     override val titleRes = R.string.app_name
     override val icon: ImageVector = Icons.Filled.Abc
 }
 
+/**
+ * Composable function that represents the Home screen
+ *
+ * @param navigateToLogin Function to go to the Login screen
+ * @param navigateToSignup Function to go to the Signup screen
+ */
 @Composable
 fun HomeScreen(
     navigateToLogin: () -> Unit,
@@ -62,6 +71,8 @@ fun HomeScreen(
                     contentDescription = stringResource(id = R.string.app_name),
                     modifier = modifier.padding(vertical = 20.dp)
                 )
+
+                // Button to login
                 Button(
                     onClick = { navigateToLogin() },
                     shape = MaterialTheme.shapes.small,
@@ -72,6 +83,7 @@ fun HomeScreen(
                     Text(text = stringResource(id = R.string.login))
                 }
 
+                // Button to signup
                 Button(
                     onClick = { navigateToSignup() },
                     shape = MaterialTheme.shapes.small,
@@ -82,15 +94,13 @@ fun HomeScreen(
                     Text(text = stringResource(id = R.string.sign_up))
                 }
 
-                Button(
-                    onClick = {},
+                // Button to start the app without a login
+                FilledTonalButton(
+                    onClick = {/*TODO*/},
                     shape = MaterialTheme.shapes.small,
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(vertical = 16.dp, horizontal = 48.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.secondary
-                    )
                 ) {
                     Text(text = stringResource(id = R.string.no_user))
                 }

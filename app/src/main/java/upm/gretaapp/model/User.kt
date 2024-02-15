@@ -1,4 +1,4 @@
-package upm.gretaapp.data
+package upm.gretaapp.model
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity

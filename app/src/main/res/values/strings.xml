@@ -30,4 +30,24 @@
     <string name="edit_vehicle">Edit vehicle</string>
     <string name="mark_vehicle">Mark vehicle</string>
     <string name="save">Save</string>
+    <string name="destination">Destination</string>
+    <string name="cancel">Cancel search</string>
+    <string name="enable_location">Enable location</string>
+    <string name="enable_location_text">Please enable location permission ALWAYS. This app uses it to estimate consumptions and keep track of the routes while you drive.</string>
+    <string name="close_window">Close window</string>
+    <string name="calculate_route">Calculate route</string>
+    <string name="logout_text">Do you want to log out?</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+    <array name="eco_driving_messages">
+        <item>Keep a constant speed</item>
+        <item>Turn off your engine for long pauses</item>
+        <item>Stay alert for changes while driving</item>
+        <item>The optimal speed for reducing consumption is around 80 km/h</item>
+        <item>Remember to monitor tire pressure</item>
+        <item>Keep your vehicle in good condition</item>
+        <item>Use the highest gear possible</item>
+        <item>Avoid excess load</item>
+        <item>Use air conditioning moderately</item>
+    </array>
 </resources>
