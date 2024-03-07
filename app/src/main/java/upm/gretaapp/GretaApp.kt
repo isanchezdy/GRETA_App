@@ -10,13 +10,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Logout
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.CenterAlignedTopAppBar
-import androidx.compose.material3.Divider
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ModalDrawerSheet
@@ -44,6 +44,8 @@ import upm.gretaapp.R.string
 import upm.gretaapp.ui.home.HomeDestination
 import upm.gretaapp.ui.map.MapDestination
 import upm.gretaapp.ui.navigation.GretaNavHost
+import upm.gretaapp.ui.review.ReviewDestination
+import upm.gretaapp.ui.stats.StatsDestination
 import upm.gretaapp.ui.theme.GRETAAppTheme
 import upm.gretaapp.ui.vehicle.VehicleListDestination
 
@@ -140,7 +142,7 @@ fun GretaTopAppBar(
             else {
                 IconButton(onClick = navigateUp) {
                     Icon(
-                        imageVector = Icons.Filled.ArrowBack,
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = stringResource(string.back_button)
                     )
                 }
@@ -163,7 +165,8 @@ fun GretaNavigationDrawer(
         modifier = modifier.fillMaxWidth(0.8f)
     ) {
         // List of screens to display with the menu
-        val items = listOf(MapDestination, VehicleListDestination)
+        val items = listOf(MapDestination, VehicleListDestination, StatsDestination,
+            ReviewDestination)
         // Index of the last selected screen
         var selectedItemIndex by rememberSaveable {
             mutableIntStateOf(0)
@@ -174,9 +177,9 @@ fun GretaNavigationDrawer(
             modifier = modifier
                 .aspectRatio(5f / 1.5f)
         )
-        Divider(thickness = 16.dp)
+        HorizontalDivider(thickness = 16.dp)
         // Scrollable column with all the buttons of the menu
-        LazyColumn(modifier = modifier) {
+        LazyColumn(modifier = modifier.padding(8.dp)) {
             // For each screen a button is added
             itemsIndexed(items = items) { index, it ->
                 NavigationDrawerItem(
@@ -189,7 +192,7 @@ fun GretaNavigationDrawer(
                             onNavigate(it.route)
                         }
                     },
-                    modifier = Modifier.padding(16.dp)
+                    modifier = Modifier.padding(2.dp)
                 )
             }
 
@@ -198,7 +201,7 @@ fun GretaNavigationDrawer(
                 val context = LocalContext.current
                 NavigationDrawerItem(
                     label = { Text(text = stringResource(id = string.logout)) },
-                    icon = { Icon(imageVector = Icons.Filled.Logout, contentDescription = null) },
+                    icon = { Icon(imageVector = Icons.AutoMirrored.Filled.Logout, contentDescription = null) },
                     selected = (items.size == selectedItemIndex),
                     onClick = {
                         val previousSelected = selectedItemIndex
@@ -216,7 +219,7 @@ fun GretaNavigationDrawer(
                         }
                         builder.show()
                     },
-                    modifier = Modifier.padding(16.dp)
+                    modifier = Modifier.padding(2.dp)
                 )
             }
         }

@@ -9,10 +9,16 @@ import upm.gretaapp.ui.home.HomeDestination
 import upm.gretaapp.ui.home.HomeScreen
 import upm.gretaapp.ui.map.MapDestination
 import upm.gretaapp.ui.map.MapScreen
+import upm.gretaapp.ui.review.ReviewDestination
+import upm.gretaapp.ui.review.ReviewScreen
+import upm.gretaapp.ui.stats.StatsDestination
+import upm.gretaapp.ui.stats.StatsScreen
 import upm.gretaapp.ui.user.LoginDestination
 import upm.gretaapp.ui.user.SignupDestination
 import upm.gretaapp.ui.user.UserLoginScreen
 import upm.gretaapp.ui.user.UserSignupScreen
+import upm.gretaapp.ui.vehicle.VehicleAddDestination
+import upm.gretaapp.ui.vehicle.VehicleAddScreen
 import upm.gretaapp.ui.vehicle.VehicleListDestination
 import upm.gretaapp.ui.vehicle.VehicleListScreen
 
@@ -42,23 +48,35 @@ fun GretaNavHost(
         composable(route = LoginDestination.route) {
             UserLoginScreen(
                 navigateUp = { navController.navigateUp() },
-                onLogin = { navController.navigate(MapDestination.route){ popUpTo(0) } }
+                onNavigate = { navController.navigate(MapDestination.route){ popUpTo(0) } }
             )
         }
         composable(route = SignupDestination.route) {
-            UserSignupScreen(navigateUp = { navController.navigateUp() })
+            UserSignupScreen(
+                navigateUp = { navController.navigateUp() },
+                onNavigate = { navController.navigate(MapDestination.route){ popUpTo(0) } }
+            )
         }
         composable(route = MapDestination.route) {
             MapScreen(openMenu = openMenu)
         }
         composable(route = VehicleListDestination.route) {
             VehicleListScreen(
-                onVehicleAdd = { /*TODO*/ },
-                onVehicleDelete = { },
-                onVehicleEdit = { },
-                onVehicleFav = { },
+                onVehicleAdd = { navController.navigate(VehicleAddDestination.route) },
                 openMenu = openMenu
             )
+        }
+        composable(route = VehicleAddDestination.route) {
+            VehicleAddScreen(
+                navigateBack = { navController.popBackStack() },
+                onNavigateUp = { navController.navigateUp() }
+            )
+        }
+        composable(route = StatsDestination.route) {
+            StatsScreen(openMenu = openMenu)
+        }
+        composable(route = ReviewDestination.route) {
+            ReviewScreen(openMenu = openMenu)
         }
     }
 }

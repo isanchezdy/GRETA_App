@@ -58,7 +58,7 @@ class LocalRecordingRepository(context: Context): RecordingRepository {
         val continuation = workManager.beginUniqueWork(
             "RECORDING_WORK",
             ExistingWorkPolicy.REPLACE,
-            recordingBuilder.build()
+            recordingBuilder.addTag("OUTPUT").build()
         )
         continuation.enqueue()
     }
@@ -83,5 +83,9 @@ class LocalRecordingRepository(context: Context): RecordingRepository {
             .putDouble(KEY_DESTINATION_LON, destination.longitude)
             .putString(KEY_FILENAME, filename)
         return builder.build()
+    }
+
+    override fun clearResults() {
+        workManager.pruneWork()
     }
 }

@@ -64,7 +64,10 @@ class MarkerWindowFragment(
                                         rememberPermissionState(Manifest.permission.ACCESS_FINE_LOCATION)
                                     if(locationPermissionState.status.isGranted) {
                                         Button(
-                                            onClick = onClick,
+                                            onClick = {
+                                                onClick()
+                                                view.visibility = View.GONE
+                                            },
                                             enabled = locationPermissionState.status.isGranted,
                                             modifier = Modifier.padding(8.dp)
                                         ) {

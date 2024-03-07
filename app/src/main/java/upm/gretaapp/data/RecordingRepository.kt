@@ -12,4 +12,6 @@ interface RecordingRepository {
     val outputWorkInfo: Flow<WorkInfo>
     fun recordRoute(destination: GeoPoint)
     fun cancelWork()
+
+    fun clearResults()
 }

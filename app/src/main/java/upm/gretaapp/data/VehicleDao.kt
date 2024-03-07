@@ -1,15 +1,7 @@
 package upm.gretaapp.data
 
-import androidx.room.Dao
-import androidx.room.Delete
-import androidx.room.Insert
-import androidx.room.OnConflictStrategy
-import androidx.room.Query
-import androidx.room.Update
-import kotlinx.coroutines.flow.Flow
-import upm.gretaapp.model.Vehicle
 
-@Dao
+/*@Dao
 interface VehicleDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insert(vehicle: Vehicle)
@@ -25,4 +17,4 @@ interface VehicleDao {
 
     @Query("SELECT * from vehicles WHERE user = :user")
     fun getAllVehiclesFromUser(user: Int): Flow<List<Vehicle>>
-}
+}*/

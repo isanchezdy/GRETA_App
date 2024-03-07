@@ -7,13 +7,12 @@
     <string name="sign_up">Registrarse</string>
     <string name="no_user">Continuar sin usuario</string>
     <string name="menu">Menú</string>
-    <string name="username">Nombre de usuario</string>
+    <string name="email">Email</string>
     <string name="password">Contraseña</string>
     <string name="forgot_password">¿Olvidaste la contraseña?</string>
     <string name="map">Mapa</string>
     <string name="logout">Cerrar sesión</string>
-    <string name="first_name">Nombre</string>
-    <string name="last_name">Apellidos</string>
+    <string name="name">Nombre</string>
     <string name="gender">Género (Opcional)</string>
     <string name="birthday">Cumpleaños</string>
     <string name="experience">Experiencia (años)</string>
@@ -28,11 +27,10 @@
     <string name="add_vehicle">Añadir vehículo</string>
     <string name="vehicle_photo">Foto del vehículo</string>
     <string name="delete_vehicle">Borrar vehículo</string>
-    <string name="edit_vehicle">Editar vehículo</string>
     <string name="mark_vehicle">Marcar vehículo</string>
     <string name="save">Guardar</string>
     <string name="destination">Destino</string>
-    <string name="cancel">Cancelar búsqueda</string>
+    <string name="cancel_search">Cancelar búsqueda</string>
     <string name="enable_location">Habilita la localización</string>
     <string name="enable_location_text">Por favor, habilita el permiso de ubicación SIEMPRE. Esta app lo usa para estimar consumo y mantener seguimiento de las rutas mientras conduces.</string>
     <string name="close_window">Cerrar ventana</string>
@@ -41,14 +39,154 @@
     <string name="yes">Sí</string>
     <string name="no">No</string>
     <array name="eco_driving_messages">
-        <item>Mantén una velocidad constante</item>
-        <item>Apaga el motor para pausas largas</item>
-        <item>Presta atención a cambios mientras conduces</item>
-        <item>La velocidad óptima para reducir el consumo es alrededor de 80 km/h</item>
-        <item>Recuerda vigilar la presión de los neumáticos</item>
-        <item>Mantén tu vehículo en buen estado</item>
-        <item>Usa la mayor marcha posible</item>
-        <item>Evita el exceso de carga</item>
-        <item>Usa el aire acondicionado con moderación</item>
+        <!--Consejos de conducción eficiente-->
+        <item>Suaviza tu aceleración, cada paso gentil es un ahorro de combustible.</item>
+        <item>Mantén una velocidad constante, encontrarás eficiencia en la constancia.</item>
+        <item>Anticípate al tráfico y reduce la necesidad de frenar bruscamente.</item>
+        <item>Mantén tus neumáticos inflados adecuadamente para una menor resistencia y mayor eficiencia.</item>
+        <item>Utiliza el freno motor en lugar del freno de pie siempre que sea posible, ahorrarás combustible.</item>
+        <item>Planifica tu ruta con anticipación para evitar atascos y optimizar la eficiencia de tu viaje.</item>
+        <item>Apaga el motor en paradas prolongadas para reducir el consumo de combustible y las emisiones.</item>
+        <item>Elimina el exceso de peso en tu vehículo, cada kilogramo innecesario impacta en la eficiencia.</item>
+        <item>Mantén una distancia segura con el vehículo de adelante para evitar frenadas bruscas.</item>
+        <item>Mantén tu vehículo correctamente mantenido para garantizar la máxima eficiencia en cada viaje.</item>
+        <item>Utiliza la tecnología a tu favor: el sistema de navegación GRETA puede ayudarte a encontrar rutas más eficientes y evitar atascos.</item>
+        <item>Conduce de manera predictiva: anticipa las acciones de otros conductores y ajusta tu velocidad y posición en consecuencia.</item>
+        <item>Mantén una velocidad moderada en autopistas y carreteras, ya que la velocidad excesiva aumenta la resistencia del aire y el consumo de combustible.</item>
+        <item>Practica la conducción económica: cambia de marcha de manera oportuna y suave para optimizar el rendimiento del motor.</item>
+        <item>Reduce la carga aerodinámica: cierra las ventanas y retira los portaequipajes cuando no los necesites para mejorar la eficiencia del combustible.</item>
+        <item>Evita las horas punta siempre que sea posible: planifica tus viajes para evitar el tráfico intenso y ahorrar tiempo y combustible.</item>
+        <item>Aprovecha el impulso: cuando sea seguro hacerlo, deslízate detrás de vehículos más grandes para reducir la resistencia del viento y ahorrar combustible.</item>
+        <item>Mantén una velocidad constante en pendientes: acelera suavemente antes de subir y deja que la inercia te lleve cuesta abajo para reducir el consumo de combustible.</item>
+        <item>Programa un mantenimiento regular: mantener tu vehículo en óptimas condiciones garantiza una conducción más eficiente y segura.</item>
+        <item>Conduce con conciencia: recuerda que cada pequeño ajuste en tu estilo de conducción puede marcar la diferencia en la eficiencia del combustible y en la protección del medio ambiente.</item>
+        <item>Optimiza tu viaje: agrupa tus tareas para reducir la cantidad de viajes y maximizar la eficiencia de cada uno.</item>
+        <item>Mantén una distancia segura y constante del vehículo de adelante para evitar frenadas bruscas y aceleraciones innecesarias.</item>
+        <item>Reduce la velocidad antes de llegar a una intersección para evitar tener que frenar bruscamente.</item>
+        <item>Evita las horas punta siempre que puedas, esto no solo reduce el tiempo de viaje, sino también el consumo de combustible.</item>
+        <item>Utiliza el control de crucero en carreteras planas para mantener una velocidad constante y reducir el consumo de combustible.</item>
+        <item>Planifica tus viajes para evitar trayectos largos durante los momentos de mayor tráfico.</item>
+        <item>Mantén tus ventanas cerradas a altas velocidades para reducir la resistencia del aire y mejorar la eficiencia del combustible.</item>
+        <item>Conduce de manera suave y predecible para minimizar la necesidad de frenar y acelerar bruscamente.</item>
+        <item>Utiliza el freno motor en lugar de frenar para reducir la velocidad, especialmente al descender por pendientes.</item>
+        <item>Considera la posibilidad de carpooling o compartir viajes para reducir el número de vehículos en la carretera y disminuir la congestión.</item>
+        <item>Conduce con atención y anticipación para evitar cambios bruscos en la velocidad y maximizar la eficiencia de tu viaje.</item>
+        <item>Planifica tus paradas para aprovechar al máximo cada viaje y minimizar la necesidad de realizar desplazamientos adicionales.</item>
+        <item>Mantén una velocidad constante en carreteras llanas para optimizar el consumo de combustible y reducir las emisiones.</item>
+        <item>Reduce el uso de sistemas de climatización y ventanas abiertas a altas velocidades para mejorar la aerodinámica de tu vehículo.</item>
+        <item>Participa en programas de conducción eficiente para aprender técnicas avanzadas y mejorar tus habilidades en la carretera.</item>
+        <item>Conduce de manera defensiva y cortés para promover un ambiente de conducción seguro y eficiente para todos los usuarios de la carretera.</item>
+        <item>Optimiza tu ruta para evitar calles congestionadas y mejorar la fluidez del tráfico, lo que resulta en una conducción más eficiente.</item>
+        <item>Mantén una presión adecuada en los neumáticos para reducir la resistencia al rodaje y mejorar la eficiencia del combustible.</item>
+        <item>Evita llevar carga innecesaria en el maletero para reducir el peso del vehículo y mejorar su eficiencia energética.</item>
+        <item>Celebra tus logros en la conducción eficiente y comparte tus experiencias para inspirar a otros a hacer lo mismo y crear un impacto positivo en el medio ambiente.</item>
+        <item>La conducción eficiente es un viaje hacia la sostenibilidad, ¡cada kilómetro cuenta en este camino hacia un futuro más limpio!</item>
+        <item>Aprovecha al máximo el impulso en descensos suaves, dejando que la inercia te lleve y reduciendo la necesidad de acelerar.</item>
+        <item>Conduce con calma y paciencia, sabiendo que cada gesto de conducción suave contribuye a una experiencia más eficiente.</item>
+        <item>Al reducir la velocidad en zonas urbanas, no solo ahorras combustible, también promueves la seguridad vial y el bienestar de la comunidad.</item>
+        <item>Mantén una actitud positiva y comprometida hacia la conducción eficiente, recordando que cada esfuerzo individual suma al bienestar colectivo.</item>
+        <item>Practica la eco-conducción: anticipa semáforos y situaciones de tráfico para minimizar el uso de frenos y aceleraciones bruscas.</item>
+        <item>Considera compartir tu viaje con amigos o colegas para reducir la cantidad de vehículos en la carretera y promover una movilidad más eficiente.</item>
+        <item>Celebra tus logros en la conducción eficiente, reconociendo el impacto positivo que cada acción tiene en el medio ambiente y en tu bolsillo.</item>
+
+        <!--Frases motivadoras para conducir con eficiencia-->
+        <item>Invierte en tu futuro y en el del planeta adoptando hábitos de conducción más eficientes, dejando una huella positiva en cada kilómetro recorrido.</item>
+        <item>Recuerda que cada vez que eliges conducir de manera eficiente, estás dando un paso hacia un futuro más verde y sostenible para todos.</item>
+        <item>Conduce con suavidad, el camino te recompensará con eficiencia.</item>
+        <item>Cada kilómetro cuenta hacia un futuro más sostenible. ¡Sigue adelante!</item>
+        <item>Tu conducción eficiente hoy, construye un mañana más verde para todos.</item>
+        <item>Cada vez que eliges una conducción eficiente, estás cuidando el planeta.</item>
+        <item>Haz que cada viaje cuente, conduce con conciencia y eficiencia.</item>
+        <item>Cada gota de combustible ahorrada es un paso hacia un futuro más limpio.</item>
+        <item>Transforma cada viaje en una oportunidad para ser parte del cambio hacia una movilidad más sostenible.</item>
+        <item>La eficiencia en la conducción no solo ahorra recursos, sino que también deja una huella positiva en el mundo.</item>
+        <item>Cada vez que conduces de manera eficiente, estás liderando el camino hacia un mañana más brillante.</item>
+        <item>Tu estilo de conducción marca la diferencia. Elige ser eficiente y haz historia en cada kilómetro.</item>
+        <item>Cada frenada suave es un paso hacia un viaje más eficiente y relajado.</item>
+        <item>La conducción eficiente no solo ahorra combustible, también reduce el estrés en la carretera.</item>
+        <item>Tu viaje eficiente es una contribución directa a la preservación del medio ambiente.</item>
+        <item>Cada vez que eliges la conducción eficiente, estás dando un paso hacia un futuro más limpio y sostenible.</item>
+        <item>Conduce con inteligencia, ahorra combustible y ayuda a proteger nuestro planeta.</item>
+        <item>La eficiencia en la carretera no solo es buena para tu bolsillo, también es una forma de cuidar nuestro hogar común.</item>
+        <item>Cada cambio de marcha suave es un gesto hacia una conducción más eficiente y económica.</item>
+        <item>La conducción eficiente es un acto de responsabilidad hacia las generaciones futuras.</item>
+        <item>Cada vez que reducimos nuestra huella de carbono en la carretera, estamos construyendo un futuro más sostenible.</item>
+        <item>Haz que cada viaje cuente, conduciendo de manera eficiente y responsable.</item>
+        <item>Cada giro suave es un paso hacia una conducción más amigable con el medio ambiente.</item>
+        <item>Tu compromiso con la conducción eficiente marca la diferencia, ¡sigue adelante!</item>
+        <item>Cada vez que optimizas tu ruta, estás contribuyendo a un viaje más eficiente y sin contratiempos.</item>
+        <item>Conduce con determinación y eficiencia, tu impacto en el mundo está en tus manos.</item>
+        <item>Cada vez que compartes tu conocimiento sobre conducción eficiente, estás multiplicando su impacto positivo.</item>
+        <item>La eficiencia en la carretera es un regalo para las generaciones venideras, ¡conduce con gratitud!</item>
+        <item>Cada acción que tomas para mejorar tu conducción es un paso hacia un mañana más brillante.</item>
+        <item>La conducción eficiente es una forma de expresar tu compromiso con un futuro sostenible.</item>
+        <item>Tu conducción eficiente es una inspiración para quienes te rodean, ¡sé un ejemplo a seguir!</item>
+        <item>Cada viaje es una oportunidad para mejorar tu técnica de conducción y hacer una diferencia.</item>
+        <item>Cada aceleración suave es un paso hacia un viaje más tranquilo y eficiente.</item>
+        <item>La eficiencia en la conducción es el camino hacia un futuro más limpio y seguro.</item>
+        <item>Conduce con empatía y eficiencia, cuidando no solo de ti mismo, sino también del mundo que te rodea.</item>
+        <item>Cada vez que evitas el exceso de velocidad, estás contribuyendo a la seguridad y la eficiencia en la carretera.</item>
+        <item>La conducción eficiente es una elección consciente que marca la diferencia en cada trayecto.</item>
+        <item>Cada vez que planificas tu viaje con antelación, estás allanando el camino hacia una conducción más eficiente.</item>
+        <item>Conduce con mente tranquila y pie ligero, cada gesto cuenta para una conducción más eficiente.</item>
+        <item>La eficiencia en la conducción no solo ahorra recursos, también promueve una experiencia de manejo más placentera.</item>
+        <item>Cada vez que optas por formas alternativas de transporte, estás contribuyendo a una movilidad más eficiente y sostenible.</item>
+        <item>La conducción eficiente es una inversión en un futuro más limpio y próspero para todos.</item>
+        <item>Cada vez que eliges la ruta más eficiente, estás trazando un camino hacia un futuro más verde.</item>
+        <item>Conduce con pasión y propósito, cada kilómetro cuenta en tu viaje hacia la eficiencia.</item>
+        <item>La conducción eficiente no solo ahorra recursos, también te conecta más con la experiencia de estar en la carretera.</item>
+        <item>Cada vez que practicas la conducción eficiente, estás contribuyendo a un estilo de vida más consciente y responsable.</item>
+        <item>La eficiencia en la conducción es un acto de amor hacia el medio ambiente y las generaciones futuras.</item>
+        <item>Cada viaje es una oportunidad para aprender y mejorar tu técnica de conducción eficiente.</item>
+        <item>Conduce con determinación y optimismo, cada gesto cuenta para un viaje más eficiente.</item>
+        <item>La conducción eficiente es una forma de expresar tu compromiso con un mundo mejor y más sostenible.</item>
+        <item>Cada vez que compartes tu conocimiento sobre conducción eficiente, estás sembrando semillas de cambio en la comunidad.</item>
+        <item>La eficiencia en la carretera es un viaje continuo, ¡disfruta del camino y celebra cada logro en el camino hacia la sostenibilidad!</item>
+        <item>En el camino de la sostenibilidad, la eficiencia es la llave que abre las puertas del éxito.</item>
+        <item>La eficiencia al volante no es solo un hábito, es un estilo de vida. Adopta una mentalidad de mejora constante.</item>
+        <item>Un conductor eficiente no solo llega más rápido, sino que también llega más lejos. Mantén tus objetivos en mente.</item>
+        <item>Tu destino está en tus manos y la manera en que conduces determina el camino que tomarás.</item>
+        <item>Tu huella de carbono está en el pedal. Conduce de manera sostenible y deja una marca positiva en el medio ambiente.</item>
+        <item>Tu elección al volante afecta al aire que compartimos. Opta por una conducción ecológica y respira mejor.</item>
+        <item>Conduce con conciencia ambiental, porque cada reducción de emisiones cuenta en la lucha contra el cambio climático.</item>
     </array>
+    <string name="small">Pequeño</string>
+    <string name="medium">Mediano</string>
+    <string name="big">Grande</string>
+    <string name="default_vehicles">Vehículos por defecto</string>
+    <string name="advanced_search">Búsqueda avanzada</string>
+    <string name="hide_search">Ocultar búsqueda</string>
+    <string name="brand_model">Marca y modelo</string>
+    <string name="review">Reseña</string>
+    <string name="comments">Comentarios</string>
+    <string name="accesibility">Accesibilidad</string>
+    <string name="response_time">Tiempo de respuesta</string>
+    <string name="configurability">Configurabilidad</string>
+    <string name="usability">Usabilidad</string>
+    <string name="trustability">Confiabilidad</string>
+    <string name="robustness">Robustez</string>
+    <string name="utility">Utilidad</string>
+    <string name="global_score">Puntuación global</string>
+    <string name="stats">Estadísticas</string>
+    <string name="distance">Distancia</string>
+    <string name="time">Tiempo</string>
+    <string name="consumption">Consumo</string>
+    <string name="error_login">El email o contraseña no son correctos</string>
+    <string name="driving_license">Fecha del carnet de conducir</string>
+    <string name="error_signup">Se produjo un error. Por favor, inténtelo de nuevo más tarde</string>
+    <string name="electric">Eléctrico</string>
+    <string name="diesel">Diesel</string>
+    <string name="gasoline">Gasolina</string>
+    <string name="age">Años (Opcional)</string>
+    <string name="travelledKm">km recorridos (Opcional)</string>
+    <string name="start_route">Comenzar ruta</string>
+    <string name="cancel_route">Cancelar ruta</string>
+    <string name="stops">Número de paradas</string>
+    <string name="speeding">Exceso de velocidad</string>
+    <string name="slow_driving">Lentidud conduciendo</string>
+    <string name="results">Resultados</string>
+    <string name="accept">Aceptar</string>
+    <string name="segment">Segmento</string>
+    <string name="years">años</string>
+    <string name="hybrid">Híbrido</string>
 </resources>

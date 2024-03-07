@@ -6,13 +6,12 @@
     <string name="sign_up">Sign up</string>
     <string name="no_user">Continue without user</string>
     <string name="menu">Menu</string>
-    <string name="username">Username</string>
+    <string name="email">Email</string>
     <string name="password">Password</string>
     <string name="forgot_password">Forgot password?</string>
     <string name="map">Map</string>
     <string name="logout">Log out</string>
-    <string name="first_name">First name</string>
-    <string name="last_name">Last name</string>
+    <string name="name">Name</string>
     <string name="gender">Gender (Optional)</string>
     <string name="birthday">Birthday</string>
     <string name="experience">Experience (years)</string>
@@ -27,11 +26,10 @@
     <string name="add_vehicle">Add vehicle</string>
     <string name="vehicle_photo">Vehicle photo</string>
     <string name="delete_vehicle">Delete vehicle</string>
-    <string name="edit_vehicle">Edit vehicle</string>
     <string name="mark_vehicle">Mark vehicle</string>
     <string name="save">Save</string>
     <string name="destination">Destination</string>
-    <string name="cancel">Cancel search</string>
+    <string name="cancel_search">Cancel search</string>
     <string name="enable_location">Enable location</string>
     <string name="enable_location_text">Please enable location permission ALWAYS. This app uses it to estimate consumptions and keep track of the routes while you drive.</string>
     <string name="close_window">Close window</string>
@@ -40,14 +38,154 @@
     <string name="yes">Yes</string>
     <string name="no">No</string>
     <array name="eco_driving_messages">
-        <item>Keep a constant speed</item>
-        <item>Turn off your engine for long pauses</item>
-        <item>Stay alert for changes while driving</item>
-        <item>The optimal speed for reducing consumption is around 80 km/h</item>
-        <item>Remember to monitor tire pressure</item>
-        <item>Keep your vehicle in good condition</item>
-        <item>Use the highest gear possible</item>
-        <item>Avoid excess load</item>
-        <item>Use air conditioning moderately</item>
+        <!--Efficient driving tips-->
+        <item>Smooth out your acceleration; every gentle step is fuel savings.</item>
+        <item>Maintain a constant speed; you’ll find efficiency in consistency.</item>
+        <item>Anticipate traffic and reduce the need for sudden braking.</item>
+        <item>Keep your tires properly inflated for less resistance and greater efficiency.</item>
+        <item>Use engine braking instead of the foot brake whenever possible; it saves fuel.</item>
+        <item>Plan your route in advance to avoid congestion and optimize travel efficiency.</item>
+        <item>Turn off the engine during prolonged stops to reduce fuel consumption and emissions.</item>
+        <item>Remove excess weight from your vehicle; every unnecessary kilogram impacts efficiency.</item>
+        <item>Maintain a safe distance from the vehicle ahead to avoid abrupt braking.</item>
+        <item>Keep your vehicle properly maintained to ensure maximum efficiency on every journey.</item>
+        <item>Use technology to your advantage: the GRETA navigation system can help you find more efficient routes and avoid traffic.</item>
+        <item>Drive predictively: anticipate other drivers’ actions and adjust your speed and position accordingly.</item>
+        <item>Maintain a moderate speed on highways and roads, as excessive speed increases air resistance and fuel consumption.</item>
+        <item>Practice economical driving: shift gears timely and smoothly to optimize engine performance.</item>
+        <item>Reduce aerodynamic drag: close windows and remove roof racks when not needed to improve fuel efficiency.</item>
+        <item>Avoid rush hours whenever possible: plan your trips to steer clear of heavy traffic and save time and fuel.</item>
+        <item>Harness momentum: when safe, draft behind larger vehicles to reduce wind resistance and save fuel.</item>
+        <item>Maintain a constant speed on slopes: accelerate gently before going uphill and let inertia carry you downhill to reduce fuel consumption.</item>
+        <item>Schedule regular maintenance: keeping your vehicle in optimal condition ensures more efficient and safer driving.</item>
+        <item>Drive consciously: remember that every small adjustment in your driving style can make a difference in fuel efficiency and environmental protection.</item>
+        <item>Optimize your trip: group your tasks to reduce the number of trips and maximize efficiency for each one.</item>
+        <item>Maintain a safe and consistent distance from the vehicle ahead to avoid sudden braking and unnecessary acceleration.</item>
+        <item>Reduce speed before reaching an intersection to avoid abrupt braking.</item>
+        <item>Avoid rush hours whenever possible; this not only reduces travel time but also fuel consumption.</item>
+        <item>Use cruise control on flat roads to maintain a constant speed and reduce fuel consumption.</item>
+        <item>Plan your trips to avoid long journeys during peak traffic times.</item>
+        <item>Keep your windows closed at high speeds to reduce air resistance and improve fuel efficiency.</item>
+        <item>Drive smoothly and predictably to minimize the need for abrupt braking and acceleration.</item>
+        <item>Use engine braking instead of regular braking to reduce speed, especially when descending slopes.</item>
+        <item>Consider carpooling or ride-sharing to reduce the number of vehicles on the road and decrease congestion.</item>
+        <item>Drive attentively and anticipate changes in speed to maximize trip efficiency.</item>
+        <item>Plan your stops to make the most of each trip and minimize the need for additional travel.</item>
+        <item>Maintain a constant speed on flat roads to optimize fuel consumption and reduce emissions.</item>
+        <item>Reduce the use of air conditioning systems and keep windows closed at high speeds to improve your vehicle’s aerodynamics.</item>
+        <item>Participate in efficient driving programs to learn advanced techniques and enhance your skills on the road.</item>
+        <item>Drive defensively and courteously to promote a safe and efficient driving environment for all road users.</item>
+        <item>Optimize your route to avoid congested streets and improve traffic flow, resulting in more efficient driving.</item>
+        <item>Keep your tires properly inflated to reduce rolling resistance and enhance fuel efficiency.</item>
+        <item>Avoid carrying unnecessary cargo in the trunk to reduce vehicle weight and improve energy efficiency.</item>
+        <item>Celebrate your achievements in efficient driving and share your experiences to inspire others to do the same and create a positive impact on the environment.</item>
+        <item>Efficient driving is a journey toward sustainability; every kilometer counts on this path to a cleaner future!</item>
+        <item>Maximize momentum on gentle descents, allowing inertia to carry you and reducing the need for acceleration.</item>
+        <item>Drive calmly and patiently, knowing that every gentle driving gesture contributes to a more efficient experience.</item>
+        <item>By reducing speed in urban areas, you not only save fuel but also promote road safety and community well-being.</item>
+        <item>Maintain a positive and committed attitude toward efficient driving, remembering that each individual effort adds to collective well-being.</item>
+        <item>Practice eco-driving: anticipate traffic lights and situations to minimize the use of brakes and abrupt accelerations.</item>
+        <item>Consider carpooling with friends or colleagues to reduce the number of vehicles on the road and promote more efficient mobility.</item>
+        <item>Celebrate your achievements in efficient driving, recognizing the positive impact that each action has on the environment and your wallet.</item>
+
+        <!--Motivational phrases to drive efficiently-->
+        <item>Invest in your future and that of the planet by adopting more efficient driving habits, leaving a positive footprint with every kilometer traveled.</item>
+        <item>Remember that every time you choose to drive efficiently, you’re taking a step toward a greener and more sustainable future for everyone.</item>
+        <item>Drive smoothly; the road will reward you with efficiency.</item>
+        <item>Every kilometer counts toward a more sustainable future. Keep going!</item>
+        <item>Your efficient driving today builds a greener tomorrow for all.</item>
+        <item>Each time you choose efficient driving, you’re caring for the planet.</item>
+        <item>Make every trip count; drive with awareness and efficiency.</item>
+        <item>Every saved drop of fuel is a step toward a cleaner future.</item>
+        <item>Transform each journey into an opportunity to be part of the change toward more sustainable mobility.</item>
+        <item>Efficient driving not only saves resources but also leaves a positive mark on the world.</item>
+        <item>Whenever you drive efficiently, you’re leading the way toward a brighter tomorrow.</item>
+        <item>Your driving style makes a difference. Choose efficiency and make history with every kilometer.</item>
+        <item>Every gentle brake is a step toward a more efficient and relaxed trip.</item>
+        <item>Efficient driving not only saves fuel but also reduces stress on the road.</item>
+        <item>Your efficient journey directly contributes to environmental preservation.</item>
+        <item>Each time you choose efficient driving, you’re taking a step toward a cleaner and more sustainable future.</item>
+        <item>Drive intelligently, save fuel, and help protect our planet.</item>
+        <item>Road efficiency is not only good for your wallet but also a way to care for our shared home.</item>
+        <item>Every smooth gear change is a gesture toward more efficient and economical driving.</item>
+        <item>Efficient driving is an act of responsibility toward future generations.</item>
+        <item>Whenever we reduce our carbon footprint on the road, we’re building a more sustainable future.</item>
+        <item>Make every trip count by driving efficiently and responsibly.</item>
+        <item>Every smooth turn is a step toward environmentally friendly driving.</item>
+        <item>Your commitment to efficient driving makes a difference; keep going!</item>
+        <item>Each time you optimize your route, you contribute to a smoother and more efficient journey.</item>
+        <item>Drive with determination and efficiency; your impact on the world is in your hands.</item>
+        <item>Whenever you share your knowledge about efficient driving, you multiply its positive impact.</item>
+        <item>Road efficiency is a gift for future generations; drive with gratitude!</item>
+        <item>Every action you take to improve your driving is a step toward a brighter tomorrow.</item>
+        <item>Efficient driving is a way to express your commitment to a sustainable future.</item>
+        <item>Your efficient driving inspires those around you; be a role model!</item>
+        <item>Each journey is an opportunity to enhance your driving technique and make a difference.</item>
+        <item>Every gentle acceleration is a step toward a calmer and more efficient trip.</item>
+        <item>Road efficiency leads to a cleaner and safer future.</item>
+        <item>Drive with empathy and efficiency, caring not only for yourself but also for the world around you.</item>
+        <item>Whenever you avoid excessive speed, you contribute to road safety and efficiency.</item>
+        <item>Efficient driving is a conscious choice that makes a difference in every trip.</item>
+        <item>Planning your journey in advance paves the way for more efficient driving.</item>
+        <item>Drive with a calm mind and a light foot; every gesture counts for efficient driving.</item>
+        <item>Efficient driving not only saves resources but also promotes a more pleasant driving experience.</item>
+        <item>Choosing alternative forms of transportation contributes to more efficient and sustainable mobility.</item>
+        <item>Efficient driving is an investment in a cleaner and more prosperous future for all.</item>
+        <item>Every time you choose the most efficient route, you’re paving a path toward a greener future.</item>
+        <item>Drive with passion and purpose; every kilometer counts on your journey toward efficiency.</item>
+        <item>Efficient driving not only saves resources but also connects you more deeply with the road experience.</item>
+        <item>Each time you practice efficient driving, you contribute to a more conscious and responsible lifestyle.</item>
+        <item>Road efficiency is an act of love for the environment and future generations.</item>
+        <item>Every journey is an opportunity to learn and improve your technique in efficient driving.</item>
+        <item>Drive with determination and optimism; every gesture matters for a more efficient trip.</item>
+        <item>Efficient driving is a way to express your commitment to a better and more sustainable world.</item>
+        <item>Whenever you share your knowledge about efficient driving, you’re sowing seeds of change in the community.</item>
+        <item>Road efficiency is an ongoing journey; enjoy the ride and celebrate each achievement on the path to sustainability!</item>
+        <item>On the path of sustainability, efficiency is the key that unlocks the doors of success.</item>
+        <item>Efficient driving is not just a habit; it’s a way of life. Adopt a mindset of continuous improvement.</item>
+        <item>An efficient driver not only arrives faster but also goes farther. Keep your goals in mind.</item>
+        <item>Your destination is in your hands, and the way you drive determines the path you’ll take.</item>
+        <item>Your carbon footprint is on the pedal. Drive sustainably and leave a positive mark on the environment.</item>
+        <item>Your choice behind the wheel affects the air we share. Opt for eco-friendly driving and breathe better.</item>
+        <item>Drive with environmental awareness, because every emission reduction counts in the fight against climate change.</item>
     </array>
+    <string name="small">Small</string>
+    <string name="medium">Medium</string>
+    <string name="big">Big</string>
+    <string name="default_vehicles">Default vehicles</string>
+    <string name="advanced_search">Advanced search</string>
+    <string name="hide_search">Hide search</string>
+    <string name="brand_model">Brand and model</string>
+    <string name="review">Review</string>
+    <string name="comments">Comments</string>
+    <string name="accesibility">Accesibility</string>
+    <string name="response_time">Response time</string>
+    <string name="configurability">Configurability</string>
+    <string name="usability">Usability</string>
+    <string name="trustability">Trustability</string>
+    <string name="robustness">Robustness</string>
+    <string name="utility">Utility</string>
+    <string name="global_score">Global score</string>
+    <string name="stats">Stats</string>
+    <string name="distance">Distance</string>
+    <string name="time">Time</string>
+    <string name="consumption">Consumption</string>
+    <string name="error_login">The email or password are not correct</string>
+    <string name="driving_license">Driving License Date</string>
+    <string name="error_signup">There was an error. Please try again later</string>
+    <string name="electric">Electric</string>
+    <string name="diesel">Diesel</string>
+    <string name="gasoline">Gasoline</string>
+    <string name="age">Age (Optional)</string>
+    <string name="travelledKm">Travelled km (Optional)</string>
+    <string name="start_route">Start route</string>
+    <string name="cancel_route">Cancel route</string>
+    <string name="stops">Number of stops</string>
+    <string name="speeding">Speeding</string>
+    <string name="slow_driving">Slow driving</string>
+    <string name="results">Results</string>
+    <string name="accept">Accept</string>
+    <string name="segment">Segment</string>
+    <string name="years">years</string>
+    <string name="hybrid">Hybrid</string>
 </resources>

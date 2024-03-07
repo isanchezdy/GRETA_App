@@ -15,6 +15,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -23,7 +24,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import upm.gretaapp.R
+import upm.gretaapp.ui.AppViewModelProvider
 import upm.gretaapp.ui.navigation.NavigationDestination
 import upm.gretaapp.ui.theme.GRETAAppTheme
 
@@ -44,6 +47,21 @@ object HomeDestination : NavigationDestination {
  */
 @Composable
 fun HomeScreen(
+    navigateToLogin: () -> Unit,
+    navigateToSignup: () -> Unit,
+    modifier: Modifier = Modifier,
+    viewModel: HomeViewModel = viewModel(factory = AppViewModelProvider.Factory),
+) {
+    LaunchedEffect(true) {
+        viewModel.logout()
+    }
+
+    HomeBody(navigateToLogin = navigateToLogin, navigateToSignup = navigateToSignup,
+        modifier = modifier)
+}
+
+@Composable
+fun HomeBody(
     navigateToLogin: () -> Unit,
     navigateToSignup: () -> Unit,
     modifier: Modifier = Modifier
@@ -109,13 +127,13 @@ fun HomeScreen(
             Image(
                 painter = painterResource(id = R.drawable.developers),
                 contentDescription = stringResource(id = R.string.app_name),
-                modifier = modifier.padding(vertical = 16.dp)
+                modifier = modifier
+                    .padding(vertical = 16.dp)
                     .align(Alignment.BottomCenter)
                     .fillMaxWidth(0.8f)
             )
         }
     }
-
 }
 
 @Preview(showBackground = true, heightDp = 650)
@@ -123,6 +141,6 @@ fun HomeScreen(
 @Composable
 fun HomeScreenPreview() {
     GRETAAppTheme {
-        HomeScreen(navigateToLogin = {}, navigateToSignup = {})
+        HomeBody(navigateToLogin = {}, navigateToSignup = {})
     }
 }

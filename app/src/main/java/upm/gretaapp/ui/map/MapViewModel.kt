@@ -1,14 +1,26 @@
 package upm.gretaapp.ui.map
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.work.WorkInfo
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import org.osmdroid.util.GeoPoint
+import upm.gretaapp.data.GretaRepository
 import upm.gretaapp.data.NominatimRepository
 import upm.gretaapp.data.RecordingRepository
+import upm.gretaapp.data.UserSessionRepository
 import upm.gretaapp.model.NominatimResult
+import upm.gretaapp.model.Route
+import upm.gretaapp.model.RouteEvaluation
+import upm.gretaapp.model.RouteEvaluationInput
 
 /**
  * [ViewModel] that manages the current UI state of the Map Screen (search a destination, a route,
@@ -18,8 +30,20 @@ import upm.gretaapp.model.NominatimResult
  *  them on the map
  *  @param recordingRepository Repository class to start recording a route when selected
  */
-class MapViewModel(private val nominatimRepository: NominatimRepository,
-    private val recordingRepository: RecordingRepository): ViewModel() {
+class MapViewModel(
+    private val nominatimRepository: NominatimRepository,
+    userSessionRepository: UserSessionRepository,
+    private val gretaRepository: GretaRepository,
+    private val recordingRepository: RecordingRepository
+): ViewModel() {
+
+    private var userId: Long = 0
+
+    init {
+        viewModelScope.launch {
+            userSessionRepository.user.collectLatest { userId = it }
+        }
+    }
 
     // Variables that manage the current state of the ui, showing a read-only value to the screen
     private val _uiState = MutableStateFlow<MapUiState>(MapUiState.Start)
@@ -29,6 +53,29 @@ class MapViewModel(private val nominatimRepository: NominatimRepository,
     private val _searchResults: MutableStateFlow<List<NominatimResult>> =
         MutableStateFlow(emptyList())
     val searchResults = _searchResults.asStateFlow()
+
+    val recordingUiState: StateFlow<RecordingUiState> = recordingRepository.outputWorkInfo
+        .map { info ->
+            val outputSpeeds = info.outputData.getDoubleArray("speeds")
+            val outputHeights = info.outputData.getDoubleArray("heights")
+            when  {
+                info.state.isFinished && outputSpeeds != null
+                        && outputHeights != null -> {
+                    RecordingUiState.Complete(
+                        speeds = outputSpeeds.asList(),
+                        heights = outputHeights.asList()
+                    )
+                }
+                info.state == WorkInfo.State.CANCELLED -> {
+                    RecordingUiState.Default
+                }
+                else -> RecordingUiState.Loading
+            }
+        }.stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = RecordingUiState.Default
+        )
 
     /**
      * Function to update search results based on a query
@@ -50,13 +97,80 @@ class MapViewModel(private val nominatimRepository: NominatimRepository,
      */
     fun clearOptions() {
         _searchResults.value = emptyList()
+        _uiState.value = MapUiState.Start
     }
+
+    fun getRoutes(
+        source: GeoPoint,
+        destination: GeoPoint,
+        userId: Long = this.userId,
+        vehicleId: Long = -1,
+        additionalMass: Long = 0
+    ) {
+        viewModelScope.launch {
+            try{
+                _uiState.value = MapUiState.LoadingRoute
+                val routes = gretaRepository.getRoutes(
+                    source = source.latitude.toFloat().toString() + ","
+                            + source.longitude.toFloat().toString(),
+                    destination = destination.latitude.toFloat().toString() + ","
+                            + destination.longitude.toFloat().toString(),
+                    innerCoords = "",
+                    additionalMass = additionalMass,
+                    vehicleId = vehicleId,
+                    userId = userId
+                )
+
+                val processedRoutes = routes.entries.groupBy(
+                    keySelector = { it.value },
+                    valueTransform = { it.key }
+                ).map { (value, keys) -> keys to value }
+
+                _uiState.value = MapUiState.CompleteRoutes(routes = processedRoutes)
+            } catch (throwable: Throwable) {
+                _uiState.value = MapUiState.Error
+                Log.e("Error_route", throwable.stackTraceToString())
+            }
+        }
+    }
+
 
     /**
      * Function to start recording a route
      */
     fun startRecording(destination: GeoPoint) {
         recordingRepository.recordRoute(destination)
+        recordingUiState
+    }
+
+    fun cancelRecording() {
+        recordingRepository.cancelWork()
+    }
+
+    fun getScore(speeds: List<Double>, heights: List<Double>) {
+        viewModelScope.launch {
+            if(recordingUiState.value is RecordingUiState.Complete) {
+                try {
+                    _uiState.value = MapUiState.LoadingRoute
+                    val input =
+                        RouteEvaluationInput(userId = userId, vehicleId = 1, additionalMass = 0,
+                            speeds = speeds, heights = heights, times = (speeds.indices).toList()
+                                .map {
+                                    it.toDouble()
+                                }
+                        )
+
+                    val scores = gretaRepository.getScore(input)
+                    _uiState.value = MapUiState.CompleteScore(scores)
+                } catch (_ : Throwable) {
+                    _uiState.value = MapUiState.Error
+                }
+            }
+        }
+    }
+
+    fun clearResults() {
+        recordingRepository.clearResults()
     }
 
 }
@@ -66,9 +180,17 @@ class MapViewModel(private val nominatimRepository: NominatimRepository,
  */
 sealed interface MapUiState {
     data object Start: MapUiState
-    data object Loading: MapUiState
+    data object LoadingRoute: MapUiState
     data object Error: MapUiState
-    data class Complete(val routes: List</*Route*/ Int>): MapUiState
+    data class CompleteRoutes(val routes: List<Pair<List<String>, Route>>): MapUiState
+
+    data class CompleteScore(val scores: RouteEvaluation): MapUiState
+}
+
+sealed interface RecordingUiState {
+    data object Default : RecordingUiState
+    data object Loading : RecordingUiState
+    data class Complete(val heights: List<Double>, val speeds: List<Double> ): RecordingUiState
 }
 
 /**

@@ -14,6 +14,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.core.app.ActivityCompat
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
+import androidx.work.workDataOf
 import com.google.android.gms.location.LocationServices
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -69,6 +70,9 @@ class RecordingWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
     // Instance of a recording to keep updating its data each second
     private var recording = Recording("",null,null,null,0.0,
         null, null, null, null, null)
+
+    private val speeds = mutableListOf<Double>()
+    private val heights = mutableListOf<Double>()
 
     // Values to retrieve the current location of the phone
     private var location = mutableStateOf<Location?>(null)
@@ -136,6 +140,7 @@ class RecordingWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
                             location.value = it
                             // Store speed
                             recording = recording.copy(speed = speed)
+                            speeds.add(speed)
                         }
 
                     // The recording is updated
@@ -143,6 +148,8 @@ class RecordingWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
                         longitude = location.value?.longitude,
                         altitude = location.value?.altitude,
                         timestamp = dateFormat.format(Date()))
+
+                    heights.add(recording.altitude ?: 0.0)
 
                     writeRecordingToCsv(applicationContext, recording, filename)
 
@@ -161,6 +168,9 @@ class RecordingWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
                 // When the loop ends, remove all sensors and restart app
                 closeSensors()
 
+                val output = workDataOf("speeds" to speeds.toDoubleArray(),
+                    "heights" to heights.toDoubleArray())
+
                 // Define notification intent
                 val notificationIntent = Intent(applicationContext, MainActivity::class.java)
                     .setAction(Intent.ACTION_MAIN)
@@ -169,7 +179,7 @@ class RecordingWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
                 applicationContext.startActivity(notificationIntent)
 
                 // Return success
-                Result.success()
+                Result.success(output)
             } catch (throwable: Throwable) {
                 Log.e(
                     TAG,

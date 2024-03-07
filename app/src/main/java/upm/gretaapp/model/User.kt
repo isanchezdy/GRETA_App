@@ -1,37 +1,31 @@
 package upm.gretaapp.model
 
-import androidx.room.ColumnInfo
-import androidx.room.Entity
-import androidx.room.Index
-import androidx.room.PrimaryKey
-import androidx.room.TypeConverter
-import java.util.Date
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
 /**
- * Entity data class represents a single row in the database.
+ * Data class that represents a User from the database
  */
-@Entity(tableName = "users", indices = [Index(value = ["username"], unique = true)])
-data class User(
-    @PrimaryKey(autoGenerate = true)
-    val id: Int = 0,
-    @ColumnInfo(name = "first_name") val firstName: String,
-    @ColumnInfo(name = "last_name") val lastName: String,
+@Serializable
+data class User (
+    @SerialName("BirthDate")
+    val birthDate: String,
+
+    @SerialName("DrivingLicenseDate")
+    val drivingLicenseDate: String,
+
+    @SerialName("Email")
+    val email: String,
+
+    @SerialName("Gender")
+    val gender: String,
+
+    @SerialName("Name")
+    val name: String,
+
+    @SerialName("Password")
     val password: String,
-    val username: String,
-    val gender: String?,
-    val birthday: Date,
-    val experience: Int,
-    val icon: Int
+
+    @SerialName("UserID")
+    val userID: Long? = null
 )
-
-class Converters {
-    @TypeConverter
-    fun fromTimestamp(value: Long?): Date? {
-        return value?.let { Date(it) }
-    }
-
-    @TypeConverter
-    fun dateToTimestamp(date: Date?): Long? {
-        return date?.time?.toLong()
-    }
-}
