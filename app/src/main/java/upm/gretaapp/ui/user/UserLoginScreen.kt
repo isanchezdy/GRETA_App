@@ -177,16 +177,6 @@ fun UserLoginBody(
                 )
             }
 
-            FilledTonalButton(
-                onClick = {/*TODO*/},
-                shape = MaterialTheme.shapes.small,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(all = 16.dp),
-            ) {
-                Text(text = stringResource(id = R.string.forgot_password))
-            }
-
             if(uiState is LoginUiState.Loading) {
                 CircularProgressIndicator(
                     modifier = Modifier

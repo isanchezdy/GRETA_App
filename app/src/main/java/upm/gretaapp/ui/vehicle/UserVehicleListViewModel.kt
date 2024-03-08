@@ -30,12 +30,12 @@ class VehicleListViewModel( userSessionRepository: UserSessionRepository,
         }
     }
 
-    var vehicleListUiState: VehicleListUiState by mutableStateOf(VehicleListUiState.Loading)
+    var userVehicleListUiState: UserVehicleListUiState by mutableStateOf(UserVehicleListUiState.Loading)
         private set
 
     fun getVehicles() {
         viewModelScope.launch {
-            vehicleListUiState = try {
+            userVehicleListUiState = try {
                 val userVehicles = gretaRepository.getUserVehicles(userId)
                 val list: MutableList<Pair<UserVehicle, Vehicle>> = mutableListOf()
                 for (userVehicle in userVehicles) {
@@ -46,10 +46,10 @@ class VehicleListViewModel( userSessionRepository: UserSessionRepository,
                         )
                     )
                 }
-                VehicleListUiState.Success(list)
+                UserVehicleListUiState.Success(list)
             } catch (throwable: Throwable) {
                 Log.e("Error_vehicles", throwable.stackTraceToString())
-                VehicleListUiState.Error
+                UserVehicleListUiState.Error
             }
         }
     }
@@ -57,11 +57,11 @@ class VehicleListViewModel( userSessionRepository: UserSessionRepository,
     fun setFavourite(userVehicle: UserVehicle) {
         viewModelScope.launch {
             try {
-                if (vehicleListUiState is VehicleListUiState.Success) {
+                if (userVehicleListUiState is UserVehicleListUiState.Success) {
                     if (userVehicle.isFav == 1) {
                         gretaRepository.updateUserVehicle(userVehicle.copy(isFav = 0))
                     } else {
-                        val previousFavourite = (vehicleListUiState as VehicleListUiState.Success)
+                        val previousFavourite = (userVehicleListUiState as UserVehicleListUiState.Success)
                             .vehicleList.find {
                                 it.first.isFav == 1
                             }?.first
@@ -81,15 +81,15 @@ class VehicleListViewModel( userSessionRepository: UserSessionRepository,
     fun deleteVehicle(id: Long) {
         viewModelScope.launch {
             try {
-                if (vehicleListUiState is VehicleListUiState.Success) {
-                    vehicleListUiState =
-                        VehicleListUiState.Success((vehicleListUiState as VehicleListUiState.Success)
+                if (userVehicleListUiState is UserVehicleListUiState.Success) {
+                    userVehicleListUiState =
+                        UserVehicleListUiState.Success((userVehicleListUiState as UserVehicleListUiState.Success)
                             .vehicleList.filter { it.first.id != id })
                     gretaRepository.deleteUserVehicle(id)
                 }
             } catch (throwable: Throwable) {
                 Log.e("Error_vehicles", throwable.stackTraceToString())
-                VehicleListUiState.Error
+                UserVehicleListUiState.Error
             }
         }
     }
@@ -98,8 +98,8 @@ class VehicleListViewModel( userSessionRepository: UserSessionRepository,
 /**
  * Ui State for HomeScreen
  */
-sealed interface VehicleListUiState {
-    data class Success(val vehicleList: List<Pair<UserVehicle, Vehicle>>) : VehicleListUiState
-    data object Error : VehicleListUiState
-    data object Loading : VehicleListUiState
+sealed interface UserVehicleListUiState {
+    data class Success(val vehicleList: List<Pair<UserVehicle, Vehicle>>) : UserVehicleListUiState
+    data object Error : UserVehicleListUiState
+    data object Loading : UserVehicleListUiState
 }

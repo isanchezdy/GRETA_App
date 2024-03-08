@@ -10,7 +10,7 @@ import upm.gretaapp.ui.home.HomeViewModel
 import upm.gretaapp.ui.map.MapViewModel
 import upm.gretaapp.ui.user.UserLoginViewModel
 import upm.gretaapp.ui.user.UserSignupViewModel
-import upm.gretaapp.ui.vehicle.VehicleAddViewModel
+import upm.gretaapp.ui.vehicle.UserVehicleAddViewModel
 import upm.gretaapp.ui.vehicle.VehicleListViewModel
 
 /**
@@ -41,7 +41,7 @@ object AppViewModelProvider {
                 gretaApplication().container.gretaRepository)
         }
         initializer {
-            VehicleAddViewModel(gretaApplication().container.gretaRepository,
+            UserVehicleAddViewModel(gretaApplication().container.gretaRepository,
                 gretaApplication().container.userSessionRepository)
         }
         // Initializer for MapViewModel

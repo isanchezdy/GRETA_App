@@ -15,8 +15,8 @@ import upm.gretaapp.model.Vehicle
 /**
  * ViewModel to validate and insert vehicles in the database.
  */
-class VehicleAddViewModel(private val gretaRepository: GretaRepository,
-    private val userSessionRepository: UserSessionRepository) : ViewModel() {
+class UserVehicleAddViewModel(private val gretaRepository: GretaRepository,
+                              private val userSessionRepository: UserSessionRepository) : ViewModel() {
     private var userId: Long = 0
 
     init {
@@ -55,4 +55,3 @@ class VehicleAddViewModel(private val gretaRepository: GretaRepository,
         }
     }
 }
-

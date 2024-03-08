@@ -110,6 +110,7 @@ class MapViewModel(
         viewModelScope.launch {
             try{
                 _uiState.value = MapUiState.LoadingRoute
+
                 val routes = gretaRepository.getRoutes(
                     source = source.latitude.toFloat().toString() + ","
                             + source.longitude.toFloat().toString(),

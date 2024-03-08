@@ -52,6 +52,7 @@ import upm.gretaapp.ui.AppViewModelProvider
 import upm.gretaapp.ui.navigation.NavigationDestination
 import upm.gretaapp.ui.theme.GRETAAppTheme
 import java.text.SimpleDateFormat
+import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 
@@ -115,7 +116,7 @@ fun UserEntryBody(
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceAround,
-            modifier = Modifier.padding(all = 48.dp)
+            modifier = Modifier.padding(all = 18.dp)
         ) {
             LazyColumn(
                 modifier = Modifier.fillMaxHeight(0.7f)
@@ -308,8 +309,7 @@ fun UserEntryBody(
                     enabled = userUiState.isEntryValid,
                     shape = MaterialTheme.shapes.small,
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(all = 16.dp)
+                        .fillMaxWidth().padding(start=24.dp, end=24.dp)
                 ) {
                     Text(text = stringResource(id = R.string.sign_up))
                 }
@@ -348,7 +348,7 @@ fun DatePickerField(
     )
 
     val selectedDate = datePickerState.selectedDateMillis?.let {
-        SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date(it))
+        SimpleDateFormat("dd - MMMM - yyyy", Locale.getDefault()).format(Date(it))
     } ?: ""
 
     DatePickerDialog(

@@ -23,7 +23,7 @@
     <string name="pick_date">Pick date</string>
     <string name="no_vehicle_description">You have not registered any vehicles yet. Tap + to add.</string>
     <string name="my_vehicles">My vehicles</string>
-    <string name="add_vehicle">Add vehicle</string>
+    <string name="add_vehicle">Add your vehicle</string>
     <string name="vehicle_photo">Vehicle photo</string>
     <string name="delete_vehicle">Delete vehicle</string>
     <string name="mark_vehicle">Mark vehicle</string>
@@ -153,9 +153,9 @@
     <string name="medium">Medium</string>
     <string name="big">Big</string>
     <string name="default_vehicles">Default vehicles</string>
-    <string name="advanced_search">Advanced search</string>
+    <string name="advanced_search">Find your model</string>
     <string name="hide_search">Hide search</string>
-    <string name="brand_model">Brand and model</string>
+    <string name="brand_model">Enter your brand and model</string>
     <string name="review">Review</string>
     <string name="comments">Comments</string>
     <string name="accesibility">Accesibility</string>
@@ -188,4 +188,9 @@
     <string name="segment">Segment</string>
     <string name="years">years</string>
     <string name="hybrid">Hybrid</string>
+    <string name="segment_b">Small (~4.2 meters)</string>
+    <string name="segment_c">Medium (~4.6 meters)</string>
+    <string name="segment_d">Big (~4.9 meters)</string>
+    <string name="segment_e">XL (~5 meters)</string>
+    <string name="veh_additional_info">Vehicle additional info</string>
 </resources>

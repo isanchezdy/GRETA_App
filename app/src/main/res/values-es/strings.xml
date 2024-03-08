@@ -24,7 +24,7 @@
     <string name="pick_date">Seleccionar fecha</string>
     <string name="no_vehicle_description">Aún no has añadido ningún vehículo. Presiona + para añadir uno.</string>
     <string name="my_vehicles">Mis vehículos</string>
-    <string name="add_vehicle">Añadir vehículo</string>
+    <string name="add_vehicle">Añadir tu vehículo</string>
     <string name="vehicle_photo">Foto del vehículo</string>
     <string name="delete_vehicle">Borrar vehículo</string>
     <string name="mark_vehicle">Marcar vehículo</string>
@@ -154,9 +154,9 @@
     <string name="medium">Mediano</string>
     <string name="big">Grande</string>
     <string name="default_vehicles">Vehículos por defecto</string>
-    <string name="advanced_search">Búsqueda avanzada</string>
+    <string name="advanced_search">Busca tu modelo</string>
     <string name="hide_search">Ocultar búsqueda</string>
-    <string name="brand_model">Marca y modelo</string>
+    <string name="brand_model">Introduce tu marca y modelo</string>
     <string name="review">Reseña</string>
     <string name="comments">Comentarios</string>
     <string name="accesibility">Accesibilidad</string>
@@ -189,4 +189,9 @@
     <string name="segment">Segmento</string>
     <string name="years">años</string>
     <string name="hybrid">Híbrido</string>
+    <string name="segment_b">Pequeño (~4.2 metros)</string>
+    <string name="segment_c">Mediano (~4.6 metros)</string>
+    <string name="segment_d">Grande (~4.9 metros)</string>
+    <string name="segment_e">XL (~5 metros)</string>
+    <string name="veh_additional_info">Información adicional</string>
 </resources>

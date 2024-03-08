@@ -47,7 +47,6 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
-import org.osmdroid.views.MapView
 import upm.gretaapp.GretaTopAppBar
 import upm.gretaapp.R
 import upm.gretaapp.model.UserVehicle
@@ -73,7 +72,7 @@ fun VehicleListScreen(
     openMenu: () -> Unit,
     viewModel: VehicleListViewModel = viewModel(factory = AppViewModelProvider.Factory)
 ) {
-    val vehicleListUiState = viewModel.vehicleListUiState
+    val userVehicleListUiState = viewModel.userVehicleListUiState
     Scaffold(
         topBar = {
             GretaTopAppBar(canUseMenu = true, openMenu = openMenu, navigateUp = { })
@@ -101,7 +100,7 @@ fun VehicleListScreen(
         }
 
         VehicleListBody(
-            uiState = vehicleListUiState,
+            uiState = userVehicleListUiState,
             onVehicleDelete = viewModel::deleteVehicle,
             onVehicleFav = viewModel::setFavourite,
             modifier = Modifier.padding(it)
@@ -111,12 +110,12 @@ fun VehicleListScreen(
 
 @Composable
 private fun VehicleListBody(
-    uiState: VehicleListUiState,
+    uiState: UserVehicleListUiState,
     onVehicleDelete: (Long) -> Unit,
     onVehicleFav: (UserVehicle) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val vehicleList = if(uiState is VehicleListUiState.Success) {
+    val vehicleList = if(uiState is UserVehicleListUiState.Success) {
         uiState.vehicleList
     } else {
         emptyList()
@@ -143,7 +142,7 @@ private fun VehicleListBody(
             modifier = modifier.padding(8.dp)
         ) {
 
-            if(uiState is VehicleListUiState.Error) {
+            if(uiState is UserVehicleListUiState.Error) {
                 Text(
                     text = stringResource(id = R.string.error_signup),
                     textAlign = TextAlign.Center,
@@ -153,7 +152,7 @@ private fun VehicleListBody(
                 )
             }
 
-            else if(uiState is VehicleListUiState.Loading) {
+            else if(uiState is UserVehicleListUiState.Loading) {
                 CircularProgressIndicator(
                     modifier = Modifier
                         .padding(8.dp)
@@ -307,7 +306,7 @@ fun rememberVehiclesLifecycleObserver(viewModel: VehicleListViewModel): Lifecycl
 fun VehicleEmptyListScreenPreview() {
     GRETAAppTheme {
         VehicleListBody(
-            uiState = VehicleListUiState.Loading,
+            uiState = UserVehicleListUiState.Loading,
             onVehicleDelete = {},
             onVehicleFav = {}
         )

@@ -18,6 +18,7 @@ import java.util.concurrent.TimeUnit
  * App container for Dependency injection.
  */
 interface AppContainer {
+
     val userSessionRepository: UserSessionRepository
     val recordingRepository: RecordingRepository
     val nominatimRepository: NominatimRepository

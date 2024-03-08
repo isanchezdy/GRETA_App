@@ -112,16 +112,6 @@ fun HomeBody(
                     Text(text = stringResource(id = R.string.sign_up))
                 }
 
-                // Button to start the app without a login
-                FilledTonalButton(
-                    onClick = {/*TODO*/},
-                    shape = MaterialTheme.shapes.small,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 16.dp, horizontal = 48.dp),
-                ) {
-                    Text(text = stringResource(id = R.string.no_user))
-                }
             }
 
             Image(
