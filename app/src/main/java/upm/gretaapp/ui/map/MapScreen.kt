@@ -132,7 +132,7 @@ fun MapScreen(
     }
 
     val numberOfPersons = remember{ mutableIntStateOf(0) }
-    val numberOfBulks = remember{ mutableIntStateOf(0) }
+    val numberOfBulks: MutableState<Int?> = remember{ mutableStateOf(null) }
     val visible = remember{ mutableStateOf(false) }
 
     RouteParams(
@@ -177,7 +177,7 @@ fun MapScreen(
                     source = source,
                     destination = destination,
                     vehicleId = selectedVehicle.value?.second ?: -1,
-                    additionalMass = (numberOfPersons.intValue * 75 + numberOfBulks.intValue * 5).toLong()
+                    additionalMass = (numberOfPersons.intValue * 75 + (numberOfBulks.value ?: 0) * 5).toLong()
                 )
             },
             startRecording = { point ->
@@ -712,7 +712,7 @@ fun RouteParams(
     vehicles: List<Pair<UserVehicle, Vehicle>>,
     selectedVehicle: MutableState<Pair<Long, Long>?>,
     numberOfPersons: MutableState<Int>,
-    numberOfBulks: MutableState<Int>
+    numberOfBulks: MutableState<Int?>
 ) {
     val close = {
         visible.value = false
@@ -780,7 +780,7 @@ fun RouteParams(
                             if (it.isBlank()) {
                                 numberOfPersons.value = 0
                             }
-                            else if(it.isDigitsOnly() && it.toInt() < 10) {
+                            else if(it.isDigitsOnly()) {
                                 numberOfPersons.value = it.toInt()
                             }
                         }},
@@ -794,12 +794,12 @@ fun RouteParams(
                     )
 
                     TextField(
-                        value = if(numberOfBulks.value == 0) "" else numberOfBulks.value.toString(),
-                        onValueChange = { if(it.length < 2) {
+                        value = if(numberOfBulks.value == null) "" else numberOfBulks.value.toString(),
+                        onValueChange = { if(it.length <= 2) {
                             if (it.isBlank()) {
-                                numberOfBulks.value = 0
+                                numberOfBulks.value = null
                             }
-                            else if(it.isDigitsOnly() && it.toInt() < 20) {
+                            else if(it.isDigitsOnly()) {
                                 numberOfBulks.value = it.toInt()
                             }
                         }},
