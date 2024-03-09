@@ -11,6 +11,8 @@ import upm.gretaapp.model.Route
 import upm.gretaapp.model.RouteEvaluation
 import upm.gretaapp.model.RouteEvaluationInput
 import upm.gretaapp.model.User
+import upm.gretaapp.model.UserRoute
+import upm.gretaapp.model.UserStats
 import upm.gretaapp.model.UserVehicle
 import upm.gretaapp.model.Vehicle
 
@@ -94,11 +96,28 @@ interface GretaApiService {
         @Query("api_key") apiKey: String
     ): RouteEvaluation
 
-    // TODO UserRoute methods
+    // UserRoute methods
+    @POST("user_routes")
+    suspend fun createUserRoute(
+        @Body userRoute: UserRoute,
+        @Query("api_key") apiKey: String
+    ): UserRoute
 
-    // TODO UserStats methods
+    // UserStats methods
+    @GET("user_stats/{user_id}")
+    suspend fun getStatsUser(
+        @Path("user_id") userId: Long,
+        @Query("api_key") apiKey: String
+    ): List<UserStats>
+
+    @POST("user_stats")
+    suspend fun createUserStats(
+        @Body userStats: UserStats,
+        @Query("api_key") apiKey: String
+    ): UserStats
 
     // TODO AppReview methods
+
 
     // TODO FeatureReview methods
 }

@@ -188,4 +188,8 @@
     <string name="segment">Segment</string>
     <string name="years">years</string>
     <string name="hybrid">Hybrid</string>
+    <string name="route_options">Route options</string>
+    <string name="selected_vehicle">Selected vehicle</string>
+    <string name="number_passengers">Number of passengers</string>
+    <string name="number_bulks">Number of bulks</string>
 </resources>

@@ -1,6 +1,7 @@
 package upm.gretaapp.ui.map
 
 import android.Manifest
+import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -60,22 +61,33 @@ class MarkerWindowFragment(
                                 shape = RoundedCornerShape(30)
                             ) {
                                 Row {
-                                    val locationPermissionState =
+                                    val fineLocationPermissionState =
                                         rememberPermissionState(Manifest.permission.ACCESS_FINE_LOCATION)
-                                    if(locationPermissionState.status.isGranted) {
+                                    val coarseLocationPermissionState =
+                                        rememberPermissionState(Manifest.permission.ACCESS_COARSE_LOCATION)
+                                    val backgroundLocationState = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                                        rememberPermissionState(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+                                    } else {
+                                        null
+                                    }
+
+                                    if((fineLocationPermissionState.status.isGranted ||
+                                        coarseLocationPermissionState.status.isGranted) &&
+                                        (backgroundLocationState == null || backgroundLocationState.status.isGranted)) {
                                         Button(
                                             onClick = {
                                                 onClick()
                                                 view.visibility = View.GONE
                                             },
-                                            enabled = locationPermissionState.status.isGranted,
+                                            enabled = fineLocationPermissionState.status.isGranted,
                                             modifier = Modifier.padding(8.dp)
                                         ) {
                                             Text(text = stringResource(id = R.string.calculate_route))
                                         }
                                     } else {
                                         Text(text = stringResource(id = R.string.enable_location),
-                                            modifier = Modifier.padding(8.dp)
+                                            modifier = Modifier
+                                                .padding(8.dp)
                                                 .align(Alignment.CenterVertically))
                                     }
 

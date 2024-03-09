@@ -88,7 +88,10 @@ class RouteWindowFragment(
                                             }
                                         } else {
                                             Button(
-                                                onClick = onClick,
+                                                onClick = {
+                                                    onClick()
+                                                    view.visibility = View.GONE
+                                                },
                                                 modifier = Modifier.padding(top = 8.dp)
                                             ) {
                                                 Text(stringResource(id = R.string.start_route))

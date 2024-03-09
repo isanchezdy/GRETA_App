@@ -4,6 +4,8 @@ import upm.gretaapp.model.Route
 import upm.gretaapp.model.RouteEvaluation
 import upm.gretaapp.model.RouteEvaluationInput
 import upm.gretaapp.model.User
+import upm.gretaapp.model.UserRoute
+import upm.gretaapp.model.UserStats
 import upm.gretaapp.model.UserVehicle
 import upm.gretaapp.model.Vehicle
 import upm.gretaapp.network.GretaApiService
@@ -72,5 +74,22 @@ class OnlineGretaRepository(
         routeEvaluationInput = routeEvaluationInput,
         apiKey = API_KEY
     )
+
+    override suspend fun createUserRoute(userRoute: UserRoute): UserRoute = gretaApiService
+        .createUserRoute(
+            userRoute = userRoute,
+            apiKey = API_KEY
+        )
+
+    override suspend fun getStatsUser(userId: Long): List<UserStats> = gretaApiService.getStatsUser(
+        userId = userId,
+        apiKey = API_KEY
+    )
+
+    override suspend fun createUserStats(userStats: UserStats): UserStats = gretaApiService
+        .createUserStats(
+            userStats = userStats,
+            apiKey = API_KEY
+        )
 
 }
