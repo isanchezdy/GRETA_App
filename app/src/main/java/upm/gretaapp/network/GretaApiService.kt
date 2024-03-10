@@ -41,6 +41,7 @@ interface GretaApiService {
     // Vehicle methods
     @GET("vehicles")
     suspend fun getVehicles(
+        @Query("q") query: String,
         @Query("api_key") apiKey: String
     ): List<Vehicle>
 

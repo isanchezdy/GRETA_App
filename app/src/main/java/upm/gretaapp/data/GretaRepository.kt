@@ -16,7 +16,7 @@ interface GretaRepository {
     suspend fun updateUser(user: User): User
 
     // Vehicle methods
-    suspend fun getVehicles(): List<Vehicle>
+    suspend fun getVehicles(query: String = ""): List<Vehicle>
 
     suspend fun getVehicle(id: Long): Vehicle
 

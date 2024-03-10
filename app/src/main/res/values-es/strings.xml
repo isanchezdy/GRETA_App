@@ -189,9 +189,9 @@
     <string name="segment">Segmento</string>
     <string name="years">años</string>
     <string name="hybrid">Híbrido</string>
-    <string name="segment_b">Pequeño (~4.2 metros)</string>
-    <string name="segment_c">Mediano (~4.6 metros)</string>
-    <string name="segment_d">Grande (~4.9 metros)</string>
-    <string name="segment_e">XL (~5 metros)</string>
+    <string name="segment_b">Pequeño (~4.2 m)</string>
+    <string name="segment_c">Mediano (~4.6 m)</string>
+    <string name="segment_d">Grande (~4.9 m)</string>
+    <string name="segment_e">XL (~5 m)</string>
     <string name="veh_additional_info">Información adicional</string>
 </resources>

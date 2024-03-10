@@ -26,7 +26,8 @@ class OnlineGretaRepository(
         apiKey = API_KEY
     )
 
-    override suspend fun getVehicles(): List<Vehicle> = gretaApiService.getVehicles(
+    override suspend fun getVehicles(query: String): List<Vehicle> = gretaApiService.getVehicles(
+        query = query,
         apiKey = API_KEY
     )
 
