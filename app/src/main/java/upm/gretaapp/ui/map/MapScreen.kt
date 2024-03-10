@@ -35,6 +35,9 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -44,6 +47,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -59,11 +63,13 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.window.Dialog
+import androidx.core.text.isDigitsOnly
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
@@ -82,6 +88,8 @@ import upm.gretaapp.GretaTopAppBar
 import upm.gretaapp.R
 import upm.gretaapp.model.NominatimResult
 import upm.gretaapp.model.RouteEvaluation
+import upm.gretaapp.model.UserVehicle
+import upm.gretaapp.model.Vehicle
 import upm.gretaapp.model.processedRoute
 import upm.gretaapp.ui.AppViewModelProvider
 import upm.gretaapp.ui.navigation.NavigationDestination
@@ -106,9 +114,50 @@ fun MapScreen(
     openMenu: () -> Unit,
     viewModel: MapViewModel = viewModel(factory = AppViewModelProvider.Factory)
 ) {
+    val vehicles by viewModel.vehicleList.collectAsState()
+    var favouriteVehicle: Pair<UserVehicle, Vehicle>?
+    val selectedVehicle: MutableState<Pair<Long, Long>?> = remember {
+        mutableStateOf(null)
+    }
+
+    LaunchedEffect(vehicles) {
+        favouriteVehicle = vehicles.find {
+            it.first.isFav == 1
+        }
+        selectedVehicle.value = if(favouriteVehicle != null) {
+            Pair(favouriteVehicle!!.first.id!!, favouriteVehicle!!.second.vehicleID)
+        } else {
+            null
+        }
+    }
+
+    val numberOfPersons = remember{ mutableIntStateOf(0) }
+    val numberOfBulks: MutableState<Int?> = remember{ mutableStateOf(null) }
+    val visible = remember{ mutableStateOf(false) }
+
+    RouteParams(
+        visible = visible,
+        vehicles = vehicles,
+        selectedVehicle = selectedVehicle,
+        numberOfPersons = numberOfPersons,
+        numberOfBulks = numberOfBulks
+    )
+
     Scaffold(
         topBar = {
             GretaTopAppBar(canUseMenu = true, openMenu = openMenu, navigateUp = { })
+        },
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = { visible.value = true },
+                shape = MaterialTheme.shapes.medium,
+                modifier = Modifier.padding(20.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.DirectionsCar, 
+                    contentDescription = stringResource(id = R.string.route_options)
+                )
+            }
         }
     ) { it ->
         val options by viewModel.searchResults.collectAsState()
@@ -124,7 +173,12 @@ fun MapScreen(
                 viewModel.clearOptions()
             },
             searchRoutes = { source, destination ->
-                viewModel.getRoutes(source = source, destination = destination)
+                viewModel.getRoutes(
+                    source = source,
+                    destination = destination,
+                    vehicleId = selectedVehicle.value?.second ?: -1,
+                    additionalMass = (numberOfPersons.intValue * 75 + (numberOfBulks.value ?: 0) * 5).toLong()
+                )
             },
             startRecording = { point ->
                 viewModel.startRecording(point)
@@ -171,7 +225,8 @@ fun MapBody(
     val recordingUiState by recordingUiStateFlow.collectAsState()
 
     // Location permission in case it is required to show a message
-    val locationPermissionState = rememberPermissionState(Manifest.permission.ACCESS_FINE_LOCATION)
+    val fineLocationPermissionState = rememberPermissionState(Manifest.permission.ACCESS_FINE_LOCATION)
+    val coarseLocationPermissionState = rememberPermissionState(Manifest.permission.ACCESS_COARSE_LOCATION)
     val backgroundLocationState = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
         rememberPermissionState(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
     } else {
@@ -184,11 +239,14 @@ fun MapBody(
     val locationOverlay = rememberLocationOverlayWithLifecycle(mapView)
 
     // Asks permission to use location from the phone
-    LaunchedEffect(locationPermissionState.status.isGranted,
+    LaunchedEffect(
+        fineLocationPermissionState.status.isGranted,
+        coarseLocationPermissionState.status.isGranted,
         backgroundLocationState?.status?.isGranted
     ) {
         // Asks only if they are not granted
-        if(!locationPermissionState.status.isGranted ||
+        if((!fineLocationPermissionState.status.isGranted
+                    && !coarseLocationPermissionState.status.isGranted) ||
             (backgroundLocationState != null && !backgroundLocationState.status.isGranted)) {
             // If the state of the permissions is changed, the position is removed from the map
             locationOverlay.disableMyLocation()
@@ -196,19 +254,19 @@ fun MapBody(
             mapView.invalidate()
 
             // If the app considers it, a dialog with a warning for the user is shown
-            if(locationPermissionState.status.shouldShowRationale) {
+            if(fineLocationPermissionState.status.shouldShowRationale) {
                 val builder = AlertDialog.Builder(context)
                 builder.setTitle(R.string.enable_location)
                 builder.setMessage(R.string.enable_location_text)
                 builder.setPositiveButton("OK") { _, _ ->
-                    locationPermissionState.launchPermissionRequest()
+                    fineLocationPermissionState.launchPermissionRequest()
                     backgroundLocationState?.launchPermissionRequest()
                 }
                 builder.show()
             }
             // The permissions are requested otherwise
             else {
-                locationPermissionState.launchPermissionRequest()
+                fineLocationPermissionState.launchPermissionRequest()
                 backgroundLocationState?.launchPermissionRequest()
             }
         // If the location is granted, the screen is centered towards the current position
@@ -380,18 +438,6 @@ fun MapBody(
             }
         }
 
-        Row(
-            verticalAlignment = Alignment.Bottom,
-            horizontalArrangement = Arrangement.SpaceBetween,
-            modifier = Modifier.padding(8.dp)
-        ) {
-            IconButton(
-                onClick = {}
-            ) {
-                Icon(imageVector = Icons.Filled.DirectionsCar, contentDescription = null)
-            }
-        }
-
         LaunchedEffect(uiState) {
             if (uiState is MapUiState.CompleteRoutes) {
                 var bounds = destinationPoint.bounds
@@ -427,7 +473,8 @@ fun MapBody(
                             route = route.second,
                             onClick = {
                                 startRecording(destinationPoint.position)
-                                openMaps(context, polyline.actualPoints.map { it.toPair() })
+                                mapView.controller.setZoom(18.0)
+                                locationOverlay.enableFollowLocation()
                             },
                             onCancel = cancelRecording
                         ).onCreateView(layoutInflater,null,null),
@@ -443,7 +490,7 @@ fun MapBody(
                 mapView.zoomToBoundingBox(bounds.increaseByScale(1.3f),
                     true)
             }
-            else if (uiState is MapUiState.Start) {
+            else if (uiState is MapUiState.Start || uiState is MapUiState.LoadingRoute) {
                 if(routeOverlays.isNotEmpty()) {
                     mapView.overlayManager.removeAll(routeOverlays)
                     mapView.invalidate()
@@ -473,6 +520,7 @@ fun MapBody(
 
     LaunchedEffect(recordingUiState) {
         if(recordingUiState is RecordingUiState.Complete) {
+            locationOverlay.disableFollowLocation()
             getScore((recordingUiState as RecordingUiState.Complete).speeds,
                 (recordingUiState as RecordingUiState.Complete).heights)
         }
@@ -506,7 +554,7 @@ fun LoadingRouteDialog(ecoDrivingPhrases: List<String> =
 
     Dialog(onDismissRequest = { }) {
         ElevatedCard(modifier = Modifier
-            .fillMaxWidth(0.8f)
+            .fillMaxWidth()
             .clickable {
                 calculateNewPhrase()
             }) {
@@ -653,6 +701,125 @@ fun Score(score: Int) {
                 contentDescription = null,
                 modifier = Modifier.padding(8.dp)
             )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun RouteParams(
+    visible: MutableState<Boolean>,
+    vehicles: List<Pair<UserVehicle, Vehicle>>,
+    selectedVehicle: MutableState<Pair<Long, Long>?>,
+    numberOfPersons: MutableState<Int>,
+    numberOfBulks: MutableState<Int?>
+) {
+    val close = {
+        visible.value = false
+    }
+
+    if(visible.value) {
+        Dialog(onDismissRequest = close) {
+            ElevatedCard(
+                modifier = Modifier
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally, modifier =
+                    Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = stringResource(id = R.string.route_options),
+                        style = MaterialTheme.typography.titleLarge,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
+                            .padding(16.dp)
+                    )
+
+                    var expanded by remember { mutableStateOf(false) }
+
+                    ExposedDropdownMenuBox(
+                        expanded = expanded,
+                        onExpandedChange = { expanded = !expanded },
+                        modifier = Modifier.padding(vertical = 16.dp)
+                    ) {
+                        TextField(
+                            modifier = Modifier.menuAnchor(),
+                            readOnly = true,
+                            value = if(selectedVehicle.value == null) {
+                                ""
+                            } else {
+                                vehicles
+                                    .first { it.second.vehicleID == selectedVehicle.value!!.second }
+                                    .second.name.replace("_-_", " ")
+                            },
+                            onValueChange = {},
+                            label = { Text(stringResource(id = R.string.selected_vehicle)) },
+                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                            colors = ExposedDropdownMenuDefaults.textFieldColors(),
+                        )
+
+                        ExposedDropdownMenu(
+                            expanded = expanded,
+                            onDismissRequest = { expanded = false },
+                        ) {
+                            vehicles.forEach {
+                                DropdownMenuItem(
+                                    text = { Text(it.second.name.replace("_-_", " ")) },
+                                    onClick = {
+                                        selectedVehicle.value = Pair(it.first.id!!, it.second.vehicleID)
+                                        expanded = false
+                                    }
+                                )
+                            }
+                        }
+                    }
+
+                    TextField(
+                        value = if(numberOfPersons.value == 0) "" else numberOfPersons.value.toString(),
+                        onValueChange = { if(it.length < 2) {
+                            if (it.isBlank()) {
+                                numberOfPersons.value = 0
+                            }
+                            else if(it.isDigitsOnly()) {
+                                numberOfPersons.value = it.toInt()
+                            }
+                        }},
+                        label = { Text(stringResource(id = R.string.number_passengers)) },
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Number,
+                            imeAction = ImeAction.Next
+                        ),
+                        singleLine = true,
+                        modifier = Modifier.padding(8.dp)
+                    )
+
+                    TextField(
+                        value = if(numberOfBulks.value == null) "" else numberOfBulks.value.toString(),
+                        onValueChange = { if(it.length <= 2) {
+                            if (it.isBlank()) {
+                                numberOfBulks.value = null
+                            }
+                            else if(it.isDigitsOnly()) {
+                                numberOfBulks.value = it.toInt()
+                            }
+                        }},
+                        label = { Text(stringResource(id = R.string.number_bulks) + " (5 kg)") },
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Number,
+                            imeAction = ImeAction.Done
+                        ),
+                        keyboardActions = KeyboardActions(
+                            onDone = { close() }
+                        ),
+                        singleLine = true,
+                        modifier = Modifier.padding(8.dp)
+                    )
+
+                    Button(onClick = close, modifier = Modifier.padding(16.dp)) {
+                        Text(stringResource(id = R.string.accept))
+                    }
+                }
+            }
         }
     }
 }

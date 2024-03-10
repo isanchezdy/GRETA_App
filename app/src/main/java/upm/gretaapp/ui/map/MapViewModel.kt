@@ -21,6 +21,8 @@ import upm.gretaapp.model.NominatimResult
 import upm.gretaapp.model.Route
 import upm.gretaapp.model.RouteEvaluation
 import upm.gretaapp.model.RouteEvaluationInput
+import upm.gretaapp.model.UserVehicle
+import upm.gretaapp.model.Vehicle
 
 /**
  * [ViewModel] that manages the current UI state of the Map Screen (search a destination, a route,
@@ -39,9 +41,29 @@ class MapViewModel(
 
     private var userId: Long = 0
 
+    private val _vehicleList = MutableStateFlow<List<Pair<UserVehicle, Vehicle>>>(emptyList())
+    val vehicleList = _vehicleList.asStateFlow()
+
     init {
         viewModelScope.launch {
-            userSessionRepository.user.collectLatest { userId = it }
+            userSessionRepository.user.collectLatest {
+                userId = it
+                _vehicleList.value = try {
+                    val userVehicles = gretaRepository.getUserVehicles(userId)
+                    val list: MutableList<Pair<UserVehicle, Vehicle>> = mutableListOf()
+                    for (userVehicle in userVehicles) {
+                        list.add(
+                            Pair(
+                                userVehicle,
+                                gretaRepository.getVehicle(userVehicle.vehicleId)
+                            )
+                        )
+                    }
+                    list
+                } catch (_: Throwable) {
+                    emptyList()
+                }
+            }
         }
     }
 

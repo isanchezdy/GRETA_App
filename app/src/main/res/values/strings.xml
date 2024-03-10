@@ -193,4 +193,8 @@
     <string name="segment_d">Big (~4.9 m)</string>
     <string name="segment_e">XL (~5 m)</string>
     <string name="veh_additional_info">Vehicle additional info</string>
+    <string name="route_options">Route options</string>
+    <string name="selected_vehicle">Selected vehicle</string>
+    <string name="number_passengers">Number of passengers</string>
+    <string name="number_bulks">Number of bulks</string>
 </resources>

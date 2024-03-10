@@ -4,6 +4,8 @@ import upm.gretaapp.model.Route
 import upm.gretaapp.model.RouteEvaluation
 import upm.gretaapp.model.RouteEvaluationInput
 import upm.gretaapp.model.User
+import upm.gretaapp.model.UserRoute
+import upm.gretaapp.model.UserStats
 import upm.gretaapp.model.UserVehicle
 import upm.gretaapp.model.Vehicle
 
@@ -42,4 +44,12 @@ interface GretaRepository {
     suspend fun getScore(
         routeEvaluationInput: RouteEvaluationInput
     ): RouteEvaluation
+
+    // User route methods
+    suspend fun createUserRoute(userRoute: UserRoute): UserRoute
+
+    // User stats methods
+    suspend fun getStatsUser(userId: Long): List<UserStats>
+
+    suspend fun createUserStats(userStats: UserStats): UserStats
 }
