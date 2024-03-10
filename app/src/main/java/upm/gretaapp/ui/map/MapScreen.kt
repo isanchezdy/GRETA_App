@@ -131,9 +131,11 @@ fun MapScreen(
         }
     }
 
-    val numberOfPersons = remember{ mutableIntStateOf(0) }
+    val numberOfPersons = remember{ mutableIntStateOf(1) }
     val numberOfBulks: MutableState<Int?> = remember{ mutableStateOf(null) }
     val visible = remember{ mutableStateOf(false) }
+
+    val uiState by viewModel.uiState.collectAsState()
 
     RouteParams(
         visible = visible,
@@ -148,20 +150,21 @@ fun MapScreen(
             GretaTopAppBar(canUseMenu = true, openMenu = openMenu, navigateUp = { })
         },
         floatingActionButton = {
-            FloatingActionButton(
-                onClick = { visible.value = true },
-                shape = MaterialTheme.shapes.medium,
-                modifier = Modifier.padding(20.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.DirectionsCar, 
-                    contentDescription = stringResource(id = R.string.route_options)
-                )
+            if(uiState is MapUiState.Start || uiState is MapUiState.Error) {
+                FloatingActionButton(
+                    onClick = { visible.value = true },
+                    shape = MaterialTheme.shapes.medium,
+                    modifier = Modifier.padding(20.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.DirectionsCar,
+                        contentDescription = stringResource(id = R.string.route_options)
+                    )
+                }
             }
         }
     ) { it ->
         val options by viewModel.searchResults.collectAsState()
-        val uiState by viewModel.uiState.collectAsState()
         MapBody(
             uiState = uiState,
             recordingUiStateFlow = viewModel.recordingUiState,
@@ -184,7 +187,14 @@ fun MapScreen(
                 viewModel.startRecording(point)
             },
             cancelRecording = viewModel::cancelRecording,
-            getScore = viewModel::getScore,
+            getScore = { speeds, heights ->
+                viewModel.getScore(
+                    speeds = speeds,
+                    heights = heights,
+                    vehicleId = selectedVehicle.value?.second ?: -1,
+                    additionalMass = (numberOfPersons.intValue * 75 + (numberOfBulks.value ?: 0) * 5).toLong()
+                )
+            },
             clearScore = viewModel::clearResults,
             modifier = Modifier.padding(it)
         )

@@ -170,13 +170,19 @@ class MapViewModel(
         recordingRepository.cancelWork()
     }
 
-    fun getScore(speeds: List<Double>, heights: List<Double>) {
+    fun getScore(
+        speeds: List<Double>,
+        heights: List<Double>,
+        vehicleId: Long = -1,
+        additionalMass: Long = 0
+    ) {
         viewModelScope.launch {
             if(recordingUiState.value is RecordingUiState.Complete) {
                 try {
                     _uiState.value = MapUiState.LoadingRoute
                     val input =
-                        RouteEvaluationInput(userId = userId, vehicleId = 1, additionalMass = 0,
+                        RouteEvaluationInput(userId = userId, vehicleId = vehicleId,
+                            additionalMass = additionalMass,
                             speeds = speeds, heights = heights, times = (speeds.indices).toList()
                                 .map {
                                     it.toDouble()
