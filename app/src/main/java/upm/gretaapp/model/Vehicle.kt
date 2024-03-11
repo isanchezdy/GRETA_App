@@ -1,6 +1,5 @@
 package upm.gretaapp.model
 
-import androidx.compose.ui.res.stringResource
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import upm.gretaapp.R
@@ -21,7 +20,7 @@ data class Vehicle (
     val c: Double,
 
     @SerialName("ImageUrl")
-    val imageURL: String,
+    val imageURL: String?,
 
     @SerialName("LitersConversion")
     val litersConversion: Double,

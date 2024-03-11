@@ -45,7 +45,6 @@ import upm.gretaapp.ui.home.HomeDestination
 import upm.gretaapp.ui.map.MapDestination
 import upm.gretaapp.ui.navigation.GretaNavHost
 import upm.gretaapp.ui.review.ReviewDestination
-import upm.gretaapp.ui.stats.StatsDestination
 import upm.gretaapp.ui.theme.GRETAAppTheme
 import upm.gretaapp.ui.vehicle.VehicleListDestination
 
@@ -165,7 +164,7 @@ fun GretaNavigationDrawer(
         modifier = modifier.fillMaxWidth(0.8f)
     ) {
         // List of screens to display with the menu
-        val items = listOf(MapDestination, VehicleListDestination, StatsDestination,
+        val items = listOf(MapDestination, VehicleListDestination, /*StatsDestination,*/
             ReviewDestination)
         // Index of the last selected screen
         var selectedItemIndex by rememberSaveable {

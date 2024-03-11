@@ -1,5 +1,6 @@
 package upm.gretaapp.ui.map
 
+import android.content.Context
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -23,6 +24,7 @@ import upm.gretaapp.model.RouteEvaluation
 import upm.gretaapp.model.RouteEvaluationInput
 import upm.gretaapp.model.UserVehicle
 import upm.gretaapp.model.Vehicle
+import java.net.ConnectException
 
 /**
  * [ViewModel] that manages the current UI state of the Map Screen (search a destination, a route,
@@ -150,8 +152,10 @@ class MapViewModel(
                 ).map { (value, keys) -> keys to value }
 
                 _uiState.value = MapUiState.CompleteRoutes(routes = processedRoutes)
+            } catch(connectException: ConnectException) {
+                _uiState.value = MapUiState.Error(1)
             } catch (throwable: Throwable) {
-                _uiState.value = MapUiState.Error
+                _uiState.value = MapUiState.Error(2)
                 Log.e("Error_route", throwable.stackTraceToString())
             }
         }
@@ -161,8 +165,8 @@ class MapViewModel(
     /**
      * Function to start recording a route
      */
-    fun startRecording(destination: GeoPoint) {
-        recordingRepository.recordRoute(destination)
+    fun startRecording(vehicleId: Long, destination: GeoPoint) {
+        recordingRepository.recordRoute(userId = userId, vehicleId = vehicleId, destination)
         recordingUiState
     }
 
@@ -191,8 +195,10 @@ class MapViewModel(
 
                     val scores = gretaRepository.getScore(input)
                     _uiState.value = MapUiState.CompleteScore(scores)
+                } catch(connectException: ConnectException) {
+                    _uiState.value = MapUiState.Error(1)
                 } catch (_ : Throwable) {
-                    _uiState.value = MapUiState.Error
+                    _uiState.value = MapUiState.Error(2)
                 }
             }
         }
@@ -200,6 +206,10 @@ class MapViewModel(
 
     fun clearResults() {
         recordingRepository.clearResults()
+    }
+
+    fun sendFiles(context: Context) {
+        sendFiles(context, userId)
     }
 
 }
@@ -210,7 +220,7 @@ class MapViewModel(
 sealed interface MapUiState {
     data object Start: MapUiState
     data object LoadingRoute: MapUiState
-    data object Error: MapUiState
+    data class Error(val code: Int): MapUiState
     data class CompleteRoutes(val routes: List<Pair<List<String>, Route>>): MapUiState
 
     data class CompleteScore(val scores: RouteEvaluation): MapUiState

@@ -14,7 +14,6 @@ import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -170,7 +169,9 @@ fun UserLoginBody(
 
             if(uiState is LoginUiState.Error) {
                 Text(
-                    text = stringResource(id = R.string.error_login),
+                    text = stringResource(id = if(uiState.code == 2) {
+                        R.string.error_login
+                    } else R.string.server_available),
                     color = MaterialTheme.colorScheme.error,
                     style = MaterialTheme.typography.bodyLarge,
                     modifier = Modifier.padding(8.dp)
@@ -213,6 +214,6 @@ fun UserLoginBody(
 @Composable
 fun UserLoginScreenPreview() {
     GRETAAppTheme {
-        UserLoginBody(uiState = LoginUiState.Error, onLogin = {_,_->}, onNavigate = {})
+        UserLoginBody(uiState = LoginUiState.Error(1), onLogin = {_,_->}, onNavigate = {})
     }
 }

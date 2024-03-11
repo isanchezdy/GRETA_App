@@ -10,7 +10,7 @@ import org.osmdroid.util.GeoPoint
  */
 interface RecordingRepository {
     val outputWorkInfo: Flow<WorkInfo>
-    fun recordRoute(destination: GeoPoint)
+    fun recordRoute(userId: Long, vehicleId: Long, destination: GeoPoint)
     fun cancelWork()
 
     fun clearResults()

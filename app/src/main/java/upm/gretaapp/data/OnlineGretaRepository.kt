@@ -1,5 +1,7 @@
 package upm.gretaapp.data
 
+import upm.gretaapp.model.AppReview
+import upm.gretaapp.model.FeatureReview
 import upm.gretaapp.model.Route
 import upm.gretaapp.model.RouteEvaluation
 import upm.gretaapp.model.RouteEvaluationInput
@@ -92,5 +94,11 @@ class OnlineGretaRepository(
             userStats = userStats,
             apiKey = API_KEY
         )
+
+    override suspend fun createAppReview(appReview: AppReview): AppReview = gretaApiService
+        .createAppReview(appReview = appReview, apiKey = API_KEY)
+
+    override suspend fun createFeatureReview(featureReview: FeatureReview): FeatureReview =
+        gretaApiService.createFeatureReview(featureReview = featureReview, apiKey = API_KEY)
 
 }

@@ -7,6 +7,8 @@ import retrofit2.http.POST
 import retrofit2.http.PUT
 import retrofit2.http.Path
 import retrofit2.http.Query
+import upm.gretaapp.model.AppReview
+import upm.gretaapp.model.FeatureReview
 import upm.gretaapp.model.Route
 import upm.gretaapp.model.RouteEvaluation
 import upm.gretaapp.model.RouteEvaluationInput
@@ -117,8 +119,18 @@ interface GretaApiService {
         @Query("api_key") apiKey: String
     ): UserStats
 
-    // TODO AppReview methods
+    // AppReview methods
+    @POST("app_review")
+    suspend fun createAppReview(
+        @Body appReview: AppReview,
+        @Query("api_key") apiKey: String
+    ): AppReview
 
 
-    // TODO FeatureReview methods
+    // FeatureReview methods
+    @POST("feature_review")
+    suspend fun createFeatureReview(
+        @Body featureReview: FeatureReview,
+        @Query("api_key") apiKey: String
+    ): FeatureReview
 }

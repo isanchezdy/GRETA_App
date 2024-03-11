@@ -145,6 +145,8 @@ fun MapScreen(
         numberOfBulks = numberOfBulks
     )
 
+    val context = LocalContext.current
+
     Scaffold(
         topBar = {
             GretaTopAppBar(canUseMenu = true, openMenu = openMenu, navigateUp = { })
@@ -184,7 +186,7 @@ fun MapScreen(
                 )
             },
             startRecording = { point ->
-                viewModel.startRecording(point)
+                viewModel.startRecording(selectedVehicle.value?.second ?: -1, point)
             },
             cancelRecording = viewModel::cancelRecording,
             getScore = { speeds, heights ->
@@ -195,6 +197,7 @@ fun MapScreen(
                     additionalMass = (numberOfPersons.intValue * 75 + (numberOfBulks.value ?: 0) * 5).toLong()
                 )
             },
+            sendFiles = { viewModel.sendFiles(context) },
             clearScore = viewModel::clearResults,
             modifier = Modifier.padding(it)
         )
@@ -222,6 +225,7 @@ fun MapBody(
     startRecording: (GeoPoint) -> Unit,
     cancelRecording: () -> Unit,
     getScore: (List<Double>, List<Double>) -> Unit,
+    sendFiles: () -> Unit,
     clearScore: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -324,8 +328,7 @@ fun MapBody(
         // Events receiver to add markers on click
         val mReceive: MapEventsReceiver = object : MapEventsReceiver {
             override fun singleTapConfirmedHelper(p: GeoPoint): Boolean {
-                if((uiState is MapUiState.Start || uiState is MapUiState.Error)
-                    && destination.isBlank()) {
+                if((uiState is MapUiState.Start || uiState is MapUiState.Error)) {
                     shouldCenter = false
                     mapView.overlayManager.remove(destinationPoint)
                     destinationPoint.position = p
@@ -435,6 +438,8 @@ fun MapBody(
                                 searchExpanded = false
                                 focusManager.clearFocus()
                                 mapView.invalidate()
+
+                                destinationPoint.showInfoWindow()
                             },
                             contentPadding = PaddingValues(10.dp),
                             modifier = Modifier.requiredHeight(40.dp)
@@ -516,11 +521,11 @@ fun MapBody(
             }
 
             is MapUiState.Error -> {
-                ErrorMessage()
+                ErrorMessage(uiState.code)
             }
 
             is MapUiState.CompleteScore -> {
-                ScoresResult(score = uiState.scores, clearScore = clearScore)
+                ScoresResult(score = uiState.scores, sendFiles = sendFiles, clearScore = clearScore)
             }
 
             else -> {}
@@ -587,7 +592,7 @@ fun LoadingRouteDialog(ecoDrivingPhrases: List<String> =
 }
 
 @Composable
-fun ErrorMessage() {
+fun ErrorMessage(code: Int) {
     var visible by remember{ mutableStateOf(true) }
     var timeLeft by remember{ mutableIntStateOf(5) }
     LaunchedEffect(visible) {
@@ -604,7 +609,9 @@ fun ErrorMessage() {
                 .fillMaxWidth(0.8f)
             ) {
                 Text(
-                    text = stringResource(id = R.string.error_signup),
+                    text = stringResource(id = if(code == 2) {
+                        R.string.error_signup
+                    } else R.string.server_available),
                     style = MaterialTheme.typography.bodyLarge,
                     textAlign = TextAlign.Justify,
                     color = MaterialTheme.colorScheme.error,
@@ -620,6 +627,7 @@ fun ErrorMessage() {
 @Composable
 fun ScoresResult(
     score: RouteEvaluation,
+    sendFiles: () -> Unit,
     clearScore: () -> Unit
 ) {
     var visible by remember{ mutableStateOf(true) }
@@ -692,6 +700,10 @@ fun ScoresResult(
                                 + " l",
                         modifier = Modifier.padding(16.dp)
                     )
+
+                    Button(onClick = sendFiles, modifier = Modifier.padding(16.dp)) {
+                        Text(stringResource(id = R.string.send_results))
+                    }
 
                     Button(onClick = close, modifier = Modifier.padding(16.dp)) {
                         Text(stringResource(id = R.string.accept))
@@ -849,6 +861,6 @@ fun LoadingRouteDialogPreview(){
 @Composable
 fun ErrorMessagePreview() {
     GRETAAppTheme {
-        ErrorMessage()
+        ErrorMessage(1)
     }
 }

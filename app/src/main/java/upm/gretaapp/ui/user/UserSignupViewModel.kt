@@ -1,5 +1,6 @@
 package upm.gretaapp.ui.user
 
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -9,6 +10,7 @@ import kotlinx.coroutines.launch
 import upm.gretaapp.data.GretaRepository
 import upm.gretaapp.data.UserSessionRepository
 import upm.gretaapp.model.User
+import java.net.ConnectException
 
 class UserSignupViewModel(
     private val gretaRepository: GretaRepository,
@@ -34,12 +36,15 @@ class UserSignupViewModel(
         if (validateInput()) {
             viewModelScope.launch {
                 try{
-                    userUiState = userUiState.copy(userState = UserState.LOADING)
+                    userUiState = userUiState.copy(userState = UserState.Loading)
                     val user = gretaRepository.createUser(userUiState.userDetails.toUser())
                     userSessionRepository.saveUserPreference(user.userID!!)
-                    userUiState = userUiState.copy(userState = UserState.COMPLETE)
-                } catch (_: Throwable) {
-                    userUiState = userUiState.copy(userState = UserState.ERROR)
+                    userUiState = userUiState.copy(userState = UserState.Complete)
+                } catch(connectException: ConnectException) {
+                    userUiState = userUiState.copy(userState = UserState.Error(1))
+                } catch (throwable: Throwable) {
+                    userUiState = userUiState.copy(userState = UserState.Error(2))
+                    Log.e("Error_signup", throwable.stackTraceToString())
                 }
             }
         }
@@ -49,11 +54,14 @@ class UserSignupViewModel(
 data class UserUiState(
     val userDetails: UserDetails = UserDetails(),
     val isEntryValid: Boolean = false,
-    val userState: UserState = UserState.START
+    val userState: UserState = UserState.Start
 )
 
-enum class UserState {
-    START, LOADING, COMPLETE, ERROR
+sealed interface UserState {
+    data object Start: UserState
+    data object Loading: UserState
+    data object Complete: UserState
+    data class Error(val code: Int): UserState
 }
 
 data class UserDetails(

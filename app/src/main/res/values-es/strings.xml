@@ -198,4 +198,7 @@
     <string name="selected_vehicle">Vehículo seleccionado</string>
     <string name="number_passengers">Número de pasajeros</string>
     <string name="number_bulks">Número de bultos</string>
+    <string name="send_results">Mandar resultados</string>
+    <string name="server_available">El servicio no está disponible ahora</string>
+    <string name="review_sent">Tu reseña se ha mandado</string>
 </resources>

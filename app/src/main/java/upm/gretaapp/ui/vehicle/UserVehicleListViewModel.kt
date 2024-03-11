@@ -12,6 +12,7 @@ import upm.gretaapp.data.GretaRepository
 import upm.gretaapp.data.UserSessionRepository
 import upm.gretaapp.model.Vehicle
 import upm.gretaapp.model.UserVehicle
+import java.net.ConnectException
 
 /**
  * ViewModel to retrieve all vehicles from user in the database.
@@ -47,9 +48,12 @@ class VehicleListViewModel( userSessionRepository: UserSessionRepository,
                     )
                 }
                 UserVehicleListUiState.Success(list)
+
+            } catch(connectException: ConnectException) {
+                UserVehicleListUiState.Error(1)
             } catch (throwable: Throwable) {
                 Log.e("Error_vehicles", throwable.stackTraceToString())
-                UserVehicleListUiState.Error
+                UserVehicleListUiState.Error(2)
             }
         }
     }
@@ -87,9 +91,11 @@ class VehicleListViewModel( userSessionRepository: UserSessionRepository,
                             .vehicleList.filter { it.first.id != id })
                     gretaRepository.deleteUserVehicle(id)
                 }
+            } catch(connectException: ConnectException) {
+                UserVehicleListUiState.Error(1)
             } catch (throwable: Throwable) {
                 Log.e("Error_vehicles", throwable.stackTraceToString())
-                UserVehicleListUiState.Error
+                UserVehicleListUiState.Error(2)
             }
         }
     }
@@ -100,6 +106,6 @@ class VehicleListViewModel( userSessionRepository: UserSessionRepository,
  */
 sealed interface UserVehicleListUiState {
     data class Success(val vehicleList: List<Pair<UserVehicle, Vehicle>>) : UserVehicleListUiState
-    data object Error : UserVehicleListUiState
+    data class Error(val code: Int) : UserVehicleListUiState
     data object Loading : UserVehicleListUiState
 }

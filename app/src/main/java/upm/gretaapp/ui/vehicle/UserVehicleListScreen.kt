@@ -144,7 +144,9 @@ private fun VehicleListBody(
 
             if(uiState is UserVehicleListUiState.Error) {
                 Text(
-                    text = stringResource(id = R.string.error_signup),
+                    text = stringResource(id = if(uiState.code == 2) {
+                        R.string.error_signup
+                    } else R.string.server_available),
                     textAlign = TextAlign.Center,
                     color = MaterialTheme.colorScheme.error,
                     style = MaterialTheme.typography.titleMedium,

@@ -3,6 +3,12 @@ package upm.gretaapp.ui.map
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import androidx.core.content.FileProvider
+import java.io.File
+import java.io.FileInputStream
+import java.io.FileOutputStream
+import java.util.zip.ZipEntry
+import java.util.zip.ZipOutputStream
 import kotlin.math.pow
 
 /**
@@ -76,4 +82,71 @@ fun decodePoly(encoded: String, precision: Int = 5): List<Pair<Double,Double>> {
     }
 
     return poly
+}
+
+fun sendFiles(context: Context, userId: Long) {
+    // Get file directory files
+    val filePath = context.getExternalFilesDir(null)
+    val filePathString = filePath.toString()
+    val fileDir = File(filePathString)
+    var files = fileDir.list()
+
+    // Compressed file to be created
+    val zipFile = File(filePath, "$userId.zip")
+    // Deletes zip file if already exists
+    if (zipFile.exists()){
+        zipFile.delete()
+        // Removes zip from directory to prevent recursive zipping
+        if (files != null) {
+            files = files.filter { !it.contains(".zip") && it != "osmdroid" }.toTypedArray()
+        }
+    }
+
+    // Creates zip file when there is at least one file
+    if (files != null) {
+        if (files.isNotEmpty()) {
+            // Stream for writing compressed contents
+            val zipOutputStream = ZipOutputStream(FileOutputStream(zipFile))
+            zipOutputStream.flush()
+
+            // Compresses each file from the folder
+            for (file in files) {
+                val zipEntry = ZipEntry(file)
+                zipOutputStream.putNextEntry(zipEntry)
+
+                // Reads bytes from the file and writes inside ZIP
+                val inputStream = FileInputStream(File(filePath, file))
+                val buffer = ByteArray(1024)
+                var len = inputStream.read(buffer)
+                while (len > 0) {
+                    zipOutputStream.write(buffer, 0, len)
+                    len = inputStream.read(buffer)
+                }
+
+                // Closes streams
+                zipOutputStream.closeEntry()
+                inputStream.close()
+            }
+
+            zipOutputStream.close()
+
+            // If file exists, start the intent
+            if (zipFile.exists()) {
+                // Get URI from the selected file
+                val contentUri = FileProvider.getUriForFile(
+                    context, "upm.gretaapp.fileprovider",
+                    zipFile
+                )
+                // Create the intent to send the file, with type "application/zip" and granting read uri
+                // permission
+                val intent = Intent(Intent.ACTION_SEND).apply {
+                    type = "application/zip"
+                    putExtra(Intent.EXTRA_STREAM, contentUri)
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                }
+                // Start intent activity
+                context.startActivity(Intent.createChooser(intent, "Share file"))
+            }
+        }
+    }
 }

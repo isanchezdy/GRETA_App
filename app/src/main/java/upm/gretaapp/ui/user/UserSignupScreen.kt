@@ -52,7 +52,6 @@ import upm.gretaapp.ui.AppViewModelProvider
 import upm.gretaapp.ui.navigation.NavigationDestination
 import upm.gretaapp.ui.theme.GRETAAppTheme
 import java.text.SimpleDateFormat
-import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 
@@ -129,7 +128,7 @@ fun UserEntryBody(
                                 userUiState.userDetails.copy(name = it)
                             )
                         },
-                        enabled = userUiState.userState != UserState.LOADING,
+                        enabled = userUiState.userState != UserState.Loading,
                         singleLine = true,
                         label = { Text(stringResource(id = R.string.name)) },
                         modifier = Modifier.padding(vertical = 16.dp)
@@ -144,7 +143,7 @@ fun UserEntryBody(
                                 userUiState.userDetails.copy(email = it)
                             )
                         },
-                        enabled = userUiState.userState != UserState.LOADING,
+                        enabled = userUiState.userState != UserState.Loading,
                         singleLine = true,
                         label = { Text(stringResource(id = R.string.email)) },
                         modifier = Modifier.padding(vertical = 16.dp)
@@ -160,7 +159,7 @@ fun UserEntryBody(
                                 userUiState.userDetails.copy(password = it)
                             )
                         },
-                        enabled = userUiState.userState != UserState.LOADING,
+                        enabled = userUiState.userState != UserState.Loading,
                         singleLine = true,
                         label = { Text(stringResource(id = R.string.password)) },
                         visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
@@ -207,7 +206,7 @@ fun UserEntryBody(
                                 options[userUiState.userDetails.gender]
                             },
                             onValueChange = {},
-                            enabled = userUiState.userState != UserState.LOADING,
+                            enabled = userUiState.userState != UserState.Loading,
                             label = { Text(stringResource(id = R.string.gender)) },
                             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
                             colors = ExposedDropdownMenuDefaults.textFieldColors(),
@@ -239,7 +238,7 @@ fun UserEntryBody(
                         onValueChange = {},
                         singleLine = true,
                         readOnly = true,
-                        enabled = userUiState.userState != UserState.LOADING,
+                        enabled = userUiState.userState != UserState.Loading,
                         label = { Text(stringResource(id = R.string.birthday)) },
                         trailingIcon = {
                             IconButton(onClick = { showBirthdayPicker = true }) {
@@ -269,7 +268,7 @@ fun UserEntryBody(
                     TextField(
                         value = userUiState.userDetails.drivingLicenseDate,
                         onValueChange = { },
-                        enabled = userUiState.userState != UserState.LOADING,
+                        enabled = userUiState.userState != UserState.Loading,
                         singleLine = true,
                         readOnly = true,
                         label = { Text(stringResource(id = R.string.driving_license)) },
@@ -297,7 +296,7 @@ fun UserEntryBody(
                 }
             }
 
-            if(userUiState.userState == UserState.LOADING) {
+            if(userUiState.userState is UserState.Loading) {
                 CircularProgressIndicator(
                     modifier = Modifier
                         .padding(8.dp)
@@ -315,9 +314,11 @@ fun UserEntryBody(
                 }
             }
 
-            if(userUiState.userState == UserState.ERROR) {
+            if(userUiState.userState is UserState.Error) {
                 Text(
-                    text = stringResource(id = R.string.error_signup),
+                    text = stringResource(id = if (userUiState.userState.code == 2) {
+                        R.string.error_signup
+                    } else R.string.server_available),
                     color = MaterialTheme.colorScheme.error,
                     style = MaterialTheme.typography.bodyLarge,
                     modifier = Modifier.padding(8.dp)
@@ -325,7 +326,7 @@ fun UserEntryBody(
             }
 
             LaunchedEffect(userUiState.userState) {
-                if(userUiState.userState == UserState.COMPLETE) {
+                if(userUiState.userState is UserState.Complete) {
                     onNavigate()
                 }
             }
@@ -348,7 +349,7 @@ fun DatePickerField(
     )
 
     val selectedDate = datePickerState.selectedDateMillis?.let {
-        SimpleDateFormat("dd - MMMM - yyyy", Locale.getDefault()).format(Date(it))
+        SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date(it))
     } ?: ""
 
     DatePickerDialog(

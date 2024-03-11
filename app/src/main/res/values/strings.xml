@@ -197,4 +197,7 @@
     <string name="selected_vehicle">Selected vehicle</string>
     <string name="number_passengers">Number of passengers</string>
     <string name="number_bulks">Number of bulks</string>
+    <string name="send_results">Send results</string>
+    <string name="server_available">Service is not available now</string>
+    <string name="review_sent">Your review has been sent</string>
 </resources>

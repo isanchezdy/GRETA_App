@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import upm.gretaapp.data.GretaRepository
 import upm.gretaapp.data.UserSessionRepository
+import java.net.ConnectException
 
 class UserLoginViewModel(
     private val gretaRepository: GretaRepository,
@@ -25,10 +26,12 @@ class UserLoginViewModel(
                     _uiState.value = LoginUiState.Complete
                     userSessionRepository.saveUserPreference(user.userID!!)
                 } else {
-                    _uiState.value = LoginUiState.Error
+                    _uiState.value = LoginUiState.Error(2)
                 }
+            } catch(connectException: ConnectException) {
+                _uiState.value = LoginUiState.Error(1)
             } catch (throwable: Throwable) {
-                _uiState.value = LoginUiState.Error
+                _uiState.value = LoginUiState.Error(2)
                 Log.e("Error_login", throwable.stackTraceToString())
             }
         }
@@ -38,6 +41,6 @@ class UserLoginViewModel(
 sealed interface LoginUiState {
     data object Start: LoginUiState
     data object Loading: LoginUiState
-    data object Error: LoginUiState
+    data class Error(val code: Int): LoginUiState
     data object Complete: LoginUiState
 }

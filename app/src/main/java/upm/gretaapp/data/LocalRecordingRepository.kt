@@ -37,7 +37,7 @@ class LocalRecordingRepository(context: Context): RecordingRepository {
      *
      * @param destination Destination point to check if current position is near enough to stop
      */
-    override fun recordRoute(destination: GeoPoint) {
+    override fun recordRoute(userId: Long, vehicleId: Long, destination: GeoPoint) {
         // Constraints of the worker to assure it functions
         val constraints = Constraints.Builder()
             .setRequiresStorageNotLow(true)
@@ -48,7 +48,8 @@ class LocalRecordingRepository(context: Context): RecordingRepository {
         // Builder for requesting the work one time
         val recordingBuilder = OneTimeWorkRequestBuilder<RecordingWorker>()
         recordingBuilder.setInputData(createInputDataForWorkRequest(
-            destination, Date().toString()
+            destination, "user " + userId.toString() + " vehicle " + vehicleId.toString()
+                    + Date().toString()
         ))
         recordingBuilder.setConstraints(constraints)
         recordingBuilder.addTag("RecordingWorker")

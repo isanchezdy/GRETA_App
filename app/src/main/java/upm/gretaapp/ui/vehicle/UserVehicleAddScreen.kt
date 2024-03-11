@@ -205,12 +205,12 @@ fun VehicleInputForm(
                 label = { Text(stringResource(id = R.string.brand_model)) },
                 value = searchVehicle,
                 singleLine = true,
-                onValueChange = { searchVehicle = it.trim()
+                onValueChange = { searchVehicle = it.trimStart()
                         expanded = true },
                 keyboardOptions = KeyboardOptions(
                     imeAction = if(searchVehicle.isNotBlank()) ImeAction.Search else ImeAction.None
                 ),
-                keyboardActions = KeyboardActions(onSearch = { search(searchVehicle) }),
+                keyboardActions = KeyboardActions(onSearch = { search(searchVehicle.trim()) }),
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
                 colors = ExposedDropdownMenuDefaults.textFieldColors(),
             )

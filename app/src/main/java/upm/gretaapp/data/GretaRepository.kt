@@ -1,5 +1,7 @@
 package upm.gretaapp.data
 
+import upm.gretaapp.model.AppReview
+import upm.gretaapp.model.FeatureReview
 import upm.gretaapp.model.Route
 import upm.gretaapp.model.RouteEvaluation
 import upm.gretaapp.model.RouteEvaluationInput
@@ -52,4 +54,11 @@ interface GretaRepository {
     suspend fun getStatsUser(userId: Long): List<UserStats>
 
     suspend fun createUserStats(userStats: UserStats): UserStats
+
+    // App review methods
+
+    suspend fun createAppReview(appReview: AppReview): AppReview
+
+    // Feature review methods
+    suspend fun createFeatureReview(featureReview: FeatureReview): FeatureReview
 }

@@ -1,5 +1,6 @@
 package upm.gretaapp.ui.vehicle
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -40,8 +41,8 @@ class UserVehicleAddViewModel(private val gretaRepository: GretaRepository,
                 }.map {
                     it.copy(name = it.name.replace("_-_", " - "))
                 }
-            } catch(_: Throwable) {
-
+            } catch(throwable: Throwable) {
+                Log.e("Error_add_vehicles", throwable.stackTraceToString())
             }
         }
     }
@@ -57,7 +58,9 @@ class UserVehicleAddViewModel(private val gretaRepository: GretaRepository,
         viewModelScope.launch {
             try{
                 gretaRepository.createUserVehicle(userVehicle)
-            } catch(_: Throwable) {}
+            } catch(throwable: Throwable) {
+                Log.e("Error_add_vehicles", throwable.stackTraceToString())
+            }
         }
     }
 }
