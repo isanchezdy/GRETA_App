@@ -49,7 +49,7 @@ class LocalRecordingRepository(context: Context): RecordingRepository {
         val recordingBuilder = OneTimeWorkRequestBuilder<RecordingWorker>()
         recordingBuilder.setInputData(createInputDataForWorkRequest(
             destination, "user " + userId.toString() + " vehicle " + vehicleId.toString()
-                    + Date().toString()
+                    + " " + Date().toString()
         ))
         recordingBuilder.setConstraints(constraints)
         recordingBuilder.addTag("RecordingWorker")

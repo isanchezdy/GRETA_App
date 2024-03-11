@@ -145,7 +145,7 @@ fun sendFiles(context: Context, userId: Long) {
                     addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                 }
                 // Start intent activity
-                context.startActivity(Intent.createChooser(intent, "Share file"))
+                context.startActivity(intent)
             }
         }
     }
