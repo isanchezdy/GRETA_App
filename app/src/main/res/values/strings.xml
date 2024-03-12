@@ -200,4 +200,8 @@
     <string name="send_results">Send results</string>
     <string name="server_available">Service is not available now</string>
     <string name="review_sent">Your review has been sent</string>
+    <string name="fastest">Fastest</string>
+    <string name="shortest">Shortest</string>
+    <string name="eco_route">Eco-route</string>
+    <string name="center_map">Center map</string>
 </resources>

@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.foundation.layout.requiredHeightIn
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardActions
@@ -29,6 +30,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Cancel
 import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material.icons.filled.Map
+import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.StarRate
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
@@ -43,6 +45,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
@@ -57,6 +60,10 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color.Companion.Blue
+import androidx.compose.ui.graphics.Color.Companion.Green
+import androidx.compose.ui.graphics.Color.Companion.Magenta
+import androidx.compose.ui.graphics.Color.Companion.Red
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
@@ -87,6 +94,7 @@ import org.osmdroid.views.overlay.Polyline
 import upm.gretaapp.GretaTopAppBar
 import upm.gretaapp.R
 import upm.gretaapp.model.NominatimResult
+import upm.gretaapp.model.Route
 import upm.gretaapp.model.RouteEvaluation
 import upm.gretaapp.model.UserVehicle
 import upm.gretaapp.model.Vehicle
@@ -146,22 +154,38 @@ fun MapScreen(
     )
 
     val context = LocalContext.current
+    val center: MutableState<(() -> Unit)?> = remember{ mutableStateOf(null) }
 
     Scaffold(
         topBar = {
             GretaTopAppBar(canUseMenu = true, openMenu = openMenu, navigateUp = { })
         },
         floatingActionButton = {
-            if(uiState is MapUiState.Start || uiState is MapUiState.Error) {
-                FloatingActionButton(
-                    onClick = { visible.value = true },
-                    shape = MaterialTheme.shapes.medium,
-                    modifier = Modifier.padding(20.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.DirectionsCar,
-                        contentDescription = stringResource(id = R.string.route_options)
-                    )
+            Column {
+                if (uiState is MapUiState.Start || uiState is MapUiState.Error) {
+                    if( center.value != null) {
+                        FloatingActionButton(
+                            onClick = center.value!!,
+                            shape = MaterialTheme.shapes.medium,
+                            modifier = Modifier.padding(horizontal = 20.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.MyLocation,
+                                contentDescription = stringResource(id = R.string.center_map)
+                            )
+                        }
+                    }
+
+                    FloatingActionButton(
+                        onClick = { visible.value = true },
+                        shape = MaterialTheme.shapes.medium,
+                        modifier = Modifier.padding(20.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.DirectionsCar,
+                            contentDescription = stringResource(id = R.string.route_options)
+                        )
+                    }
                 }
             }
         }
@@ -171,6 +195,7 @@ fun MapScreen(
             uiState = uiState,
             recordingUiStateFlow = viewModel.recordingUiState,
             options = options,
+            center = center,
             search = {
                 viewModel.getDestination(it)
             },
@@ -219,6 +244,7 @@ fun MapBody(
     uiState: MapUiState,
     recordingUiStateFlow: StateFlow<RecordingUiState>,
     options: List<NominatimResult>,
+    center: MutableState<(() -> Unit)?>,
     search: (String) -> Unit,
     clearOptions: () -> Unit,
     searchRoutes: (GeoPoint, GeoPoint) -> Unit,
@@ -267,6 +293,8 @@ fun MapBody(
             mapView.overlayManager.remove(locationOverlay)
             mapView.invalidate()
 
+            center.value = null
+
             // If the app considers it, a dialog with a warning for the user is shown
             if(fineLocationPermissionState.status.shouldShowRationale) {
                 val builder = AlertDialog.Builder(context)
@@ -297,6 +325,11 @@ fun MapBody(
             locationOverlay.enableMyLocation()
             mapView.overlayManager.add(locationOverlay)
             mapView.invalidate()
+
+            center.value = {
+                mapView.controller.setZoom(18.0)
+                mapView.controller.setCenter(locationOverlay.myLocation)
+            }
         }
     }
 
@@ -328,16 +361,15 @@ fun MapBody(
         // Events receiver to add markers on click
         val mReceive: MapEventsReceiver = object : MapEventsReceiver {
             override fun singleTapConfirmedHelper(p: GeoPoint): Boolean {
-                if((uiState is MapUiState.Start || uiState is MapUiState.Error)) {
-                    shouldCenter = false
-                    mapView.overlayManager.remove(destinationPoint)
-                    destinationPoint.position = p
-                    mapView.overlayManager.add(destinationPoint)
-                    mapView.controller.animateTo(destinationPoint.position)
-                    destinationPoint.showInfoWindow()
-                    destination = String.format("%.8f", p.latitude) + ";" + String.format("%.8f", p.longitude)
-                    mapView.invalidate()
-                }
+                shouldCenter = false
+                mapView.overlayManager.remove(destinationPoint)
+                destinationPoint.position = p
+                mapView.overlayManager.add(destinationPoint)
+                mapView.controller.animateTo(destinationPoint.position)
+                destinationPoint.showInfoWindow()
+                destination = String.format("%.8f", p.latitude) + ";" + String.format("%.8f", p.longitude)
+                mapView.invalidate()
+
                 return false
             }
 
@@ -346,8 +378,7 @@ fun MapBody(
             }
         }
 
-        val overlayEvents = MapEventsOverlay(mReceive)
-        mapView.overlays.add(overlayEvents)
+        val overlayEvents = remember{ MapEventsOverlay(mReceive) }
 
         var searchExpanded by rememberSaveable { mutableStateOf(false) }
         val focusManager = LocalFocusManager.current
@@ -454,7 +485,10 @@ fun MapBody(
         }
 
         LaunchedEffect(uiState) {
+
             if (uiState is MapUiState.CompleteRoutes) {
+                mapView.overlays.remove(overlayEvents)
+
                 var bounds = destinationPoint.bounds
                 bounds = bounds.concat(BoundingBox.fromGeoPoints(
                     listOf(locationOverlay.myLocation))
@@ -462,19 +496,18 @@ fun MapBody(
                 for(route in uiState.routes) {
                     val polyline = Polyline(mapView)
 
+
                     polyline.outlinePaint.strokeCap = Paint.Cap.ROUND
                     polyline.outlinePaint.strokeWidth = 20F
 
-                    if(route.first.size > 1) {
-                        polyline.outlinePaint.color = Color.MAGENTA
-                    }
-                    else {
-                        polyline.outlinePaint.color = when(route.first.first()) {
-                            "ECO" -> Color.GREEN
-                            "FASTEST" -> Color.BLUE
-                            "SHORTEST" -> Color.YELLOW
-                            else -> Color.RED
-                        }
+                    polyline.outlinePaint.color = if(route.first.contains("eco")) {
+                        Color.GREEN
+                    } else if(route.first.contains("fastest")) {
+                        Color.BLUE
+                    } else if (route.first.contains("shortest")) {
+                        Color.MAGENTA
+                    } else {
+                        Color.RED
                     }
 
                     val coordinates = route.second.processedRoute
@@ -506,6 +539,9 @@ fun MapBody(
                     true)
             }
             else if (uiState is MapUiState.Start || uiState is MapUiState.LoadingRoute) {
+                if(!mapView.overlays.contains(overlayEvents)) {
+                    mapView.overlays.add(overlayEvents)
+                }
                 if(routeOverlays.isNotEmpty()) {
                     mapView.overlayManager.removeAll(routeOverlays)
                     mapView.invalidate()
@@ -518,6 +554,10 @@ fun MapBody(
         when (uiState) {
             is MapUiState.LoadingRoute -> {
                 LoadingRouteDialog()
+            }
+
+            is MapUiState.CompleteRoutes -> {
+                RoutesLegend(routes = uiState.routes, Modifier.align(Alignment.BottomEnd))
             }
 
             is MapUiState.Error -> {
@@ -625,6 +665,51 @@ fun ErrorMessage(code: Int) {
 }
 
 @Composable
+fun RoutesLegend(routes: List<Pair<List<String>,Route>>, modifier: Modifier = Modifier) {
+    Surface(
+        color = MaterialTheme.colorScheme.surface,
+        modifier = modifier
+            .fillMaxWidth()
+    ) {
+        Column(modifier = Modifier.fillMaxWidth()) {
+            val labels = mapOf(
+                "fastest" to stringResource(id = R.string.fastest),
+                "shortest" to stringResource(id = R.string.shortest),
+                "eco" to stringResource(id = R.string.eco_route)
+            )
+            val legend = routes.map {
+                val color = if(it.first.contains("eco")) {
+                    Green
+                } else if(it.first.contains("fastest")) {
+                    Blue
+                } else if (it.first.contains("shortest")) {
+                    Magenta
+                } else {
+                    Red
+                }
+
+                val label = it.first.joinToString(separator = ", ") { type ->
+                    labels[type] ?: ""
+                }
+
+                Pair(color, label)
+            }
+
+            legend.forEach { (color, label) ->
+                Row(modifier = Modifier.padding(horizontal = 32.dp, vertical = 8.dp)) {
+                    Box(
+                        modifier = Modifier
+                            .size(20.dp)
+                            .background(color)
+                    )
+                    Text(text = " $label", modifier = Modifier.padding(start = 8.dp))
+                }
+            }
+        }
+    }
+}
+
+@Composable
 fun ScoresResult(
     score: RouteEvaluation,
     sendFiles: () -> Unit,
@@ -637,7 +722,7 @@ fun ScoresResult(
     }
 
     if(visible) {
-        Dialog(onDismissRequest = close) {
+        Dialog(onDismissRequest = { }) {
             ElevatedCard(
                 modifier = Modifier
                     .fillMaxWidth(0.8f)

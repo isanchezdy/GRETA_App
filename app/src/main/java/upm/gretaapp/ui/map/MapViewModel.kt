@@ -93,7 +93,8 @@ class MapViewModel(
                 info.state == WorkInfo.State.CANCELLED -> {
                     RecordingUiState.Default
                 }
-                else -> RecordingUiState.Loading
+                !info.state.isFinished -> RecordingUiState.Loading
+                else -> RecordingUiState.Default
             }
         }.stateIn(
             scope = viewModelScope,

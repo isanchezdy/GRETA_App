@@ -201,4 +201,8 @@
     <string name="send_results">Mandar resultados</string>
     <string name="server_available">El servicio no está disponible ahora</string>
     <string name="review_sent">Tu reseña se ha mandado</string>
+    <string name="fastest">Más rápida</string>
+    <string name="shortest">Más corta</string>
+    <string name="eco_route">Eco-ruta</string>
+    <string name="center_map">Centrar mapa</string>
 </resources>
