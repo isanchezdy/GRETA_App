@@ -327,8 +327,10 @@ fun MapBody(
             mapView.invalidate()
 
             center.value = {
-                mapView.controller.setZoom(18.0)
-                mapView.controller.setCenter(locationOverlay.myLocation)
+                if(locationOverlay.myLocation != null) {
+                    mapView.controller.setZoom(18.0)
+                    mapView.controller.setCenter(locationOverlay.myLocation)
+                }
             }
         }
     }
@@ -416,6 +418,8 @@ fun MapBody(
                                     }
                                     mapView.invalidate()
                                 }
+
+                                cancelRecording()
                             }
                         ) {
                             Icon(
@@ -496,7 +500,6 @@ fun MapBody(
                 for(route in uiState.routes) {
                     val polyline = Polyline(mapView)
 
-
                     polyline.outlinePaint.strokeCap = Paint.Cap.ROUND
                     polyline.outlinePaint.strokeWidth = 20F
 
@@ -523,6 +526,14 @@ fun MapBody(
                                 startRecording(destinationPoint.position)
                                 mapView.controller.setZoom(18.0)
                                 locationOverlay.enableFollowLocation()
+                                locationOverlay.enableAutoStop = true
+
+                                mapView.overlayManager.removeAll(routeOverlays)
+                                routeOverlays.clear()
+                                routeOverlays.add(polyline)
+                                mapView.overlayManager.add(polyline)
+
+                                mapView.invalidate()
                             },
                             onCancel = cancelRecording
                         ).onCreateView(layoutInflater,null,null),
@@ -557,7 +568,9 @@ fun MapBody(
             }
 
             is MapUiState.CompleteRoutes -> {
-                RoutesLegend(routes = uiState.routes, Modifier.align(Alignment.BottomEnd))
+                if(recordingUiState is RecordingUiState.Default) {
+                    RoutesLegend(routes = uiState.routes, Modifier.align(Alignment.BottomEnd))
+                }
             }
 
             is MapUiState.Error -> {

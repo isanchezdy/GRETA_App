@@ -168,11 +168,11 @@ class MapViewModel(
      */
     fun startRecording(vehicleId: Long, destination: GeoPoint) {
         recordingRepository.recordRoute(userId = userId, vehicleId = vehicleId, destination)
-        recordingUiState
     }
 
     fun cancelRecording() {
         recordingRepository.cancelWork()
+        _uiState.value = MapUiState.Start
     }
 
     fun getScore(
