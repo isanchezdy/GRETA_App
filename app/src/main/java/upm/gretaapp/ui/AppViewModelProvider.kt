@@ -12,24 +12,27 @@ import upm.gretaapp.ui.review.ReviewViewModel
 import upm.gretaapp.ui.user.UserLoginViewModel
 import upm.gretaapp.ui.user.UserSignupViewModel
 import upm.gretaapp.ui.vehicle.UserVehicleAddViewModel
-import upm.gretaapp.ui.vehicle.VehicleListViewModel
+import upm.gretaapp.ui.vehicle.UserVehicleListViewModel
 
 /**
  * Provides Factory to create instance of ViewModel for the entire GRETA App
  */
 object AppViewModelProvider {
     val Factory = viewModelFactory {
+        // Initializer for HomeViewModel
         initializer {
             HomeViewModel(
                 gretaApplication().container.userSessionRepository
             )
         }
+        // Initializer for UserLoginViewModel
         initializer {
             UserLoginViewModel(
                 gretaApplication().container.gretaRepository,
                 gretaApplication().container.userSessionRepository
             )
         }
+        // Initializer for UserSignupViewModel
         initializer {
             UserSignupViewModel(
                 gretaApplication().container.gretaRepository,
@@ -38,9 +41,10 @@ object AppViewModelProvider {
         }
         // Initializer for VehicleListViewModel
         initializer {
-            VehicleListViewModel(gretaApplication().container.userSessionRepository,
+            UserVehicleListViewModel(gretaApplication().container.userSessionRepository,
                 gretaApplication().container.gretaRepository)
         }
+        // Initializer to UserVehicleAddViewModel
         initializer {
             UserVehicleAddViewModel(gretaApplication().container.gretaRepository,
                 gretaApplication().container.userSessionRepository)
@@ -54,6 +58,7 @@ object AppViewModelProvider {
                 gretaApplication().container.recordingRepository
             )
         }
+        // Initializer for ReviewViewModel
         initializer {
             ReviewViewModel(
                 gretaApplication().container.userSessionRepository,

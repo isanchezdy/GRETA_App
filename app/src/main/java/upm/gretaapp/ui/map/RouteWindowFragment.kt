@@ -35,8 +35,17 @@ import upm.gretaapp.model.Route
 import upm.gretaapp.ui.theme.GRETAAppTheme
 import kotlin.math.ceil
 
+/**
+ * Fragment to show when a route is selected
+ *
+ * @param _uiState The state of the recording to update the button from the interface
+ * @param route The route from which the data shown in the window is retrieved
+ * @param onClick Function to start a route when the button is clicked
+ * @param onCancel Function to cancel the recording process when the button is clicked
+ */
 class RouteWindowFragment(
     private val _uiState: StateFlow<RecordingUiState>,
+    private val isElectric: Boolean,
     private val route: Route,
     private val onClick: () -> Unit,
     private val onCancel: () -> Unit,
@@ -47,20 +56,26 @@ class RouteWindowFragment(
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
+        // The view object of the window is retrieved
         val binding = FragmentInfoWindowBinding.inflate(inflater, container, false)
         val view = binding.root
+
+        // The contents of the view are set
         binding.infoWindow
             .apply {
                 setViewCompositionStrategy(ViewCompositionStrategy.Default)
                 setContent {
                     val color = MaterialTheme.colorScheme.surfaceVariant
                     GRETAAppTheme {
+                        // The ui state of the window is retrieved
                         val uiState by _uiState.collectAsState()
+                        // Column for a Bubble representation
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Surface(
                                 color = color,
                                 shape = RoundedCornerShape(30)
                             ) {
+                                // The data of the route is shown
                                 Row {
                                     Column(modifier = Modifier.padding(16.dp)) {
                                         Text(
@@ -76,9 +91,9 @@ class RouteWindowFragment(
                                         Text(
                                             text = stringResource(id = R.string.consumption) + ": "
                                                 + String.format("%.3f", route.energyConsumption)
-                                                + " l"
+                                                + if(isElectric) " kW/h" else " l"
                                         )
-
+                                        // The cancel button is shown while recording a route
                                         if(uiState is RecordingUiState.Loading) {
                                             OutlinedButton(
                                                 onClick = onCancel,
@@ -87,6 +102,7 @@ class RouteWindowFragment(
                                                 Text(stringResource(id = R.string.cancel_route))
                                             }
                                         } else {
+                                            // The recording button shows when there is no recording running
                                             Button(
                                                 onClick = {
                                                     onClick()
@@ -99,6 +115,7 @@ class RouteWindowFragment(
                                         }
                                     }
 
+                                    // Button to close the window
                                     IconButton(
                                         onClick = { view.visibility = View.GONE },
                                         modifier = Modifier.align(Alignment.Top)
@@ -112,6 +129,7 @@ class RouteWindowFragment(
                                 }
                             }
 
+                            // A triangle to end the bubble figure
                             Canvas(
                                 modifier = Modifier
                                     .requiredSize(16.dp)

@@ -3,7 +3,14 @@ package upm.gretaapp.ui.map
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.os.Environment
+import android.util.Log
 import androidx.core.content.FileProvider
+import org.osmdroid.views.MapView
+import org.osmdroid.views.overlay.Marker
+import org.osmdroid.views.overlay.Overlay
+import org.osmdroid.views.overlay.Polyline
+import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
@@ -84,6 +91,46 @@ fun decodePoly(encoded: String, precision: Int = 5): List<Pair<Double,Double>> {
     return poly
 }
 
+fun readFile(context: Context, filename: String): Pair<List<Double>, List<Double>> {
+    val state = Environment.getExternalStorageState()
+    if (Environment.MEDIA_MOUNTED == state) {
+        // Get the app-specific directory on external storage
+        val dir = context.getExternalFilesDir(null)
+        val file = File(dir, filename)
+
+        return file.useLines {
+            val speeds = mutableListOf<Double>()
+            val heights = mutableListOf<Double>()
+            it.forEach { line ->
+                if (!line.contains(
+                        "timestamp,latitude,longitude,altitude,speed_m_s," +
+                                "acceleration,ax,ay,az,numSatellites"
+                    )
+                ) {
+                    val values = line.split(",")
+                    if (values.size == 10) {
+                        if (values[3] != "null") {
+                            heights.add(values[3].toDouble())
+                            speeds.add(values[4].toDouble())
+                        }
+                    }
+                }
+            }
+            Log.d("read_file", speeds.toString())
+            Log.d("read_file", heights.toString())
+
+            Pair(speeds,heights)
+        }
+    }
+    return Pair(emptyList(), emptyList())
+}
+
+/**
+ * Function to send a zip with all the recording files through another app
+ *
+ * @param context The [Context] used to send the file
+ * @param userId The id of the current user of the app
+ */
 fun sendFiles(context: Context, userId: Long) {
     // Get file directory files
     val filePath = context.getExternalFilesDir(null)
@@ -149,4 +196,34 @@ fun sendFiles(context: Context, userId: Long) {
             }
         }
     }
+}
+
+/**
+ * Sets [overlay] as the head of the list of overlays
+ *
+ * @param overlay [Overlay] to set as head
+ */
+fun MapView.setOverlayAsHead(overlay: Overlay) {
+    this.overlayManager.remove(overlay)
+    this.overlayManager.add(overlay)
+}
+
+/**
+ * Inserts a [Polyline] on the map, setting the current markers as the heads of the overlays list
+ *
+ * @param polyline [Polyline] to insert on the map
+ */
+fun MapView.insertPolyline(polyline: Polyline) {
+    // The markers are found within the list
+    val markerOverlay = this.overlayManager.find { it.javaClass == Marker::class.java }!!
+    val myLocationNewOverlay = this.overlayManager.find {
+        it.javaClass == MyLocationNewOverlay::class.java
+    }!!
+
+    // The polyline is inserted
+    this.overlayManager.add(polyline)
+
+    // The markers are set as heads
+    this.setOverlayAsHead(markerOverlay)
+    this.setOverlayAsHead(myLocationNewOverlay)
 }

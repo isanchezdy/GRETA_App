@@ -11,6 +11,7 @@ import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
+import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.CustomZoomButtonsController
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
@@ -35,6 +36,7 @@ fun rememberMapViewWithLifecycle(): MapView {
                 this.setMultiTouchControls(true)
                 this.zoomController.setVisibility(CustomZoomButtonsController.Visibility.NEVER)
                 this.controller.setZoom(18.0)
+                this.controller.setCenter(GeoPoint(40.447234,-3.7348339))
             }
         )
     }

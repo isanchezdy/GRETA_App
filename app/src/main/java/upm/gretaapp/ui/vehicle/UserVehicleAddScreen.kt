@@ -47,14 +47,14 @@ import upm.gretaapp.ui.AppViewModelProvider
 import upm.gretaapp.ui.navigation.NavigationDestination
 import upm.gretaapp.ui.theme.GRETAAppTheme
 
-object VehicleAddDestination : NavigationDestination {
+object UserVehicleAddDestination : NavigationDestination {
     override val route = "add_vehicle"
     override val titleRes = R.string.add_vehicle
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun VehicleAddScreen(
+fun UserVehicleAddScreen(
     navigateBack: () -> Unit,
     onNavigateUp: () -> Unit,
     modifier: Modifier = Modifier,
@@ -66,7 +66,7 @@ fun VehicleAddScreen(
         }
     ) { paddingValues ->
         val uiState by viewModel.vehicleUiState.collectAsState()
-        VehicleEntryBody(
+        UserVehicleEntryBody(
             navigateBack = navigateBack,
             uiState = uiState,
             onCreate = viewModel::saveVehicle,
@@ -77,7 +77,7 @@ fun VehicleAddScreen(
 }
 
 @Composable
-fun VehicleEntryBody(
+fun UserVehicleEntryBody(
     navigateBack: () -> Unit,
     uiState: List<Vehicle>,
     onCreate: (Long, Long?, Long?) -> Unit,
@@ -96,7 +96,7 @@ fun VehicleEntryBody(
             modifier = Modifier.padding(16.dp)
         )
 
-        VehicleInputForm(
+        UserVehicleInputForm(
             navigateBack = navigateBack,
             uiState = uiState,
             onCreate = onCreate,
@@ -107,7 +107,7 @@ fun VehicleEntryBody(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun VehicleInputForm(
+fun UserVehicleInputForm(
     navigateBack: () -> Unit,
     uiState: List<Vehicle>,
     onCreate: (Long, Long?, Long?) -> Unit,
@@ -311,9 +311,9 @@ fun VehicleInputForm(
     locale = "es"
 )
 @Composable
-fun VehicleAddScreenPreview() {
+fun UserVehicleAddScreenPreview() {
     GRETAAppTheme {
-        VehicleEntryBody(uiState = emptyList(), onCreate = { _, _, _ -> }, search = {},
+        UserVehicleEntryBody(uiState = emptyList(), onCreate = { _, _, _ -> }, search = {},
             navigateBack = {})
     }
 }

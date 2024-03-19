@@ -17,8 +17,8 @@ import upm.gretaapp.ui.user.LoginDestination
 import upm.gretaapp.ui.user.SignupDestination
 import upm.gretaapp.ui.user.UserLoginScreen
 import upm.gretaapp.ui.user.UserSignupScreen
-import upm.gretaapp.ui.vehicle.VehicleAddDestination
-import upm.gretaapp.ui.vehicle.VehicleAddScreen
+import upm.gretaapp.ui.vehicle.UserVehicleAddDestination
+import upm.gretaapp.ui.vehicle.UserVehicleAddScreen
 import upm.gretaapp.ui.vehicle.VehicleListDestination
 import upm.gretaapp.ui.vehicle.VehicleListScreen
 
@@ -32,6 +32,7 @@ import upm.gretaapp.ui.vehicle.VehicleListScreen
 fun GretaNavHost(
     navController: NavHostController,
     openMenu: () -> Unit,
+    skipsLogin: Boolean,
     modifier: Modifier = Modifier,
 ) {
     NavHost(
@@ -42,7 +43,9 @@ fun GretaNavHost(
         composable(route = HomeDestination.route) {
             HomeScreen(
                 navigateToLogin = { navController.navigate(LoginDestination.route) },
-                navigateToSignup = { navController.navigate(SignupDestination.route) }
+                navigateToSignup = { navController.navigate(SignupDestination.route) },
+                skipsLogin = skipsLogin,
+                onSkip = { navController.navigate(MapDestination.route){ popUpTo(0) } }
             )
         }
         composable(route = LoginDestination.route) {
@@ -62,12 +65,12 @@ fun GretaNavHost(
         }
         composable(route = VehicleListDestination.route) {
             VehicleListScreen(
-                onVehicleAdd = { navController.navigate(VehicleAddDestination.route) },
+                onVehicleAdd = { navController.navigate(UserVehicleAddDestination.route) },
                 openMenu = openMenu
             )
         }
-        composable(route = VehicleAddDestination.route) {
-            VehicleAddScreen(
+        composable(route = UserVehicleAddDestination.route) {
+            UserVehicleAddScreen(
                 navigateBack = { navController.popBackStack() },
                 onNavigateUp = { navController.navigateUp() }
             )

@@ -204,4 +204,7 @@
     <string name="shortest">Shortest</string>
     <string name="eco_route">Eco-route</string>
     <string name="center_map">Center map</string>
+    <string name="recording_route">Recording the route</string>
+    <string name="introduce_consumption">Introduce the consumption your vehicle indicates</string>
+    <string name="route_history">Route history</string>
 </resources>

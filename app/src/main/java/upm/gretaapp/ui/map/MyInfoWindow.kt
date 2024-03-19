@@ -12,6 +12,7 @@ class MyInfoWindow(
     mapView: MapView
 ): InfoWindow(view, mapView) {
     override fun onOpen(item: Any?) {
+        // It makes the view visible when opened
         view.visibility = View.VISIBLE
     }
 

@@ -16,14 +16,21 @@ import java.net.ConnectException
 
 /**
  * ViewModel to retrieve all vehicles from user in the database.
+ *
+ * @param userSessionRepository Repository for obtaining the current user of the app
+ * @param gretaRepository Repository for obtaining all vehicles of the current user and show them
  */
-class VehicleListViewModel( userSessionRepository: UserSessionRepository,
+class UserVehicleListViewModel(
+    userSessionRepository: UserSessionRepository,
     private val gretaRepository: GretaRepository
 ) : ViewModel() {
+
+    // Id of the current user
     private var userId: Long = 0
 
     init {
         viewModelScope.launch {
+            // The id of the current user is retrieved
             userSessionRepository.user.collectLatest {
                 userId = it
                 getVehicles()
@@ -31,13 +38,21 @@ class VehicleListViewModel( userSessionRepository: UserSessionRepository,
         }
     }
 
+    /**
+     * Variable for representing the current state of the ui, starting with a loading screen
+      */
     var userVehicleListUiState: UserVehicleListUiState by mutableStateOf(UserVehicleListUiState.Loading)
         private set
 
+    /**
+     * Function to retrieve all the vehicles of the current user to represent them in a list
+     */
     fun getVehicles() {
         viewModelScope.launch {
             userVehicleListUiState = try {
+                // The UserVehicles are retrieved
                 val userVehicles = gretaRepository.getUserVehicles(userId)
+                // For each UserVehicle, the corresponding Vehicle is associated
                 val list: MutableList<Pair<UserVehicle, Vehicle>> = mutableListOf()
                 for (userVehicle in userVehicles) {
                     list.add(
@@ -47,34 +62,48 @@ class VehicleListViewModel( userSessionRepository: UserSessionRepository,
                         )
                     )
                 }
+                // The ui is updated with the results
                 UserVehicleListUiState.Success(list)
 
             } catch(connectException: ConnectException) {
+                // A message is shown for a connection error
                 UserVehicleListUiState.Error(1)
             } catch (throwable: Throwable) {
                 Log.e("Error_vehicles", throwable.stackTraceToString())
+                // Another message is shown for server errors of other type
                 UserVehicleListUiState.Error(2)
             }
         }
     }
 
+    /**
+     * Function to set a [UserVehicle] as the favourite of its list
+     *
+     * @param userVehicle The [UserVehicle] that the user selects as its new favourite
+     */
     fun setFavourite(userVehicle: UserVehicle) {
         viewModelScope.launch {
             try {
+                // If all the vehicles of the user have loaded successfully
                 if (userVehicleListUiState is UserVehicleListUiState.Success) {
+                    // The button removes the favourite if it was already set
                     if (userVehicle.isFav == 1) {
                         gretaRepository.updateUserVehicle(userVehicle.copy(isFav = 0))
                     } else {
+                        // The previous favourite is retrieved to remove its favourite property
                         val previousFavourite = (userVehicleListUiState as UserVehicleListUiState.Success)
                             .vehicleList.find {
                                 it.first.isFav == 1
                             }?.first
 
+                        // If there is a previous favourite, its favourite flag is removed
                         if (previousFavourite != null) {
                             gretaRepository.updateUserVehicle(previousFavourite.copy(isFav = 0))
                         }
+                        // The new favourite vehicle is updated
                         gretaRepository.updateUserVehicle(userVehicle.copy(isFav = 1))
                     }
+                    // The ui refreshes to reflect changes
                     getVehicles()
                 }
             } catch(_ : Throwable) {
@@ -102,7 +131,7 @@ class VehicleListViewModel( userSessionRepository: UserSessionRepository,
 }
 
 /**
- * Ui State for HomeScreen
+ * Ui State for UserVehicleListScreen
  */
 sealed interface UserVehicleListUiState {
     data class Success(val vehicleList: List<Pair<UserVehicle, Vehicle>>) : UserVehicleListUiState

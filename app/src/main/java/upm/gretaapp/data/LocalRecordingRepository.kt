@@ -5,7 +5,6 @@ import androidx.lifecycle.asFlow
 import androidx.work.Constraints
 import androidx.work.Data
 import androidx.work.ExistingWorkPolicy
-import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
@@ -16,13 +15,14 @@ import upm.gretaapp.KEY_DESTINATION_LAT
 import upm.gretaapp.KEY_DESTINATION_LON
 import upm.gretaapp.KEY_FILENAME
 import upm.gretaapp.workers.RecordingWorker
+import upm.gretaapp.workers.writeCsvHeader
 import java.util.Date
 import java.util.concurrent.TimeUnit
 
 /**
  * Implementation of [RecordingRepository] to start recording a route using the phone information
  */
-class LocalRecordingRepository(context: Context): RecordingRepository {
+class LocalRecordingRepository(private val context: Context): RecordingRepository {
 
     // WorkManager to control all background processes
     private val workManager = WorkManager.getInstance(context)
@@ -42,15 +42,17 @@ class LocalRecordingRepository(context: Context): RecordingRepository {
         val constraints = Constraints.Builder()
             .setRequiresStorageNotLow(true)
             .setRequiresBatteryNotLow(true)
-            .setRequiredNetworkType(NetworkType.CONNECTED)
             .build()
+
+        val filename = "user " + userId.toString() + " vehicle " + vehicleId.toString() +
+                " " + Date().toString()
+        writeCsvHeader(context = context, "$filename.csv")
 
         // Builder for requesting the work one time
         val recordingBuilder = OneTimeWorkRequestBuilder<RecordingWorker>()
-        recordingBuilder.setInputData(createInputDataForWorkRequest(
-            destination, "user " + userId.toString() + " vehicle " + vehicleId.toString()
-                    + " " + Date().toString()
-        ))
+        recordingBuilder.setInputData(
+            createInputDataForWorkRequest(destination, filename)
+        )
         recordingBuilder.setConstraints(constraints)
         recordingBuilder.addTag("RecordingWorker")
         recordingBuilder.keepResultsForAtLeast(5, TimeUnit.MINUTES)

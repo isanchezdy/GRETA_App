@@ -70,7 +70,7 @@ object VehicleListDestination : NavigationDestination {
 fun VehicleListScreen(
     onVehicleAdd: () -> Unit,
     openMenu: () -> Unit,
-    viewModel: VehicleListViewModel = viewModel(factory = AppViewModelProvider.Factory)
+    viewModel: UserVehicleListViewModel = viewModel(factory = AppViewModelProvider.Factory)
 ) {
     val userVehicleListUiState = viewModel.userVehicleListUiState
     Scaffold(
@@ -292,7 +292,7 @@ private fun VehicleItem(
 }
 
 @Composable
-fun rememberVehiclesLifecycleObserver(viewModel: VehicleListViewModel): LifecycleEventObserver =
+fun rememberVehiclesLifecycleObserver(viewModel: UserVehicleListViewModel): LifecycleEventObserver =
     remember(viewModel) {
         LifecycleEventObserver { _, event ->
             when (event) {

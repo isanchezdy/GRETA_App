@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Abc
 import androidx.compose.material3.Button
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -25,6 +24,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import kotlinx.coroutines.delay
 import upm.gretaapp.R
 import upm.gretaapp.ui.AppViewModelProvider
 import upm.gretaapp.ui.navigation.NavigationDestination
@@ -50,10 +50,16 @@ fun HomeScreen(
     navigateToLogin: () -> Unit,
     navigateToSignup: () -> Unit,
     modifier: Modifier = Modifier,
+    skipsLogin: Boolean = true,
+    onSkip: () -> Unit,
     viewModel: HomeViewModel = viewModel(factory = AppViewModelProvider.Factory),
 ) {
     LaunchedEffect(true) {
-        viewModel.logout()
+        delay(100.toLong())
+        if(skipsLogin && viewModel.isUserLoggedIn())
+            onSkip()
+        else
+            viewModel.logout()
     }
 
     HomeBody(navigateToLogin = navigateToLogin, navigateToSignup = navigateToSignup,

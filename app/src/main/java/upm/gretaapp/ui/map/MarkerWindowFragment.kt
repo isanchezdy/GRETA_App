@@ -36,6 +36,8 @@ import upm.gretaapp.ui.theme.GRETAAppTheme
 
 /**
  * Fragment to show when a destination marker is clicked on the map
+ *
+ * @param onClick Function to search routes from the current location to this position
  */
 class MarkerWindowFragment(
     private val onClick: () -> Unit
@@ -47,20 +49,25 @@ class MarkerWindowFragment(
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
+        // The view object of the window is retrieved
         val binding = FragmentInfoWindowBinding.inflate(inflater, container, false)
         val view = binding.root
+
+        // The contents of the view are set
         binding.infoWindow
             .apply {
                 setViewCompositionStrategy(ViewCompositionStrategy.Default)
                 setContent {
                     val color = MaterialTheme.colorScheme.surfaceVariant
                     GRETAAppTheme {
+                        // Column for a Bubble representation
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Surface(
                                 color = color,
                                 shape = RoundedCornerShape(30)
                             ) {
                                 Row {
+                                    // The location permission is checked
                                     val fineLocationPermissionState =
                                         rememberPermissionState(Manifest.permission.ACCESS_FINE_LOCATION)
                                     val coarseLocationPermissionState =
@@ -71,6 +78,7 @@ class MarkerWindowFragment(
                                         null
                                     }
 
+                                    // if the location is available, allows to ask for routes
                                     if((fineLocationPermissionState.status.isGranted ||
                                         coarseLocationPermissionState.status.isGranted) &&
                                         (backgroundLocationState == null || backgroundLocationState.status.isGranted)) {
@@ -85,12 +93,14 @@ class MarkerWindowFragment(
                                             Text(text = stringResource(id = R.string.calculate_route))
                                         }
                                     } else {
+                                        // It shows a warning message otherwise
                                         Text(text = stringResource(id = R.string.enable_location),
                                             modifier = Modifier
                                                 .padding(8.dp)
                                                 .align(Alignment.CenterVertically))
                                     }
 
+                                    // A button to close the window
                                     IconButton(
                                         onClick = { view.visibility = View.GONE },
                                         modifier = Modifier.align(Alignment.Top)
@@ -103,6 +113,7 @@ class MarkerWindowFragment(
                                     }
                                 }
                             }
+                            // A triangle to end the bubble figure
                             Canvas(
                                 modifier = Modifier
                                     .requiredSize(16.dp)

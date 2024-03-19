@@ -3,7 +3,6 @@ package upm.gretaapp.ui.map
 import android.Manifest
 import android.annotation.SuppressLint
 import android.app.AlertDialog
-import android.content.res.Configuration
 import android.graphics.Color
 import android.graphics.Paint
 import android.os.Build
@@ -31,14 +30,8 @@ import androidx.compose.material.icons.filled.Cancel
 import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.MyLocation
-import androidx.compose.material.icons.filled.StarRate
-import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -67,23 +60,16 @@ import androidx.compose.ui.graphics.Color.Companion.Red
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.compose.ui.window.Dialog
-import androidx.core.text.isDigitsOnly
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import com.google.accompanist.permissions.shouldShowRationale
 import com.google.android.gms.location.LocationServices
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.StateFlow
 import org.osmdroid.events.MapEventsReceiver
 import org.osmdroid.util.BoundingBox
@@ -95,14 +81,11 @@ import upm.gretaapp.GretaTopAppBar
 import upm.gretaapp.R
 import upm.gretaapp.model.NominatimResult
 import upm.gretaapp.model.Route
-import upm.gretaapp.model.RouteEvaluation
 import upm.gretaapp.model.UserVehicle
 import upm.gretaapp.model.Vehicle
 import upm.gretaapp.model.processedRoute
 import upm.gretaapp.ui.AppViewModelProvider
 import upm.gretaapp.ui.navigation.NavigationDestination
-import upm.gretaapp.ui.theme.GRETAAppTheme
-import kotlin.math.ceil
 
 object MapDestination : NavigationDestination {
     override val route = "map"
@@ -122,29 +105,40 @@ fun MapScreen(
     openMenu: () -> Unit,
     viewModel: MapViewModel = viewModel(factory = AppViewModelProvider.Factory)
 ) {
+    // All the vehicles from the user are retrieved
     val vehicles by viewModel.vehicleList.collectAsState()
+    // The favourite one is set as default
     var favouriteVehicle: Pair<UserVehicle, Vehicle>?
     val selectedVehicle: MutableState<Pair<Long, Long>?> = remember {
         mutableStateOf(null)
     }
 
+    var isElectric by remember {
+        mutableStateOf(false)
+    }
+
+    // The favourite is selected when the list is retrieved
     LaunchedEffect(vehicles) {
         favouriteVehicle = vehicles.find {
             it.first.isFav == 1
         }
         selectedVehicle.value = if(favouriteVehicle != null) {
+            isElectric = favouriteVehicle!!.second.motorType == "ELECTRIC"
             Pair(favouriteVehicle!!.first.id!!, favouriteVehicle!!.second.vehicleID)
         } else {
             null
         }
     }
 
+    // Values of the route
     val numberOfPersons = remember{ mutableIntStateOf(1) }
     val numberOfBulks: MutableState<Int?> = remember{ mutableStateOf(null) }
     val visible = remember{ mutableStateOf(false) }
 
+    // Current state of the ui
     val uiState by viewModel.uiState.collectAsState()
 
+    // The screen for selecting parameters is shown only when the button is pressed
     RouteParams(
         visible = visible,
         vehicles = vehicles,
@@ -154,6 +148,7 @@ fun MapScreen(
     )
 
     val context = LocalContext.current
+    // Function for centering the map when location is available
     val center: MutableState<(() -> Unit)?> = remember{ mutableStateOf(null) }
 
     Scaffold(
@@ -162,7 +157,9 @@ fun MapScreen(
         },
         floatingActionButton = {
             Column {
+                // The buttons are shown only before starting a route
                 if (uiState is MapUiState.Start || uiState is MapUiState.Error) {
+                    // The button for centering the map is available only after accepting permissions
                     if( center.value != null) {
                         FloatingActionButton(
                             onClick = center.value!!,
@@ -190,10 +187,13 @@ fun MapScreen(
             }
         }
     ) { it ->
+        // The options for the search bar are retrieved for observing
         val options by viewModel.searchResults.collectAsState()
+
         MapBody(
             uiState = uiState,
             recordingUiStateFlow = viewModel.recordingUiState,
+            isElectric = isElectric,
             options = options,
             center = center,
             search = {
@@ -214,10 +214,9 @@ fun MapScreen(
                 viewModel.startRecording(selectedVehicle.value?.second ?: -1, point)
             },
             cancelRecording = viewModel::cancelRecording,
-            getScore = { speeds, heights ->
+            getScore = {
                 viewModel.getScore(
-                    speeds = speeds,
-                    heights = heights,
+                    context = context,
                     vehicleId = selectedVehicle.value?.second ?: -1,
                     additionalMass = (numberOfPersons.intValue * 75 + (numberOfBulks.value ?: 0) * 5).toLong()
                 )
@@ -232,10 +231,20 @@ fun MapScreen(
 /**
  * Body of the map screen with all of its functions
  *
+ * @param uiState The current state of the ui(start, loading, showing routes, on navigation, etc...)
+ * @param recordingUiStateFlow The [StateFlow] that observes the current state of a route recording
+ * to show results when finished
  * @param options List of results to choose one with the search bar
+ * @param center A function to center the screen when the location permission is obtained
  * @param search Function to update results based on a location query
  * @param clearOptions Function to remove results when one is selected
+ * @param searchRoutes Function to search the routes from an origin to a destination [GeoPoint],
  * @param startRecording Function to start recording a route
+ * @param cancelRecording Function to cancel a route recording in course
+ * @param getScore Function to get the score of a route using the data obtained from the records
+ * @param sendFiles Function to send all the recording files from the phone through another app
+ * @param clearScore Function to clear the information of the results from the phone to avoid
+ *  showing them multiple times
  */
 @SuppressLint("MissingPermission")
 @OptIn(ExperimentalPermissionsApi::class)
@@ -243,6 +252,7 @@ fun MapScreen(
 fun MapBody(
     uiState: MapUiState,
     recordingUiStateFlow: StateFlow<RecordingUiState>,
+    isElectric: Boolean,
     options: List<NominatimResult>,
     center: MutableState<(() -> Unit)?>,
     search: (String) -> Unit,
@@ -250,18 +260,14 @@ fun MapBody(
     searchRoutes: (GeoPoint, GeoPoint) -> Unit,
     startRecording: (GeoPoint) -> Unit,
     cancelRecording: () -> Unit,
-    getScore: (List<Double>, List<Double>) -> Unit,
+    getScore: () -> Unit,
     sendFiles: () -> Unit,
     clearScore: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     // View which contains the map and its functions
     val mapView = rememberMapViewWithLifecycle()
-    // Variable that represents the center of the map
-    var startPoint by remember{ mutableStateOf(GeoPoint(40.447234,-3.7348339)) }
-    // Variable for managing the center of the map for each recomposition
-    var shouldCenter by remember{ mutableStateOf(true) }
-
+    // State of the recording process to update the ui
     val recordingUiState by recordingUiStateFlow.collectAsState()
 
     // Location permission in case it is required to show a message
@@ -276,6 +282,7 @@ fun MapBody(
     val context = LocalContext.current
     val layoutInflater = LayoutInflater.from(context)
 
+    // Overlay to show the current position on the map
     val locationOverlay = rememberLocationOverlayWithLifecycle(mapView)
 
     // Asks permission to use location from the phone
@@ -285,14 +292,17 @@ fun MapBody(
         backgroundLocationState?.status?.isGranted
     ) {
         // Asks only if they are not granted
-        if((!fineLocationPermissionState.status.isGranted
-                    && !coarseLocationPermissionState.status.isGranted) ||
-            (backgroundLocationState != null && !backgroundLocationState.status.isGranted)) {
+        if(
+            (!fineLocationPermissionState.status.isGranted
+            && !coarseLocationPermissionState.status.isGranted) ||
+            (backgroundLocationState != null && !backgroundLocationState.status.isGranted)
+        ) {
             // If the state of the permissions is changed, the position is removed from the map
             locationOverlay.disableMyLocation()
             mapView.overlayManager.remove(locationOverlay)
             mapView.invalidate()
 
+            // The center button is removed
             center.value = null
 
             // If the app considers it, a dialog with a warning for the user is shown
@@ -317,7 +327,7 @@ fun MapBody(
             fusedLocationClient.lastLocation
                 .addOnSuccessListener {
                     if ((it != null)) {
-                        startPoint = GeoPoint(it)
+                        mapView.controller.setCenter(GeoPoint(it))
                     }
                 }
 
@@ -326,6 +336,7 @@ fun MapBody(
             mapView.overlayManager.add(locationOverlay)
             mapView.invalidate()
 
+            // The button to center the map is placed
             center.value = {
                 if(locationOverlay.myLocation != null) {
                     mapView.controller.setZoom(18.0)
@@ -335,11 +346,10 @@ fun MapBody(
         }
     }
 
-    if(shouldCenter) mapView.controller.setCenter(startPoint)
-
     Box(
         modifier = modifier.fillMaxSize()
     ) {
+        // View which contains the map
         AndroidView(
             factory = {
                 mapView
@@ -347,14 +357,16 @@ fun MapBody(
             modifier = Modifier.fillMaxSize()
         )
 
+        // Value of the search bar
         var destination by rememberSaveable{ mutableStateOf("") }
+        // Marker which represents the destination point on the map
         val destinationPoint by remember {
             mutableStateOf(Marker(mapView).apply {
+                // A window with a button to search the routes is added when clicking the marker
                 this.infoWindow = MyInfoWindow(
                     view = MarkerWindowFragment(onClick = {
                         searchRoutes(locationOverlay.myLocation, this.position)
-                    })
-                        .onCreateView(layoutInflater, null, null),
+                    }).onCreateView(layoutInflater, null, null),
                     mapView = mapView
                 )
             })
@@ -363,30 +375,39 @@ fun MapBody(
         // Events receiver to add markers on click
         val mReceive: MapEventsReceiver = object : MapEventsReceiver {
             override fun singleTapConfirmedHelper(p: GeoPoint): Boolean {
-                shouldCenter = false
+                // The position of the previous marker is updated
                 mapView.overlayManager.remove(destinationPoint)
                 destinationPoint.position = p
                 mapView.overlayManager.add(destinationPoint)
+
+                // The map centers to the marker with an animation
                 mapView.controller.animateTo(destinationPoint.position)
+                // The information window is shown to select the route
                 destinationPoint.showInfoWindow()
+                // The destination from the search bar is updated
                 destination = String.format("%.8f", p.latitude) + ";" + String.format("%.8f", p.longitude)
                 mapView.invalidate()
 
                 return false
             }
 
+            // Nothing happens when the screen is pressed for long time periods
             override fun longPressHelper(p: GeoPoint): Boolean {
                 return false
             }
         }
-
+        // A layer is attached to the map to allow selection of destination points with a click
         val overlayEvents = remember{ MapEventsOverlay(mReceive) }
 
+        // A flag to remember if the options from the search are shown
         var searchExpanded by rememberSaveable { mutableStateOf(false) }
+        // Manager to remove focus from the search bar when an option is selected
         val focusManager = LocalFocusManager.current
 
+        // List with the routes represented on the map
         val routeOverlays: MutableList<Polyline> = remember { mutableListOf() }
 
+        // Search bar with address options to select from
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Top,
@@ -397,17 +418,16 @@ fun MapBody(
             TextField(
                 value = destination,
                 onValueChange = {
-                    shouldCenter = false
                     destination = it
                     clearOptions()
                 },
                 singleLine = true,
                 label = { Text(stringResource(id = R.string.destination)) },
                 trailingIcon = {
+                    // Button to remove the contents of the search bar and the marker
                     if (destination.isNotBlank()) {
                         IconButton(
                             onClick = {
-                                shouldCenter = false
                                 destination = ""
                                 clearOptions()
                                 searchExpanded = false
@@ -418,7 +438,6 @@ fun MapBody(
                                     }
                                     mapView.invalidate()
                                 }
-
                                 cancelRecording()
                             }
                         ) {
@@ -442,7 +461,7 @@ fun MapBody(
                 ),
                 modifier = Modifier.fillMaxWidth(0.8f)
             )
-
+            // List with the address options of the search bar
             AnimatedVisibility(
                 visible = searchExpanded
             ) {
@@ -456,30 +475,35 @@ fun MapBody(
                         .background(MaterialTheme.colorScheme.background)
                 ) {
                     items(items = options, key = { it.placeId }) {
+                        // Clickable for an address
                         DropdownMenuItem(
                             text = { Text(it.displayName) },
                             onClick = {
+                                // The search bar is updated
                                 destination = it.displayName
                                 destinationPoint.position = GeoPoint(
                                     it.lat,
                                     it.lon
                                 )
+                                // The info window is closed and the destination gets updated
                                 destinationPoint.closeInfoWindow()
-                                shouldCenter = true
-                                startPoint = destinationPoint.position
+                                mapView.controller.setCenter(destinationPoint.position)
                                 mapView.overlayManager.remove(destinationPoint)
                                 mapView.overlayManager.add(destinationPoint)
 
+                                // The search bar loses focus
                                 searchExpanded = false
                                 focusManager.clearFocus()
                                 mapView.invalidate()
 
+                                // The info window of the destination is shown
                                 destinationPoint.showInfoWindow()
                             },
                             contentPadding = PaddingValues(10.dp),
                             modifier = Modifier.requiredHeight(40.dp)
                         )
 
+                        // A divider is added to every element in between
                         if (options.last() != it) {
                             HorizontalDivider(thickness = 1.dp)
                         }
@@ -488,21 +512,28 @@ fun MapBody(
             }
         }
 
+        // If there is a change on the ui, the routes on the map change
         LaunchedEffect(uiState) {
-
+            // If there is a response from the server with the routes, they are shown
             if (uiState is MapUiState.CompleteRoutes) {
+                // The layer for putting a marker with a click is removed
                 mapView.overlays.remove(overlayEvents)
 
+                // The bounds are computed to focus the screen with all the routes visible
                 var bounds = destinationPoint.bounds
                 bounds = bounds.concat(BoundingBox.fromGeoPoints(
                     listOf(locationOverlay.myLocation))
                 )
+
+                // For each route
                 for(route in uiState.routes) {
+                    // A polyline is drawn with its parameters
                     val polyline = Polyline(mapView)
 
                     polyline.outlinePaint.strokeCap = Paint.Cap.ROUND
                     polyline.outlinePaint.strokeWidth = 20F
 
+                    // The color is decided based on the most important label it contains
                     polyline.outlinePaint.color = if(route.first.contains("eco")) {
                         Color.GREEN
                     } else if(route.first.contains("fastest")) {
@@ -513,25 +544,31 @@ fun MapBody(
                         Color.RED
                     }
 
+                    // The coordinates are added to the line
                     val coordinates = route.second.processedRoute
                     for(cord in coordinates) {
                         polyline.addPoint(GeoPoint(cord.first, cord.second))
                     }
 
+                    // A window is added to show information about the route when it is clicked
                     polyline.infoWindow = MyInfoWindow(
                         view = RouteWindowFragment(
                             _uiState = recordingUiStateFlow,
                             route = route.second,
+                            isElectric = isElectric,
                             onClick = {
+                                // A recording starts and the map focuses on the location of the car
                                 startRecording(destinationPoint.position)
                                 mapView.controller.setZoom(18.0)
+                                // The map follows the position of the phone
                                 locationOverlay.enableFollowLocation()
-                                locationOverlay.enableAutoStop = true
+                                locationOverlay.enableAutoStop = false
 
+                                // The other routes get removed from the map
                                 mapView.overlayManager.removeAll(routeOverlays)
                                 routeOverlays.clear()
                                 routeOverlays.add(polyline)
-                                mapView.overlayManager.add(polyline)
+                                mapView.insertPolyline(polyline)
 
                                 mapView.invalidate()
                             },
@@ -540,20 +577,30 @@ fun MapBody(
                         mapView = mapView
                     )
 
+                    // The bounds get bigger using the ones from the new route to show
                     bounds = bounds.concat(polyline.bounds)
 
-                    mapView.overlayManager.add(polyline)
+                    // The route is drawn keeping the markers as the head objects from the map
+                    mapView.insertPolyline(polyline)
                     routeOverlays.add(polyline)
                 }
+                // The map view is updated with the new changes, and it zooms to the new routes
                 mapView.invalidate()
                 mapView.zoomToBoundingBox(bounds.increaseByScale(1.3f),
                     true)
             }
+            // If the routes are not selected
             else if (uiState is MapUiState.Start || uiState is MapUiState.LoadingRoute) {
+                // The layer to select destination with a click is added
                 if(!mapView.overlays.contains(overlayEvents)) {
                     mapView.overlays.add(overlayEvents)
                 }
+                // All the routes from the map are removed if they existed previously
                 if(routeOverlays.isNotEmpty()) {
+                    // All the info windows are closed
+                    for(route in routeOverlays) {
+                        route.closeInfoWindow()
+                    }
                     mapView.overlayManager.removeAll(routeOverlays)
                     mapView.invalidate()
 
@@ -562,6 +609,7 @@ fun MapBody(
             }
         }
 
+        // Changes the popups that should show based on the current ui state
         when (uiState) {
             is MapUiState.LoadingRoute -> {
                 LoadingRouteDialog()
@@ -569,7 +617,26 @@ fun MapBody(
 
             is MapUiState.CompleteRoutes -> {
                 if(recordingUiState is RecordingUiState.Default) {
-                    RoutesLegend(routes = uiState.routes, Modifier.align(Alignment.BottomEnd))
+                    // A legend with information of the routes is added at the bottom of the screen
+                    RoutesLegend(
+                        routes = uiState.routes,
+                        onClick = {
+                            // The selected route is set as the head of the layers list
+                            mapView.overlayManager.remove(routeOverlays[it])
+                            mapView.insertPolyline(routeOverlays[it])
+                            mapView.invalidate()
+
+                            // All the info windows are closed
+                            for(route in routeOverlays) {
+                                route.closeInfoWindow()
+                            }
+
+                            // A window is opened for the route in the middle point
+                            routeOverlays[it].infoWindowLocation =
+                                routeOverlays[it].actualPoints[routeOverlays[it].actualPoints.size/2]
+                            routeOverlays[it].showInfoWindow()
+                        },
+                        modifier = Modifier.align(Alignment.BottomEnd))
                 }
             }
 
@@ -578,7 +645,8 @@ fun MapBody(
             }
 
             is MapUiState.CompleteScore -> {
-                ScoresResult(score = uiState.scores, sendFiles = sendFiles, clearScore = clearScore)
+                ScoresResult(score = uiState.scores, isElectric = isElectric,
+                    sendFiles = sendFiles, clearScore = clearScore)
             }
 
             else -> {}
@@ -586,114 +654,51 @@ fun MapBody(
 
     }
 
+    // When the recording ends, the results are sent once
     LaunchedEffect(recordingUiState) {
         if(recordingUiState is RecordingUiState.Complete) {
+            // The map stops following the phone position
             locationOverlay.disableFollowLocation()
-            getScore((recordingUiState as RecordingUiState.Complete).speeds,
-                (recordingUiState as RecordingUiState.Complete).heights)
+            locationOverlay.enableAutoStop = true
+            // The scores are obtained and the ui updates
+            getScore()
+        }
+        else if (recordingUiState is RecordingUiState.Default) {
+            locationOverlay.disableFollowLocation()
+            locationOverlay.enableAutoStop = true
         }
     }
 }
-
 
 /**
- * Dialog that shows Eco-Driving phrases to the user while a query is being processed
+ * Legend to show the labels of each route drawn on the map
  *
- * @param ecoDrivingPhrases Phrases shown while waiting, tapping on the screen changes the current
- * one
+ * @param routes The routes to show information about
+ * @param onClick The function that focuses the information of a route when clicking its name
  */
 @Composable
-fun LoadingRouteDialog(ecoDrivingPhrases: List<String> =
-                           stringArrayResource(id = R.array.eco_driving_messages).toList()){
-
-    var currentPhrase by remember { mutableStateOf(ecoDrivingPhrases.random()) }
-
-    val calculateNewPhrase = { var newPhrase = ecoDrivingPhrases.random()
-        while (newPhrase == currentPhrase) {
-            newPhrase = ecoDrivingPhrases.random()
-        }
-        currentPhrase = newPhrase
-    }
-
-    LaunchedEffect(currentPhrase) {
-        delay(10000)
-        calculateNewPhrase()
-    }
-
-    Dialog(onDismissRequest = { }) {
-        ElevatedCard(modifier = Modifier
-            .fillMaxWidth()
-            .clickable {
-                calculateNewPhrase()
-            }) {
-            CircularProgressIndicator(
-                modifier = Modifier
-                    .padding(8.dp)
-                    .align(Alignment.CenterHorizontally)
-            )
-
-            Text(
-                text = currentPhrase,
-                style = MaterialTheme.typography.bodyLarge,
-                textAlign = TextAlign.Justify,
-                modifier = Modifier
-                    .align(Alignment.CenterHorizontally)
-                    .padding(8.dp)
-            )
-        }
-    }
-}
-
-@Composable
-fun ErrorMessage(code: Int) {
-    var visible by remember{ mutableStateOf(true) }
-    var timeLeft by remember{ mutableIntStateOf(5) }
-    LaunchedEffect(visible) {
-        while(timeLeft > 0) {
-            delay(1000L)
-            timeLeft--
-        }
-        visible = false
-    }
-
-    if(visible) {
-        Dialog(onDismissRequest = { visible = false }) {
-            ElevatedCard(modifier = Modifier
-                .fillMaxWidth(0.8f)
-            ) {
-                Text(
-                    text = stringResource(id = if(code == 2) {
-                        R.string.error_signup
-                    } else R.string.server_available),
-                    style = MaterialTheme.typography.bodyLarge,
-                    textAlign = TextAlign.Justify,
-                    color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier
-                        .align(Alignment.CenterHorizontally)
-                        .padding(16.dp)
-                )
-            }
-        }
-    }
-}
-
-@Composable
-fun RoutesLegend(routes: List<Pair<List<String>,Route>>, modifier: Modifier = Modifier) {
+fun RoutesLegend(
+    routes: List<Pair<List<String>,Route>>,
+    onClick: (Int) -> Unit,
+    modifier: Modifier = Modifier
+) {
     Surface(
         color = MaterialTheme.colorScheme.surface,
         modifier = modifier
             .fillMaxWidth()
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
+            // The possible labels
             val labels = mapOf(
                 "fastest" to stringResource(id = R.string.fastest),
                 "shortest" to stringResource(id = R.string.shortest),
                 "eco" to stringResource(id = R.string.eco_route)
             )
+            // For each route, the colors and labels are decided
             val legend = routes.map {
-                val color = if(it.first.contains("eco")) {
+                val color = if (it.first.contains("eco")) {
                     Green
-                } else if(it.first.contains("fastest")) {
+                } else if (it.first.contains("fastest")) {
                     Blue
                 } else if (it.first.contains("shortest")) {
                     Magenta
@@ -701,15 +706,22 @@ fun RoutesLegend(routes: List<Pair<List<String>,Route>>, modifier: Modifier = Mo
                     Red
                 }
 
+                // The label is formed joining all the string with a comma in the middle
                 val label = it.first.joinToString(separator = ", ") { type ->
                     labels[type] ?: ""
                 }
 
+                // A list with the color and label of each route is returned
                 Pair(color, label)
             }
 
-            legend.forEach { (color, label) ->
-                Row(modifier = Modifier.padding(horizontal = 32.dp, vertical = 8.dp)) {
+            // For each route, a Row with its information is shown
+            legend.forEachIndexed { index, (color, label) ->
+                Row(
+                    modifier = Modifier
+                        .padding(horizontal = 32.dp, vertical = 8.dp)
+                        .clickable { onClick(index) }
+                ) {
                     Box(
                         modifier = Modifier
                             .size(20.dp)
@@ -719,246 +731,5 @@ fun RoutesLegend(routes: List<Pair<List<String>,Route>>, modifier: Modifier = Mo
                 }
             }
         }
-    }
-}
-
-@Composable
-fun ScoresResult(
-    score: RouteEvaluation,
-    sendFiles: () -> Unit,
-    clearScore: () -> Unit
-) {
-    var visible by remember{ mutableStateOf(true) }
-    val close = {
-        visible = false
-        clearScore()
-    }
-
-    if(visible) {
-        Dialog(onDismissRequest = { }) {
-            ElevatedCard(
-                modifier = Modifier
-                    .fillMaxWidth(0.8f)
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally, modifier =
-                    Modifier.fillMaxWidth()) {
-                    Text(
-                        text = stringResource(id = R.string.results),
-                        style = MaterialTheme.typography.titleLarge,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier
-                            .padding(16.dp)
-                    )
-                    
-                    Text(
-                        text = stringResource(id = R.string.stops),
-                        style = MaterialTheme.typography.bodyLarge,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier
-                            .padding(8.dp)
-                    )
-
-                    Score(score = score.numStopsPerKm)
-
-                    Text(
-                        text = stringResource(id = R.string.speeding),
-                        style = MaterialTheme.typography.bodyLarge,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier
-                            .padding(8.dp)
-                    )
-
-                    Score(score = score.accelerationGreaterThreshold)
-
-                    Text(
-                        text = stringResource(id = R.string.slow_driving),
-                        style = MaterialTheme.typography.bodyLarge,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier
-                            .padding(8.dp)
-                    )
-
-                    Score(score = score.accelerationLowerThreshold)
-
-                    Text(
-                        text = stringResource(id = R.string.distance) + ": " +
-                                String.format("%.3f", (score.distance/1000.0) )
-                                + " km",
-                        modifier = Modifier.padding(16.dp)
-                    )
-                    Text(
-                        text = stringResource(id = R.string.time) + ": " +
-                                ceil(score.time/60).toInt().toString()
-                                + " min",
-                        modifier = Modifier.padding(16.dp)
-                    )
-                    Text(
-                        text = stringResource(id = R.string.consumption) + ": "
-                                + String.format("%.3f", score.energyConsumption)
-                                + " l",
-                        modifier = Modifier.padding(16.dp)
-                    )
-
-                    Button(onClick = sendFiles, modifier = Modifier.padding(16.dp)) {
-                        Text(stringResource(id = R.string.send_results))
-                    }
-
-                    Button(onClick = close, modifier = Modifier.padding(16.dp)) {
-                        Text(stringResource(id = R.string.accept))
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun Score(score: Int) {
-    Row {
-        for (i in (1..score)) {
-            Icon(
-                imageVector = Icons.Filled.StarRate,
-                contentDescription = null,
-                modifier = Modifier.padding(8.dp)
-            )
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun RouteParams(
-    visible: MutableState<Boolean>,
-    vehicles: List<Pair<UserVehicle, Vehicle>>,
-    selectedVehicle: MutableState<Pair<Long, Long>?>,
-    numberOfPersons: MutableState<Int>,
-    numberOfBulks: MutableState<Int?>
-) {
-    val close = {
-        visible.value = false
-    }
-
-    if(visible.value) {
-        Dialog(onDismissRequest = close) {
-            ElevatedCard(
-                modifier = Modifier
-            ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally, modifier =
-                    Modifier.fillMaxWidth()
-                ) {
-                    Text(
-                        text = stringResource(id = R.string.route_options),
-                        style = MaterialTheme.typography.titleLarge,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier
-                            .padding(16.dp)
-                    )
-
-                    var expanded by remember { mutableStateOf(false) }
-
-                    ExposedDropdownMenuBox(
-                        expanded = expanded,
-                        onExpandedChange = { expanded = !expanded },
-                        modifier = Modifier.padding(vertical = 16.dp)
-                    ) {
-                        TextField(
-                            modifier = Modifier.menuAnchor(),
-                            readOnly = true,
-                            value = if(selectedVehicle.value == null) {
-                                ""
-                            } else {
-                                vehicles
-                                    .first { it.second.vehicleID == selectedVehicle.value!!.second }
-                                    .second.name.replace("_-_", " ")
-                            },
-                            onValueChange = {},
-                            label = { Text(stringResource(id = R.string.selected_vehicle)) },
-                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-                            colors = ExposedDropdownMenuDefaults.textFieldColors(),
-                        )
-
-                        ExposedDropdownMenu(
-                            expanded = expanded,
-                            onDismissRequest = { expanded = false },
-                        ) {
-                            vehicles.forEach {
-                                DropdownMenuItem(
-                                    text = { Text(it.second.name.replace("_-_", " ")) },
-                                    onClick = {
-                                        selectedVehicle.value = Pair(it.first.id!!, it.second.vehicleID)
-                                        expanded = false
-                                    }
-                                )
-                            }
-                        }
-                    }
-
-                    TextField(
-                        value = if(numberOfPersons.value == 0) "" else numberOfPersons.value.toString(),
-                        onValueChange = { if(it.length < 2) {
-                            if (it.isBlank()) {
-                                numberOfPersons.value = 0
-                            }
-                            else if(it.isDigitsOnly()) {
-                                numberOfPersons.value = it.toInt()
-                            }
-                        }},
-                        label = { Text(stringResource(id = R.string.number_passengers)) },
-                        keyboardOptions = KeyboardOptions(
-                            keyboardType = KeyboardType.Number,
-                            imeAction = ImeAction.Next
-                        ),
-                        singleLine = true,
-                        modifier = Modifier.padding(8.dp)
-                    )
-
-                    TextField(
-                        value = if(numberOfBulks.value == null) "" else numberOfBulks.value.toString(),
-                        onValueChange = { if(it.length <= 2) {
-                            if (it.isBlank()) {
-                                numberOfBulks.value = null
-                            }
-                            else if(it.isDigitsOnly()) {
-                                numberOfBulks.value = it.toInt()
-                            }
-                        }},
-                        label = { Text(stringResource(id = R.string.number_bulks) + " (5 kg)") },
-                        keyboardOptions = KeyboardOptions(
-                            keyboardType = KeyboardType.Number,
-                            imeAction = ImeAction.Done
-                        ),
-                        keyboardActions = KeyboardActions(
-                            onDone = { close() }
-                        ),
-                        singleLine = true,
-                        modifier = Modifier.padding(8.dp)
-                    )
-
-                    Button(onClick = close, modifier = Modifier.padding(16.dp)) {
-                        Text(stringResource(id = R.string.accept))
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Preview(showBackground = true, heightDp = 480, widthDp = 320)
-@Preview(showBackground = true, heightDp = 480, widthDp = 320, uiMode = Configuration.UI_MODE_NIGHT_YES)
-@Composable
-fun LoadingRouteDialogPreview(){
-    GRETAAppTheme {
-        LoadingRouteDialog(listOf("Keep a constant speed", "Turn off your engine for long pauses",
-            "Stay alert for changes while driving", "Remember to monitor tire pressure"))
-    }
-}
-
-@Preview(showBackground = true, heightDp = 480, widthDp = 320)
-@Preview(showBackground = true, heightDp = 480, widthDp = 320, uiMode = Configuration.UI_MODE_NIGHT_YES, locale = "es")
-@Composable
-fun ErrorMessagePreview() {
-    GRETAAppTheme {
-        ErrorMessage(1)
     }
 }

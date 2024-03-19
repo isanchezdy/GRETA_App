@@ -26,8 +26,11 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -60,6 +63,8 @@ fun GretaApp(
     // Current state of the menu to open or close
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
+    // Skip login flag
+    val skipsLogin = remember{ mutableStateOf(true) }
     // Menu view to select screens
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -71,7 +76,9 @@ fun GretaApp(
                         popUpTo(0)
                     }
                 }
-            })
+            },
+                skipsLogin = skipsLogin
+            )
         },
         gesturesEnabled = drawerState.isOpen
     ) {
@@ -84,7 +91,8 @@ fun GretaApp(
                         if (isClosed) open() else close()
                     }
                 }
-            }
+            },
+            skipsLogin = skipsLogin.value
         )
 
         // Closes the menu when it is open instead of going to the previous screen of the backstack
@@ -158,6 +166,7 @@ fun GretaTopAppBar(
 @Composable
 fun GretaNavigationDrawer(
     onNavigate: (String) -> Unit,
+    skipsLogin: MutableState<Boolean>,
     modifier: Modifier = Modifier
 ) {
     ModalDrawerSheet(
@@ -214,6 +223,7 @@ fun GretaNavigationDrawer(
                         }
                         builder.setPositiveButton(string.yes) { _, _ ->
                             selectedItemIndex = 0
+                            skipsLogin.value = false
                             onNavigate(HomeDestination.route)
                         }
                         builder.show()
@@ -230,7 +240,7 @@ fun GretaNavigationDrawer(
 @Composable
 fun GretaNavigationDrawerPreview() {
     GRETAAppTheme {
-        GretaNavigationDrawer({ })
+        GretaNavigationDrawer({ }, remember{ mutableStateOf(true) })
     }
 }
 

@@ -18,6 +18,7 @@ class MainActivity : ComponentActivity() {
         // Set flag for keeping the device screen always on while the application is running
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
+        // The orientation is set to portrait
         this.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
 
         // The context of the application is loaded with some parameters for osmdroid to function
