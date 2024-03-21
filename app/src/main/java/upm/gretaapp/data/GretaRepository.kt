@@ -3,8 +3,8 @@ package upm.gretaapp.data
 import upm.gretaapp.model.AppReview
 import upm.gretaapp.model.FeatureReview
 import upm.gretaapp.model.Route
-import upm.gretaapp.model.RouteEvaluation
-import upm.gretaapp.model.RouteEvaluationInput
+import upm.gretaapp.model.PerformanceRouteMetrics
+import upm.gretaapp.model.InputPerformedRoute
 import upm.gretaapp.model.User
 import upm.gretaapp.model.UserRoute
 import upm.gretaapp.model.UserStats
@@ -22,7 +22,7 @@ interface GretaRepository {
     // Vehicle methods
     suspend fun getVehicles(query: String = ""): List<Vehicle>
 
-    suspend fun getVehicle(id: Long): Vehicle
+    suspend fun getVehicle(vehicleId: Long): Vehicle
 
     // UserVehicle methods
     suspend fun getUserVehicles(userId: Long): List<UserVehicle>
@@ -31,7 +31,7 @@ interface GretaRepository {
 
     suspend fun updateUserVehicle(userVehicle: UserVehicle): UserVehicle
 
-    suspend fun deleteUserVehicle(id: Long) : Int
+    suspend fun deleteUserVehicle(userVehicleId: Long) : Int
 
     // Route methods
     suspend fun getRoutes(
@@ -43,12 +43,14 @@ interface GretaRepository {
         additionalMass: Long
     ): Map<String, Route>
 
-    suspend fun getScore(
-        routeEvaluationInput: RouteEvaluationInput
-    ): RouteEvaluation
+    suspend fun calculatePerformedRouteMetrics(
+        inputPerformedRoute: InputPerformedRoute
+    ): PerformanceRouteMetrics
 
     // User route methods
     suspend fun createUserRoute(userRoute: UserRoute): UserRoute
+
+    suspend fun getRoutesHistoryUser(userId: Long): List<UserRoute>
 
     // User stats methods
     suspend fun getStatsUser(userId: Long): List<UserStats>

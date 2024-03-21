@@ -5,8 +5,8 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class FeatureReview(
-    @SerialName("ID")
-    val id: Long? = null,
+    @SerialName("FeatureID")
+    val featureId: Long? = null,
 
     @SerialName("AppReviewID")
     val appReviewId: Long,

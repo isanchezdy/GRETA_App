@@ -5,9 +5,6 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class UserStats (
-    @SerialName("CarbonFootprint")
-    val carbonFootprint: Double,
-
     @SerialName("ConsumptionSaving")
     val consumptionSaving: Double,
 

@@ -3,8 +3,8 @@ package upm.gretaapp.data
 import upm.gretaapp.model.AppReview
 import upm.gretaapp.model.FeatureReview
 import upm.gretaapp.model.Route
-import upm.gretaapp.model.RouteEvaluation
-import upm.gretaapp.model.RouteEvaluationInput
+import upm.gretaapp.model.PerformanceRouteMetrics
+import upm.gretaapp.model.InputPerformedRoute
 import upm.gretaapp.model.User
 import upm.gretaapp.model.UserRoute
 import upm.gretaapp.model.UserStats
@@ -35,8 +35,8 @@ class OnlineGretaRepository(
         apiKey = API_KEY
     )
 
-    override suspend fun getVehicle(id: Long): Vehicle = gretaApiService.getVehicle(
-        id = id,
+    override suspend fun getVehicle(vehicleId: Long): Vehicle = gretaApiService.getVehicle(
+        vehicleId = vehicleId,
         apiKey = API_KEY
     )
 
@@ -49,8 +49,8 @@ class OnlineGretaRepository(
     override suspend fun updateUserVehicle(userVehicle: UserVehicle): UserVehicle = gretaApiService
         .updateUserVehicle(userVehicle = userVehicle, apiKey = API_KEY)
 
-    override suspend fun deleteUserVehicle(id: Long) = gretaApiService.deleteUserVehicle(
-        id = id,
+    override suspend fun deleteUserVehicle(userVehicleId: Long) = gretaApiService.deleteUserVehicle(
+        userVehicleId = userVehicleId,
         apiKey = API_KEY
     )
 
@@ -65,16 +65,15 @@ class OnlineGretaRepository(
         source = source,
         destination = destination,
         innerCoords = innerCoords,
-        userId = userId,
         vehicleId = vehicleId,
         additionalMass = additionalMass,
         apiKey = API_KEY
     )
 
-    override suspend fun getScore(
-        routeEvaluationInput: RouteEvaluationInput
-    ): RouteEvaluation = gretaApiService.getScore(
-        routeEvaluationInput = routeEvaluationInput,
+    override suspend fun calculatePerformedRouteMetrics(
+        inputPerformedRoute: InputPerformedRoute
+    ): PerformanceRouteMetrics = gretaApiService.calculatePerformedRouteMetrics(
+        inputPerformedRoute = inputPerformedRoute,
         apiKey = API_KEY
     )
 
@@ -84,7 +83,13 @@ class OnlineGretaRepository(
             apiKey = API_KEY
         )
 
-    override suspend fun getStatsUser(userId: Long): List<UserStats> = gretaApiService.getStatsUser(
+    override suspend fun getRoutesHistoryUser(userId: Long): List<UserRoute> = gretaApiService
+        .getUserRoutes(
+            userId = userId,
+            apiKey = API_KEY
+        )
+
+    override suspend fun getStatsUser(userId: Long): List<UserStats> = gretaApiService.getUserStats(
         userId = userId,
         apiKey = API_KEY
     )

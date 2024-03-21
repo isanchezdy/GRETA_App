@@ -42,7 +42,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.core.text.isDigitsOnly
 import kotlinx.coroutines.delay
 import upm.gretaapp.R
-import upm.gretaapp.model.RouteEvaluation
+import upm.gretaapp.model.PerformanceRouteMetrics
 import upm.gretaapp.model.UserVehicle
 import upm.gretaapp.model.Vehicle
 import upm.gretaapp.ui.theme.GRETAAppTheme
@@ -139,14 +139,14 @@ fun ErrorMessage(code: Int) {
 /**
  * The results shown when the route is finished
  *
- * @param score The [RouteEvaluation] with all the results to show
+ * @param score The [PerformanceRouteMetrics] with all the results to show
  * @param sendFiles The function for sending the recording files through another app
  * @param clearScore Clears the information of the results from the phone to avoid them from being
  * shown multiple times
  */
 @Composable
 fun ScoresResult(
-    score: RouteEvaluation,
+    score: PerformanceRouteMetrics,
     isElectric: Boolean,
     sendFiles: () -> Unit,
     clearScore: () -> Unit
@@ -181,7 +181,7 @@ fun ScoresResult(
                             .padding(8.dp)
                     )
 
-                    Score(score = score.numStopsPerKm)
+                    Score(score = score.numStopsKm)
 
                     Text(
                         text = stringResource(id = R.string.speeding),
@@ -191,7 +191,7 @@ fun ScoresResult(
                             .padding(8.dp)
                     )
 
-                    Score(score = score.accelerationGreaterThreshold)
+                    Score(score = score.drivingAggressiveness)
 
                     Text(
                         text = stringResource(id = R.string.slow_driving),
@@ -201,23 +201,23 @@ fun ScoresResult(
                             .padding(8.dp)
                     )
 
-                    Score(score = score.accelerationLowerThreshold)
+                    Score(score = score.speedVariationNum)
 
                     Text(
                         text = stringResource(id = R.string.distance) + ": " +
-                                String.format("%.3f", (score.distance/1000.0) )
+                                String.format("%.3f", (score.performedRouteDistance/1000.0) )
                                 + " km",
                         modifier = Modifier.padding(16.dp)
                     )
                     Text(
                         text = stringResource(id = R.string.time) + ": " +
-                                ceil(score.time/60).toInt().toString()
+                                ceil(score.performedRouteTime/60).toInt().toString()
                                 + " min",
                         modifier = Modifier.padding(16.dp)
                     )
                     Text(
                         text = stringResource(id = R.string.consumption) + ": "
-                                + String.format("%.3f", score.energyConsumption)
+                                + String.format("%.3f", score.performedRouteConsumption)
                                 + if(isElectric) " kW/h" else " l",
                         modifier = Modifier.padding(16.dp)
                     )

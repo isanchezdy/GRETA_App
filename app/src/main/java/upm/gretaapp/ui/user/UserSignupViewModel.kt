@@ -91,7 +91,7 @@ fun UserDetails.toUser(): User = User(
         }
     },
     birthDate = this.birthday + "T00:00:00",
-    drivingLicenseDate = this.drivingLicenseDate + "T00:00:00"
+    drivingLicenseYear = this.drivingLicenseDate + "T00:00:00"
 )
 
 fun User.toUserDetails(): UserDetails = UserDetails(
@@ -111,5 +111,5 @@ fun User.toUserDetails(): UserDetails = UserDetails(
         }
     },
     birthday = this.birthDate.removeSuffix("T00:00:00"),
-    drivingLicenseDate = this.drivingLicenseDate.removeSuffix("T00:00:00")
+    drivingLicenseDate = this.drivingLicenseYear.removeSuffix("T00:00:00")
 )

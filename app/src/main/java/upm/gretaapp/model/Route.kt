@@ -7,14 +7,16 @@ import upm.gretaapp.ui.map.decodePoly
 
 @Serializable
 data class Route (
+    @SerialName("Distance")
     val distance: Double,
 
-    @SerialName("energy_consumption")
+    @SerialName("EnergyConsumption")
     val energyConsumption: Double,
 
-    @SerialName("route")
+    @SerialName("Route")
     val route: String,
 
+    @SerialName("Time")
     val time: Double
 )
 

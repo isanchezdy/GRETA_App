@@ -11,8 +11,8 @@ data class User (
     @SerialName("BirthDate")
     val birthDate: String,
 
-    @SerialName("DrivingLicenseDate")
-    val drivingLicenseDate: String,
+    @SerialName("DrivingLicenseYear")
+    val drivingLicenseYear: String,
 
     @SerialName("Email")
     val email: String,

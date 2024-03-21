@@ -22,8 +22,8 @@ import upm.gretaapp.data.RecordingRepository
 import upm.gretaapp.data.UserSessionRepository
 import upm.gretaapp.model.NominatimResult
 import upm.gretaapp.model.Route
-import upm.gretaapp.model.RouteEvaluation
-import upm.gretaapp.model.RouteEvaluationInput
+import upm.gretaapp.model.PerformanceRouteMetrics
+import upm.gretaapp.model.InputPerformedRoute
 import upm.gretaapp.model.UserVehicle
 import upm.gretaapp.model.Vehicle
 import java.net.ConnectException
@@ -239,17 +239,21 @@ class MapViewModel(
                         )
                     }
 
+                    // TODO add performed route polyline
+                    val routePolyline = ""
+
                     val input =
-                        RouteEvaluationInput(userId = userId, vehicleId = vehicleId,
+                        InputPerformedRoute(vehicleId = vehicleId,
                             additionalMass = additionalMass,
                             speeds = recordingResults.first, heights = recordingResults.second,
                             times = (recordingResults.first.indices).toList()
                                 .map {
                                     it.toDouble()
-                                }
+                                },
+                            routePolyline = routePolyline
                         )
                     // The scores are retrieved and the ui is updated
-                    val scores = gretaRepository.getScore(input)
+                    val scores = gretaRepository.calculatePerformedRouteMetrics(input)
                     _uiState.value = MapUiState.CompleteScore(scores)
                 } catch(connectException: ConnectException) {
                     // If there is a connection error, a message is shown
@@ -301,7 +305,7 @@ sealed interface MapUiState {
     data object LoadingRoute: MapUiState
     data class Error(val code: Int): MapUiState
     data class CompleteRoutes(val routes: List<Pair<List<String>, Route>>): MapUiState
-    data class CompleteScore(val scores: RouteEvaluation): MapUiState
+    data class CompleteScore(val scores: PerformanceRouteMetrics): MapUiState
 }
 
 /**
