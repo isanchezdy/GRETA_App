@@ -30,8 +30,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import upm.gretaapp.DELAY_TIME_MICRO
 import upm.gretaapp.DELAY_TIME_MILLIS
-import upm.gretaapp.KEY_DESTINATION_LAT
-import upm.gretaapp.KEY_DESTINATION_LON
 import upm.gretaapp.KEY_FILENAME
 import upm.gretaapp.R
 import upm.gretaapp.TIMER_MILLIS
@@ -135,20 +133,13 @@ class RecordingWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
 
         return withContext(Dispatchers.IO) {
             // Input values are retrieved such as the destination or the filename
-            val destinationLat = inputData.getDouble(KEY_DESTINATION_LAT, 0.0)
-            val destinationLon = inputData.getDouble(KEY_DESTINATION_LON, 0.0)
             val filename = inputData.getString(KEY_FILENAME)!! + ".csv"
+            val stateFile = inputData.getString(KEY_FILENAME)!! + " state.txt"
 
             // A timer is started to stop service in case of need
             var timer = TIMER_MILLIS
 
             return@withContext try{
-                // Start file with the csv header
-                val destination = Location("").apply {
-                    this.latitude = destinationLat
-                    this.longitude = destinationLon
-                }
-
                 // Initialize all sensors
                 initializeSensors()
                 initializeLocation()
@@ -156,6 +147,21 @@ class RecordingWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
                 // Start timer to stop in case of error
                 val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
                 while(timer > 0) {
+                    var hasReachedDestination = readState(applicationContext, stateFile)
+
+                    // Exit loop when destination is reached
+                    if(hasReachedDestination == "finished") {
+                        break
+                    } else if(hasReachedDestination == "paused") {
+                        closeSensors(false)
+                        while(hasReachedDestination == "paused") {
+                            delay(DELAY_TIME_MILLIS.toLong())
+                            hasReachedDestination = readState(applicationContext, stateFile)
+                        }
+                        initializeLocation()
+                        initializeSensors()
+                    }
+
                     // The recording is updated
                     recording = recording.copy(latitude = location.value?.latitude,
                         longitude = location.value?.longitude,
@@ -167,20 +173,10 @@ class RecordingWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
                     // Initialize satellite number to 0
                     recording = recording.copy(numSatellites = 0)
 
-                    // Exit loop when destination is reached
-                    if((recording.latitude != null) and (recording.longitude != null)) {
-                        val dist = destination.distanceTo(location.value!!)
-                        if (dist <= 50) {
-                            break
-                        }
-                    }
-
                     // Decrement timer
                     delay(DELAY_TIME_MILLIS.toLong())
                     timer -= DELAY_TIME_MILLIS
                 }
-                // When the loop ends, remove all sensors and restart app
-                closeSensors()
 
                 val output = workDataOf("filename" to filename)
 
@@ -199,8 +195,9 @@ class RecordingWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
                     "Error",
                     throwable
                 )
-                closeSensors()
                 Result.failure()
+            } finally {
+                closeSensors(true)
             }
         }
     }
@@ -294,13 +291,13 @@ class RecordingWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
     /**
      * Close all sensors to optimize performance
      */
-    private fun closeSensors() {
+    private fun closeSensors(quitThread: Boolean) {
         sensorManager.unregisterListener(sensorEventListener, linearAccelerometer)
 
         locationManager.unregisterGnssStatusCallback(gnssStatusCallback)
         locationManager.removeUpdates(locationListener)
 
-        if(handlerThread.isAlive) {
+        if(handlerThread.isAlive && quitThread) {
             handlerThread.quitSafely()
         }
     }

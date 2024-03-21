@@ -14,9 +14,11 @@ import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
+import java.io.PrintWriter
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 import kotlin.math.pow
+
 
 /**
  * Function to redirect the app to Google Maps with a certain route
@@ -125,6 +127,19 @@ fun readFile(context: Context, filename: String): Pair<List<Double>, List<Double
     return Pair(emptyList(), emptyList())
 }
 
+fun writeState(context: Context, filename: String, state: String) {
+    val storageState = Environment.getExternalStorageState()
+    if (Environment.MEDIA_MOUNTED == storageState) {
+        // Get the app-specific directory on external storage
+        val dir = context.getExternalFilesDir(null)
+        val file = File(dir, filename)
+        val writer = PrintWriter(file)
+        writer.use {
+            it.print(state)
+        }
+    }
+}
+
 /**
  * Function to send a zip with all the recording files through another app
  *
@@ -195,6 +210,18 @@ fun sendFiles(context: Context, userId: Long) {
                 context.startActivity(intent)
             }
         }
+    }
+}
+
+fun clearFiles(context: Context) {
+    // Get file directory files
+    val filePath = context.getExternalFilesDir(null)
+    val filePathString = filePath.toString()
+    val fileDir = File(filePathString)
+    val files = fileDir.list()
+
+    for(file in files!!) {
+        File(filePath,file).delete()
     }
 }
 

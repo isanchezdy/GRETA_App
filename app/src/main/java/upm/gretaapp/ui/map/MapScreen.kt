@@ -5,7 +5,6 @@ import android.annotation.SuppressLint
 import android.app.AlertDialog
 import android.graphics.Color
 import android.graphics.Paint
-import android.os.Build
 import android.view.LayoutInflater
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
@@ -28,8 +27,11 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Cancel
 import androidx.compose.material.icons.filled.DirectionsCar
+import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.MyLocation
+import androidx.compose.material.icons.filled.Pause
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
@@ -49,6 +51,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -70,13 +73,18 @@ import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import com.google.accompanist.permissions.shouldShowRationale
 import com.google.android.gms.location.LocationServices
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import org.osmdroid.events.MapEventsReceiver
 import org.osmdroid.util.BoundingBox
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.overlay.MapEventsOverlay
 import org.osmdroid.views.overlay.Marker
 import org.osmdroid.views.overlay.Polyline
+import upm.gretaapp.DELAY_TIME_MILLIS
 import upm.gretaapp.GretaTopAppBar
 import upm.gretaapp.R
 import upm.gretaapp.model.NominatimResult
@@ -113,7 +121,7 @@ fun MapScreen(
         mutableStateOf(null)
     }
 
-    var isElectric by remember {
+    val isElectric = remember {
         mutableStateOf(false)
     }
 
@@ -123,7 +131,7 @@ fun MapScreen(
             it.first.isFav == 1
         }
         selectedVehicle.value = if(favouriteVehicle != null) {
-            isElectric = favouriteVehicle!!.second.motorType == "ELECTRIC"
+            isElectric.value = favouriteVehicle!!.second.motorType == "ELECTRIC"
             Pair(favouriteVehicle!!.first.id!!, favouriteVehicle!!.second.vehicleID)
         } else {
             null
@@ -144,12 +152,14 @@ fun MapScreen(
         vehicles = vehicles,
         selectedVehicle = selectedVehicle,
         numberOfPersons = numberOfPersons,
-        numberOfBulks = numberOfBulks
+        numberOfBulks = numberOfBulks,
+        isElectric = isElectric
     )
 
     val context = LocalContext.current
     // Function for centering the map when location is available
     val center: MutableState<(() -> Unit)?> = remember{ mutableStateOf(null) }
+    val canFinishRoute: MutableState<Boolean> = remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -157,6 +167,48 @@ fun MapScreen(
         },
         floatingActionButton = {
             Column {
+                if (canFinishRoute.value) {
+                    FloatingActionButton(
+                        onClick = {
+                            viewModel.finishRoute(context)
+                            canFinishRoute.value = false
+                        },
+                        shape = MaterialTheme.shapes.medium,
+                        modifier = Modifier.padding(horizontal = 20.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Flag,
+                            contentDescription = null
+                        )
+                    }
+                }
+                val recordingUiState by viewModel.recordingUiState.collectAsState()
+                var isPaused by rememberSaveable{ mutableStateOf(false) }
+                if (recordingUiState is RecordingUiState.Loading) {
+                    FloatingActionButton(
+                        onClick = {
+                            isPaused = if(isPaused) {
+                                viewModel.continueRoute(context)
+                                false
+                            } else {
+                                viewModel.pauseRoute(context)
+                                true
+                            }
+                        },
+                        shape = MaterialTheme.shapes.medium,
+                        modifier = Modifier.padding(20.dp)
+                    ) {
+                        Icon(
+                            imageVector = if(isPaused) {
+                                Icons.Filled.PlayArrow
+                            } else {
+                                Icons.Filled.Pause
+                            },
+                            contentDescription = null
+                        )
+                    }
+                }
+
                 // The buttons are shown only before starting a route
                 if (uiState is MapUiState.Start || uiState is MapUiState.Error) {
                     // The button for centering the map is available only after accepting permissions
@@ -193,9 +245,10 @@ fun MapScreen(
         MapBody(
             uiState = uiState,
             recordingUiStateFlow = viewModel.recordingUiState,
-            isElectric = isElectric,
+            isElectric = isElectric.value,
             options = options,
             center = center,
+            canFinishRoute = canFinishRoute,
             search = {
                 viewModel.getDestination(it)
             },
@@ -210,8 +263,8 @@ fun MapScreen(
                     additionalMass = (numberOfPersons.intValue * 75 + (numberOfBulks.value ?: 0) * 5).toLong()
                 )
             },
-            startRecording = { point ->
-                viewModel.startRecording(selectedVehicle.value?.second ?: -1, point)
+            startRecording = {
+                viewModel.startRecording(context, selectedVehicle.value?.second ?: -1)
             },
             cancelRecording = viewModel::cancelRecording,
             getScore = {
@@ -222,7 +275,7 @@ fun MapScreen(
                 )
             },
             sendFiles = { viewModel.sendFiles(context) },
-            clearScore = viewModel::clearResults,
+            clearScore = { viewModel.clearResults() },
             modifier = Modifier.padding(it)
         )
     }
@@ -255,10 +308,11 @@ fun MapBody(
     isElectric: Boolean,
     options: List<NominatimResult>,
     center: MutableState<(() -> Unit)?>,
+    canFinishRoute: MutableState<Boolean>,
     search: (String) -> Unit,
     clearOptions: () -> Unit,
     searchRoutes: (GeoPoint, GeoPoint) -> Unit,
-    startRecording: (GeoPoint) -> Unit,
+    startRecording: () -> Unit,
     cancelRecording: () -> Unit,
     getScore: () -> Unit,
     sendFiles: () -> Unit,
@@ -273,11 +327,11 @@ fun MapBody(
     // Location permission in case it is required to show a message
     val fineLocationPermissionState = rememberPermissionState(Manifest.permission.ACCESS_FINE_LOCATION)
     val coarseLocationPermissionState = rememberPermissionState(Manifest.permission.ACCESS_COARSE_LOCATION)
-    val backgroundLocationState = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+    /*val backgroundLocationState = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
         rememberPermissionState(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
     } else {
         null
-    }
+    }*/
 
     val context = LocalContext.current
     val layoutInflater = LayoutInflater.from(context)
@@ -289,13 +343,13 @@ fun MapBody(
     LaunchedEffect(
         fineLocationPermissionState.status.isGranted,
         coarseLocationPermissionState.status.isGranted,
-        backgroundLocationState?.status?.isGranted
+        //backgroundLocationState?.status?.isGranted
     ) {
         // Asks only if they are not granted
         if(
             (!fineLocationPermissionState.status.isGranted
-            && !coarseLocationPermissionState.status.isGranted) ||
-            (backgroundLocationState != null && !backgroundLocationState.status.isGranted)
+            && !coarseLocationPermissionState.status.isGranted) /*||
+            (backgroundLocationState != null && !backgroundLocationState.status.isGranted)*/
         ) {
             // If the state of the permissions is changed, the position is removed from the map
             locationOverlay.disableMyLocation()
@@ -312,14 +366,14 @@ fun MapBody(
                 builder.setMessage(R.string.enable_location_text)
                 builder.setPositiveButton("OK") { _, _ ->
                     fineLocationPermissionState.launchPermissionRequest()
-                    backgroundLocationState?.launchPermissionRequest()
+                    //backgroundLocationState?.launchPermissionRequest()
                 }
                 builder.show()
             }
             // The permissions are requested otherwise
             else {
                 fineLocationPermissionState.launchPermissionRequest()
-                backgroundLocationState?.launchPermissionRequest()
+                //backgroundLocationState?.launchPermissionRequest()
             }
         // If the location is granted, the screen is centered towards the current position
         } else {
@@ -346,6 +400,19 @@ fun MapBody(
         }
     }
 
+    // Marker which represents the destination point on the map
+    val destinationPoint by remember {
+        mutableStateOf(Marker(mapView).apply {
+            // A window with a button to search the routes is added when clicking the marker
+            this.infoWindow = MyInfoWindow(
+                view = MarkerWindowFragment(onClick = {
+                    searchRoutes(locationOverlay.myLocation, this.position)
+                }).onCreateView(layoutInflater, null, null),
+                mapView = mapView
+            )
+        })
+    }
+
     Box(
         modifier = modifier.fillMaxSize()
     ) {
@@ -359,18 +426,6 @@ fun MapBody(
 
         // Value of the search bar
         var destination by rememberSaveable{ mutableStateOf("") }
-        // Marker which represents the destination point on the map
-        val destinationPoint by remember {
-            mutableStateOf(Marker(mapView).apply {
-                // A window with a button to search the routes is added when clicking the marker
-                this.infoWindow = MyInfoWindow(
-                    view = MarkerWindowFragment(onClick = {
-                        searchRoutes(locationOverlay.myLocation, this.position)
-                    }).onCreateView(layoutInflater, null, null),
-                    mapView = mapView
-                )
-            })
-        }
 
         // Events receiver to add markers on click
         val mReceive: MapEventsReceiver = object : MapEventsReceiver {
@@ -558,7 +613,7 @@ fun MapBody(
                             isElectric = isElectric,
                             onClick = {
                                 // A recording starts and the map focuses on the location of the car
-                                startRecording(destinationPoint.position)
+                                startRecording()
                                 mapView.controller.setZoom(18.0)
                                 // The map follows the position of the phone
                                 locationOverlay.enableFollowLocation()
@@ -654,18 +709,34 @@ fun MapBody(
 
     }
 
+    val scope = rememberCoroutineScope()
     // When the recording ends, the results are sent once
     LaunchedEffect(recordingUiState) {
-        if(recordingUiState is RecordingUiState.Complete) {
-            // The map stops following the phone position
-            locationOverlay.disableFollowLocation()
-            locationOverlay.enableAutoStop = true
-            // The scores are obtained and the ui updates
-            getScore()
-        }
-        else if (recordingUiState is RecordingUiState.Default) {
-            locationOverlay.disableFollowLocation()
-            locationOverlay.enableAutoStop = true
+        when (recordingUiState) {
+            is RecordingUiState.Complete -> {
+                // The map stops following the phone position
+                locationOverlay.disableFollowLocation()
+                locationOverlay.enableAutoStop = true
+                // The scores are obtained and the ui updates
+                getScore()
+            }
+
+            is RecordingUiState.Default -> {
+                locationOverlay.disableFollowLocation()
+                locationOverlay.enableAutoStop = true
+                if (scope.isActive) {
+                    scope.cancel()
+                }
+            }
+
+            else -> {
+                scope.launch {
+                    while(destinationPoint.position.distanceToAsDouble(locationOverlay.myLocation) > 50.0) {
+                        delay(DELAY_TIME_MILLIS.toLong())
+                    }
+                    canFinishRoute.value = true
+                }
+            }
         }
     }
 }

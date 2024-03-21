@@ -262,6 +262,7 @@ fun RouteParams(
     visible: MutableState<Boolean>,
     vehicles: List<Pair<UserVehicle, Vehicle>>,
     selectedVehicle: MutableState<Pair<Long, Long>?>,
+    isElectric: MutableState<Boolean>,
     numberOfPersons: MutableState<Int>,
     numberOfBulks: MutableState<Int?>
 ) {
@@ -320,6 +321,7 @@ fun RouteParams(
                                     text = { Text(it.second.name.replace("_-_", " ")) },
                                     onClick = {
                                         selectedVehicle.value = Pair(it.first.id!!, it.second.vehicleID)
+                                        isElectric.value = it.second.motorType == "ELECTRIC"
                                         expanded = false
                                     }
                                 )

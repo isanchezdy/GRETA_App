@@ -27,6 +27,7 @@ import upm.gretaapp.model.RouteEvaluationInput
 import upm.gretaapp.model.UserVehicle
 import upm.gretaapp.model.Vehicle
 import java.net.ConnectException
+import java.util.Date
 
 /**
  * [ViewModel] that manages the current UI state of the Map Screen (search a destination, a route,
@@ -51,6 +52,8 @@ class MapViewModel(
     // List of vehicles of the current user
     private val _vehicleList = MutableStateFlow<List<Pair<UserVehicle, Vehicle>>>(emptyList())
     val vehicleList = _vehicleList.asStateFlow()
+
+    private var filename: String = ""
 
     init {
         viewModelScope.launch {
@@ -89,8 +92,10 @@ class MapViewModel(
     // Flow that represents the current state of recording
     val recordingUiState: StateFlow<RecordingUiState> = recordingRepository.outputWorkInfo
         .map { info ->
-            val filename = info.outputData.getString("filename")
+            val filename = info?.outputData?.getString("filename")
             when  {
+                info == null ->
+                    RecordingUiState.Default
                 // If the recording is finished
                 info.state.isFinished && filename != null -> {
                     RecordingUiState.Complete(
@@ -192,10 +197,12 @@ class MapViewModel(
      * Function to start recording a route
      *
      * @param vehicleId The id of the vehicle performing the route
-     * @param destination The point where the recording is expected to finish
      */
-    fun startRecording(vehicleId: Long, destination: GeoPoint) {
-        recordingRepository.recordRoute(userId = userId, vehicleId = vehicleId, destination)
+    fun startRecording(context: Context, vehicleId: Long) {
+        filename = "user " + userId.toString() + " vehicle " + vehicleId.toString() +
+                " " + Date().toString()
+        continueRoute(context)
+        recordingRepository.recordRoute(userId = userId, vehicleId = vehicleId, filename)
     }
 
     /**
@@ -255,11 +262,24 @@ class MapViewModel(
         }
     }
 
+    fun finishRoute(context: Context) {
+        writeState(context, "$filename state.txt", "finished")
+    }
+
+    fun pauseRoute(context: Context) {
+        writeState(context, "$filename state.txt", "paused")
+    }
+
+    fun continueRoute(context: Context) {
+        writeState(context, "$filename state.txt", "started")
+    }
+
     /**
      * Function to clear the results of the recording after accepting
      */
     fun clearResults() {
         recordingRepository.clearResults()
+        recordingUiState.replayCache
     }
 
     /**
@@ -281,7 +301,6 @@ sealed interface MapUiState {
     data object LoadingRoute: MapUiState
     data class Error(val code: Int): MapUiState
     data class CompleteRoutes(val routes: List<Pair<List<String>, Route>>): MapUiState
-
     data class CompleteScore(val scores: RouteEvaluation): MapUiState
 }
 

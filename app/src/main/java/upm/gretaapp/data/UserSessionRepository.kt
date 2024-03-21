@@ -40,7 +40,7 @@ class UserSessionRepository(
 
     suspend fun logout() {
         dataStore.edit { preferences ->
-            preferences.clear()
+            preferences[USER] = -1
         }
     }
 }

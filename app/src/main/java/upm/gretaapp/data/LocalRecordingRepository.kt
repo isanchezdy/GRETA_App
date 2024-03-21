@@ -8,15 +8,12 @@ import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
+import androidx.work.workDataOf
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.mapNotNull
-import org.osmdroid.util.GeoPoint
-import upm.gretaapp.KEY_DESTINATION_LAT
-import upm.gretaapp.KEY_DESTINATION_LON
+import kotlinx.coroutines.flow.map
 import upm.gretaapp.KEY_FILENAME
 import upm.gretaapp.workers.RecordingWorker
 import upm.gretaapp.workers.writeCsvHeader
-import java.util.Date
 import java.util.concurrent.TimeUnit
 
 /**
@@ -27,31 +24,28 @@ class LocalRecordingRepository(private val context: Context): RecordingRepositor
     // WorkManager to control all background processes
     private val workManager = WorkManager.getInstance(context)
     // Flow to observe the state of the current work from the UI
-    override val outputWorkInfo: Flow<WorkInfo> =
-        workManager.getWorkInfosByTagLiveData("OUTPUT").asFlow().mapNotNull {
+    override val outputWorkInfo: Flow<WorkInfo?> =
+        workManager.getWorkInfosByTagLiveData("OUTPUT").asFlow().map {
             if (it.isNotEmpty()) it.first() else null
         }
 
     /**
      * Function to record a route until it finishes to calculate consumption values
      *
-     * @param destination Destination point to check if current position is near enough to stop
      */
-    override fun recordRoute(userId: Long, vehicleId: Long, destination: GeoPoint) {
+    override fun recordRoute(userId: Long, vehicleId: Long, filename: String) {
         // Constraints of the worker to assure it functions
         val constraints = Constraints.Builder()
             .setRequiresStorageNotLow(true)
             .setRequiresBatteryNotLow(true)
             .build()
 
-        val filename = "user " + userId.toString() + " vehicle " + vehicleId.toString() +
-                " " + Date().toString()
         writeCsvHeader(context = context, "$filename.csv")
 
         // Builder for requesting the work one time
         val recordingBuilder = OneTimeWorkRequestBuilder<RecordingWorker>()
         recordingBuilder.setInputData(
-            createInputDataForWorkRequest(destination, filename)
+            createInputDataForWorkRequest(filename)
         )
         recordingBuilder.setConstraints(constraints)
         recordingBuilder.addTag("RecordingWorker")
@@ -76,16 +70,11 @@ class LocalRecordingRepository(private val context: Context): RecordingRepositor
     /**
      * Function to create Input [Data] for the next worker to start recording using it
      *
-     * @param destination Destination point to check if current position is near enough to stop
      * @param filename Name of the file that will be created to store the recording data
      * @return [Data] containing the provided parameters inside
      */
-    private fun createInputDataForWorkRequest(destination: GeoPoint, filename: String): Data {
-        val builder = Data.Builder()
-        builder.putDouble(KEY_DESTINATION_LAT, destination.latitude)
-            .putDouble(KEY_DESTINATION_LON, destination.longitude)
-            .putString(KEY_FILENAME, filename)
-        return builder.build()
+    private fun createInputDataForWorkRequest(filename: String): Data {
+        return workDataOf(KEY_FILENAME to filename)
     }
 
     override fun clearResults() {

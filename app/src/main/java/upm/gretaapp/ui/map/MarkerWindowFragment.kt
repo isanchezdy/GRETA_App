@@ -1,7 +1,6 @@
 package upm.gretaapp.ui.map
 
 import android.Manifest
-import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -72,16 +71,16 @@ class MarkerWindowFragment(
                                         rememberPermissionState(Manifest.permission.ACCESS_FINE_LOCATION)
                                     val coarseLocationPermissionState =
                                         rememberPermissionState(Manifest.permission.ACCESS_COARSE_LOCATION)
-                                    val backgroundLocationState = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                                    /*val backgroundLocationState = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                                         rememberPermissionState(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
                                     } else {
                                         null
-                                    }
+                                    }*/
 
                                     // if the location is available, allows to ask for routes
                                     if((fineLocationPermissionState.status.isGranted ||
-                                        coarseLocationPermissionState.status.isGranted) &&
-                                        (backgroundLocationState == null || backgroundLocationState.status.isGranted)) {
+                                        coarseLocationPermissionState.status.isGranted) /*&&
+                                        (backgroundLocationState == null || backgroundLocationState.status.isGranted)*/) {
                                         Button(
                                             onClick = {
                                                 onClick()
