@@ -19,7 +19,7 @@ import org.osmdroid.util.GeoPoint
 import upm.gretaapp.data.GretaRepository
 import upm.gretaapp.data.NominatimRepository
 import upm.gretaapp.data.RecordingRepository
-import upm.gretaapp.data.UserSessionRepository
+import upm.gretaapp.data.PhoneSessionRepository
 import upm.gretaapp.model.NominatimResult
 import upm.gretaapp.model.Route
 import upm.gretaapp.model.PerformanceRouteMetrics
@@ -41,7 +41,7 @@ import java.util.Date
  */
 class MapViewModel(
     private val nominatimRepository: NominatimRepository,
-    userSessionRepository: UserSessionRepository,
+    userSessionRepository: PhoneSessionRepository,
     private val gretaRepository: GretaRepository,
     private val recordingRepository: RecordingRepository
 ): ViewModel() {

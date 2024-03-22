@@ -8,13 +8,13 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import upm.gretaapp.data.GretaRepository
-import upm.gretaapp.data.UserSessionRepository
+import upm.gretaapp.data.PhoneSessionRepository
 import upm.gretaapp.model.AppReview
 import upm.gretaapp.model.FeatureReview
 import java.net.ConnectException
 
-class ReviewViewModel(userSessionRepository: UserSessionRepository,
-    private val gretaRepository: GretaRepository): ViewModel() {
+class ReviewViewModel(userSessionRepository: PhoneSessionRepository,
+                      private val gretaRepository: GretaRepository): ViewModel() {
     private var userId: Long = 0
 
     init {
@@ -48,7 +48,7 @@ class ReviewViewModel(userSessionRepository: UserSessionRepository,
                 topics.forEachIndexed { index, topic ->
                     gretaRepository.createFeatureReview(
                         FeatureReview(
-                            appReviewId = globalScore.id!!,
+                            appReviewId = globalScore.appReviewId!!,
                             score = scores[index].first.toDouble(),
                             comments = scores[index].second,
                             topic = topic

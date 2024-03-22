@@ -19,7 +19,7 @@ import java.util.concurrent.TimeUnit
  */
 interface AppContainer {
 
-    val userSessionRepository: UserSessionRepository
+    val userSessionRepository: PhoneSessionRepository
     val recordingRepository: RecordingRepository
     val nominatimRepository: NominatimRepository
     val gretaRepository: GretaRepository
@@ -34,10 +34,10 @@ class AppDataContainer(private val context: Context) : AppContainer {
     )
 
     /**
-     * Implementation of [UserSessionRepository]
+     * Implementation of [PhoneSessionRepository]
      */
-    override val userSessionRepository: UserSessionRepository =
-        UserSessionRepository(context.dataStore)
+    override val userSessionRepository: PhoneSessionRepository =
+        PhoneSessionRepository(context.dataStore)
 
     private val nominatimUrl = "https://nominatim.openstreetmap.org"
 

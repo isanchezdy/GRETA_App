@@ -9,7 +9,7 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import upm.gretaapp.data.GretaRepository
-import upm.gretaapp.data.UserSessionRepository
+import upm.gretaapp.data.PhoneSessionRepository
 import upm.gretaapp.model.Vehicle
 import upm.gretaapp.model.UserVehicle
 import java.net.ConnectException
@@ -21,7 +21,7 @@ import java.net.ConnectException
  * @param gretaRepository Repository for obtaining all vehicles of the current user and show them
  */
 class UserVehicleListViewModel(
-    userSessionRepository: UserSessionRepository,
+    userSessionRepository: PhoneSessionRepository,
     private val gretaRepository: GretaRepository
 ) : ViewModel() {
 

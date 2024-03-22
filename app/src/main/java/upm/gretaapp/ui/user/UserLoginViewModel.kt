@@ -7,12 +7,12 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import upm.gretaapp.data.GretaRepository
-import upm.gretaapp.data.UserSessionRepository
+import upm.gretaapp.data.PhoneSessionRepository
 import java.net.ConnectException
 
 class UserLoginViewModel(
     private val gretaRepository: GretaRepository,
-    private val userSessionRepository: UserSessionRepository
+    private val userSessionRepository: PhoneSessionRepository
 ): ViewModel() {
     private val _uiState = MutableStateFlow<LoginUiState>(LoginUiState.Start)
     val uiState = _uiState.asStateFlow()

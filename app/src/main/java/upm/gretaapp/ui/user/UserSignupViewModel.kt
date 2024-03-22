@@ -8,13 +8,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
 import upm.gretaapp.data.GretaRepository
-import upm.gretaapp.data.UserSessionRepository
+import upm.gretaapp.data.PhoneSessionRepository
 import upm.gretaapp.model.User
 import java.net.ConnectException
 
 class UserSignupViewModel(
     private val gretaRepository: GretaRepository,
-    private val userSessionRepository: UserSessionRepository
+    private val userSessionRepository: PhoneSessionRepository
 ): ViewModel() {
 
     var userUiState by mutableStateOf(UserUiState())
@@ -91,7 +91,7 @@ fun UserDetails.toUser(): User = User(
         }
     },
     birthDate = this.birthday + "T00:00:00",
-    drivingLicenseYear = this.drivingLicenseDate + "T00:00:00"
+    drivingLicenseYear = this.drivingLicenseDate
 )
 
 fun User.toUserDetails(): UserDetails = UserDetails(
@@ -111,5 +111,5 @@ fun User.toUserDetails(): UserDetails = UserDetails(
         }
     },
     birthday = this.birthDate.removeSuffix("T00:00:00"),
-    drivingLicenseDate = this.drivingLicenseYear.removeSuffix("T00:00:00")
+    drivingLicenseDate = this.drivingLicenseYear
 )

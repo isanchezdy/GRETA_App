@@ -11,6 +11,8 @@ import upm.gretaapp.ui.map.MapDestination
 import upm.gretaapp.ui.map.MapScreen
 import upm.gretaapp.ui.review.ReviewDestination
 import upm.gretaapp.ui.review.ReviewScreen
+import upm.gretaapp.ui.route_history.RouteHistoryDestination
+import upm.gretaapp.ui.route_history.RouteHistoryScreen
 import upm.gretaapp.ui.stats.StatsDestination
 import upm.gretaapp.ui.stats.StatsScreen
 import upm.gretaapp.ui.user.LoginDestination
@@ -77,6 +79,12 @@ fun GretaNavHost(
         }
         composable(route = StatsDestination.route) {
             StatsScreen(openMenu = openMenu)
+        }
+        composable(route = ReviewDestination.route) {
+            ReviewScreen(openMenu = openMenu)
+        }
+        composable(route = RouteHistoryDestination.route) {
+            RouteHistoryScreen(openMenu = openMenu)
         }
         composable(route = ReviewDestination.route) {
             ReviewScreen(openMenu = openMenu)

@@ -287,7 +287,7 @@ fun UserEntryBody(
                         DatePickerField(
                             onDateSelected = {
                                 onUserValueChange(
-                                    userUiState.userDetails.copy(drivingLicenseDate = it)
+                                    userUiState.userDetails.copy(drivingLicenseDate = it.split("-").first())
                                 )
                             },
                             onDismiss = { showLicensePicker = false }

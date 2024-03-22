@@ -51,7 +51,7 @@ interface GretaApiService {
     suspend fun getVehicle(
         @Query("vehicle_id") vehicleId: Long,
         @Query("api_key") apiKey: String
-    ): Vehicle
+    ): List<Vehicle>
 
     // UserVehicle methods
     @GET("user_vehicles")

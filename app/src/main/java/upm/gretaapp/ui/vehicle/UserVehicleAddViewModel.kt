@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import upm.gretaapp.data.GretaRepository
-import upm.gretaapp.data.UserSessionRepository
+import upm.gretaapp.data.PhoneSessionRepository
 import upm.gretaapp.model.UserVehicle
 import upm.gretaapp.model.Vehicle
 
@@ -19,7 +19,7 @@ import upm.gretaapp.model.Vehicle
  * @param userSessionRepository Repository to retrieve the current user of the app
  */
 class UserVehicleAddViewModel(private val gretaRepository: GretaRepository,
-                              private val userSessionRepository: UserSessionRepository) : ViewModel() {
+                              private val userSessionRepository: PhoneSessionRepository) : ViewModel() {
 
     // Id of the current user
     private var userId: Long = 0

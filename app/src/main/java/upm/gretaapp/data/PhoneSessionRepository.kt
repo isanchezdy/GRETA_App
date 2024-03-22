@@ -11,12 +11,12 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 import java.io.IOException
 
-class UserSessionRepository(
+class PhoneSessionRepository(
     private val dataStore: DataStore<Preferences>
 ) {
     private companion object {
         val USER = longPreferencesKey("user")
-        const val TAG = "UserSessionRepo"
+        const val TAG = "PhoneSessionRepo"
     }
 
     val user: Flow<Long> = dataStore.data

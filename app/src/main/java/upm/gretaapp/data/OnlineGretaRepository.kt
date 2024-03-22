@@ -38,7 +38,7 @@ class OnlineGretaRepository(
     override suspend fun getVehicle(vehicleId: Long): Vehicle = gretaApiService.getVehicle(
         vehicleId = vehicleId,
         apiKey = API_KEY
-    )
+    ).first()
 
     override suspend fun getUserVehicles(userId: Long): List<UserVehicle> = gretaApiService
         .getUserVehicles(userId = userId, apiKey = API_KEY)
