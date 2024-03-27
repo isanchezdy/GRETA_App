@@ -266,11 +266,13 @@ fun UserEntryBody(
                 item {
                     var showLicensePicker by remember { mutableStateOf(false) }
                     TextField(
-                        value = userUiState.userDetails.drivingLicenseDate,
-                        onValueChange = { },
+                        value = userUiState.userDetails.drivingLicenseYear,
+                        onValueChange = { onUserValueChange(
+                            userUiState.userDetails.copy(drivingLicenseYear = it)
+                        ) },
                         enabled = userUiState.userState != UserState.Loading,
                         singleLine = true,
-                        readOnly = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         label = { Text(stringResource(id = R.string.driving_license)) },
                         trailingIcon = {
                             IconButton(onClick = { showLicensePicker = true }) {
@@ -287,7 +289,7 @@ fun UserEntryBody(
                         DatePickerField(
                             onDateSelected = {
                                 onUserValueChange(
-                                    userUiState.userDetails.copy(drivingLicenseDate = it.split("-").first())
+                                    userUiState.userDetails.copy(drivingLicenseYear = it.split("-").first())
                                 )
                             },
                             onDismiss = { showLicensePicker = false }

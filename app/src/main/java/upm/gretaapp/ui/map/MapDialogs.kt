@@ -42,7 +42,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.core.text.isDigitsOnly
 import kotlinx.coroutines.delay
 import upm.gretaapp.R
-import upm.gretaapp.model.PerformanceRouteMetrics
+import upm.gretaapp.model.PerformedRouteMetrics
 import upm.gretaapp.model.UserVehicle
 import upm.gretaapp.model.Vehicle
 import upm.gretaapp.ui.theme.GRETAAppTheme
@@ -139,22 +139,26 @@ fun ErrorMessage(code: Int) {
 /**
  * The results shown when the route is finished
  *
- * @param score The [PerformanceRouteMetrics] with all the results to show
+ * @param score The [PerformedRouteMetrics] with all the results to show
  * @param sendFiles The function for sending the recording files through another app
  * @param clearScore Clears the information of the results from the phone to avoid them from being
  * shown multiple times
  */
 @Composable
 fun ScoresResult(
-    score: PerformanceRouteMetrics,
+    score: PerformedRouteMetrics,
     isElectric: Boolean,
     sendFiles: () -> Unit,
-    clearScore: () -> Unit
+    clearScore: () -> Unit,
+    needsConsumption: Boolean,
+    updateFactor: (Double) -> Unit
 ) {
     var visible by remember{ mutableStateOf(true) }
     val close = {
         visible = false
-        clearScore()
+        if(!needsConsumption) {
+            clearScore()
+        }
     }
 
     if(visible) {
@@ -231,6 +235,11 @@ fun ScoresResult(
                     }
                 }
             }
+        }
+    } else if(needsConsumption) {
+        RegisterRealConsumption {
+            updateFactor(it)
+            clearScore()
         }
     }
 }
@@ -384,7 +393,7 @@ fun RouteParams(
 }
 
 @Composable
-fun RegisterRealConsumption() {
+fun RegisterRealConsumption(updateFactor: (Double) -> Unit) {
     var visible by remember{ mutableStateOf(true) }
 
     if(visible) {
@@ -404,19 +413,31 @@ fun RegisterRealConsumption() {
                         modifier = Modifier
                             .padding(16.dp)
                     )
-                    
+
+                    var performedConsumption100km by remember{ mutableStateOf("") }
                     TextField(
-                        value = "",
-                        onValueChange = { },
+                        value = performedConsumption100km,
+                        onValueChange = {
+                            if(it.toDoubleOrNull() != null)
+                                performedConsumption100km = it
+                        },
                         singleLine = true,
-                        label = { Text(stringResource(id = R.string.consumption)) },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                        label = { Text(stringResource(id = R.string.consumption) + " (100 km)") },
                         modifier = Modifier
                             .fillMaxWidth(0.8f)
                             .padding(8.dp)
                     )
 
-                    Button(onClick = { visible = false }, modifier = Modifier.padding(16.dp)) {
-                        Text(stringResource(id = R.string.send_results))
+                    Button(
+                        onClick = {
+                            visible = false
+                            if(performedConsumption100km.isNotBlank())
+                                updateFactor(performedConsumption100km.toDouble())
+                        },
+                        modifier = Modifier.padding(16.dp)
+                    ) {
+                        Text(stringResource(id = R.string.save))
                     }
                 }
             }

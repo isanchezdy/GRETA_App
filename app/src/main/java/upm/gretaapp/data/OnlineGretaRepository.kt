@@ -3,7 +3,7 @@ package upm.gretaapp.data
 import upm.gretaapp.model.AppReview
 import upm.gretaapp.model.FeatureReview
 import upm.gretaapp.model.Route
-import upm.gretaapp.model.PerformanceRouteMetrics
+import upm.gretaapp.model.PerformedRouteMetrics
 import upm.gretaapp.model.InputPerformedRoute
 import upm.gretaapp.model.User
 import upm.gretaapp.model.UserRoute
@@ -18,7 +18,7 @@ class OnlineGretaRepository(
     override suspend fun getUserByEmail(email: String): User = gretaApiService.getUserByEmail(
         email = email,
         apiKey = API_KEY
-    )
+    ).first()
 
     override suspend fun createUser(user: User): User = gretaApiService.createUser(
         user = user,
@@ -72,7 +72,7 @@ class OnlineGretaRepository(
 
     override suspend fun calculatePerformedRouteMetrics(
         inputPerformedRoute: InputPerformedRoute
-    ): PerformanceRouteMetrics = gretaApiService.calculatePerformedRouteMetrics(
+    ): PerformedRouteMetrics = gretaApiService.calculatePerformedRouteMetrics(
         inputPerformedRoute = inputPerformedRoute,
         apiKey = API_KEY
     )

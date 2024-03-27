@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.last
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -22,12 +23,13 @@ import upm.gretaapp.data.RecordingRepository
 import upm.gretaapp.data.PhoneSessionRepository
 import upm.gretaapp.model.NominatimResult
 import upm.gretaapp.model.Route
-import upm.gretaapp.model.PerformanceRouteMetrics
+import upm.gretaapp.model.PerformedRouteMetrics
 import upm.gretaapp.model.InputPerformedRoute
 import upm.gretaapp.model.UserVehicle
 import upm.gretaapp.model.Vehicle
 import java.net.ConnectException
 import java.util.Date
+import kotlin.math.abs
 
 /**
  * [ViewModel] that manages the current UI state of the Map Screen (search a destination, a route,
@@ -35,13 +37,14 @@ import java.util.Date
  *
  * @param nominatimRepository Repository class to retrieve destinations from a text query and place
  *  them on the map
- *  @param userSessionRepository Repository class to retrieve the current user of the app
+ *  @param phoneSessionRepository Repository class to retrieve the current user of the app and other
+ *  information contained in the phone
  *  @param gretaRepository Repository class to retrieve information from the dedicated server
  *  @param recordingRepository Repository class to start recording a route when selected
  */
 class MapViewModel(
     private val nominatimRepository: NominatimRepository,
-    userSessionRepository: PhoneSessionRepository,
+    private val phoneSessionRepository: PhoneSessionRepository,
     private val gretaRepository: GretaRepository,
     private val recordingRepository: RecordingRepository
 ): ViewModel() {
@@ -58,7 +61,7 @@ class MapViewModel(
     init {
         viewModelScope.launch {
             // The current user is retrieved and updated
-            userSessionRepository.user.collectLatest {
+            phoneSessionRepository.user.collectLatest {
                 userId = it
                 // All of its vehicles are retrieved
                 _vehicleList.value = try {
@@ -239,9 +242,6 @@ class MapViewModel(
                         )
                     }
 
-                    // TODO add performed route polyline
-                    val routePolyline = ""
-
                     val input =
                         InputPerformedRoute(vehicleId = vehicleId,
                             additionalMass = additionalMass,
@@ -250,11 +250,17 @@ class MapViewModel(
                                 .map {
                                     it.toDouble()
                                 },
-                            routePolyline = routePolyline
+                            routePolyline = recordingResults.third
                         )
                     // The scores are retrieved and the ui is updated
-                    val scores = gretaRepository.calculatePerformedRouteMetrics(input)
-                    _uiState.value = MapUiState.CompleteScore(scores)
+                    var scores = gretaRepository.calculatePerformedRouteMetrics(input)
+                    scores = scores.copy(performedRouteConsumption =
+                    scores.performedRouteConsumption
+                            * phoneSessionRepository.vehicleFactor(vehicleId).last())
+                    _uiState.value = MapUiState.CompleteScore(
+                        scores,
+                        phoneSessionRepository.needsConsumption(vehicleId).last()
+                    )
                 } catch(connectException: ConnectException) {
                     // If there is a connection error, a message is shown
                     _uiState.value = MapUiState.Error(1)
@@ -283,7 +289,6 @@ class MapViewModel(
      */
     fun clearResults() {
         recordingRepository.clearResults()
-        recordingUiState.replayCache
     }
 
     /**
@@ -293,6 +298,28 @@ class MapViewModel(
      */
     fun sendFiles(context: Context) {
         sendFiles(context, userId)
+    }
+
+    fun updateConsumptionFactor(
+        recordedConsumption: Double,
+        performedConsumption100km: Double,
+        performedRouteDistance: Double,
+        vehicleId: Long
+    ) {
+        viewModelScope.launch {
+            val performedConsumption =
+                (performedConsumption100km / 100000.0) * performedRouteDistance
+            if (abs(performedConsumption - recordedConsumption) <= 0.1) {
+                phoneSessionRepository.saveNeedsConsumption(
+                    vehicleId,
+                    false
+                )
+            } else {
+                val newConsumptionFactor = (performedConsumption / recordedConsumption) *
+                        phoneSessionRepository.vehicleFactor(vehicleId).last()
+                phoneSessionRepository.saveVehicleFactor(vehicleId, newConsumptionFactor)
+            }
+        }
     }
 
 }
@@ -305,7 +332,7 @@ sealed interface MapUiState {
     data object LoadingRoute: MapUiState
     data class Error(val code: Int): MapUiState
     data class CompleteRoutes(val routes: List<Pair<List<String>, Route>>): MapUiState
-    data class CompleteScore(val scores: PerformanceRouteMetrics): MapUiState
+    data class CompleteScore(val scores: PerformedRouteMetrics, val needsConsumption: Boolean): MapUiState
 }
 
 /**

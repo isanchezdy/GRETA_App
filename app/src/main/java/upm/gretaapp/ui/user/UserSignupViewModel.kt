@@ -28,7 +28,8 @@ class UserSignupViewModel(
     private fun validateInput(uiState: UserDetails = userUiState.userDetails): Boolean {
         return with(uiState) {
             name.isNotBlank() && email.isNotBlank() && password.isNotBlank()
-                    && birthday.isNotBlank() && drivingLicenseDate.isNotBlank()
+                    && birthday.isNotBlank() && drivingLicenseYear.isNotBlank()
+                    && (drivingLicenseYear.toIntOrNull() != null && drivingLicenseYear.length == 4)
         }
     }
 
@@ -71,7 +72,7 @@ data class UserDetails(
     val password: String = "",
     val gender: Int = -1,
     val birthday: String = "",
-    val drivingLicenseDate: String = ""
+    val drivingLicenseYear: String = ""
 )
 
 fun UserDetails.toUser(): User = User(
@@ -91,7 +92,7 @@ fun UserDetails.toUser(): User = User(
         }
     },
     birthDate = this.birthday + "T00:00:00",
-    drivingLicenseYear = this.drivingLicenseDate
+    drivingLicenseYear = this.drivingLicenseYear
 )
 
 fun User.toUserDetails(): UserDetails = UserDetails(
@@ -111,5 +112,5 @@ fun User.toUserDetails(): UserDetails = UserDetails(
         }
     },
     birthday = this.birthDate.removeSuffix("T00:00:00"),
-    drivingLicenseDate = this.drivingLicenseYear
+    drivingLicenseYear = this.drivingLicenseYear
 )

@@ -13,7 +13,7 @@ data class UserRoute(
     val userId: Long,
 
     @SerialName("UserVehicleID")
-    val userVehicleId: String,
+    val userVehicleId: Long,
 
     @SerialName("AdditionalMass")
     val additionalMass: Long,

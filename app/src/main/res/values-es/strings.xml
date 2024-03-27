@@ -172,7 +172,7 @@
     <string name="time">Tiempo</string>
     <string name="consumption">Consumo</string>
     <string name="error_login">El email o contraseña no son correctos</string>
-    <string name="driving_license">Fecha del carnet de conducir</string>
+    <string name="driving_license">Año del carnet de conducir</string>
     <string name="error_signup">Se produjo un error. Por favor, inténtelo de nuevo más tarde</string>
     <string name="electric">Eléctrico</string>
     <string name="diesel">Diesel</string>
@@ -208,4 +208,10 @@
     <string name="recording_route">Registrando la ruta</string>
     <string name="introduce_consumption">Introduce el consumo que indica tu vehículo</string>
     <string name="route_history">Historial de rutas</string>
+    <string name="empty_stats">No hay estadísticas registradas para tu usuario</string>
+    <string name="consumption_saving">Ahorro de combustible</string>
+    <string name="drive_rating">Puntuación de la conducción</string>
+    <string name="eco_distance">Distancia recorrida</string>
+    <string name="eco_routes_num">Número de eco-rutas finalizadas</string>
+    <string name="eco_time">Tiempo de viaje</string>
 </resources>

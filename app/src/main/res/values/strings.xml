@@ -171,7 +171,7 @@
     <string name="time">Time</string>
     <string name="consumption">Consumption</string>
     <string name="error_login">The email or password are not correct</string>
-    <string name="driving_license">Driving License Date</string>
+    <string name="driving_license">Driving License Year</string>
     <string name="error_signup">There was an error. Please try again later</string>
     <string name="electric">Electric</string>
     <string name="diesel">Diesel</string>
@@ -207,4 +207,10 @@
     <string name="recording_route">Recording the route</string>
     <string name="introduce_consumption">Introduce the consumption your vehicle indicates</string>
     <string name="route_history">Route history</string>
+    <string name="empty_stats">There are no stats registered for your user</string>
+    <string name="consumption_saving">Consumption saving</string>
+    <string name="drive_rating">Drive rating</string>
+    <string name="eco_distance">Traveled distance</string>
+    <string name="eco_routes_num">Number of finished eco-routes</string>
+    <string name="eco_time">Travel time</string>
 </resources>

@@ -117,11 +117,11 @@ fun MapScreen(
     val vehicles by viewModel.vehicleList.collectAsState()
     // The favourite one is set as default
     var favouriteVehicle: Pair<UserVehicle, Vehicle>?
-    val selectedVehicle: MutableState<Pair<Long, Long>?> = remember {
+    val selectedVehicle: MutableState<Pair<Long, Long>?> = rememberSaveable {
         mutableStateOf(null)
     }
 
-    val isElectric = remember {
+    val isElectric = rememberSaveable {
         mutableStateOf(false)
     }
 
@@ -139,9 +139,9 @@ fun MapScreen(
     }
 
     // Values of the route
-    val numberOfPersons = remember{ mutableIntStateOf(1) }
-    val numberOfBulks: MutableState<Int?> = remember{ mutableStateOf(null) }
-    val visible = remember{ mutableStateOf(false) }
+    val numberOfPersons = rememberSaveable{ mutableIntStateOf(1) }
+    val numberOfBulks: MutableState<Int?> = rememberSaveable{ mutableStateOf(null) }
+    val visible = rememberSaveable{ mutableStateOf(false) }
 
     // Current state of the ui
     val uiState by viewModel.uiState.collectAsState()
@@ -276,6 +276,10 @@ fun MapScreen(
             },
             sendFiles = { viewModel.sendFiles(context) },
             clearScore = { viewModel.clearResults() },
+            updateFactor = { recordedConsumption, performedConsumption100km, performedRouteDistance ->
+                viewModel.updateConsumptionFactor(recordedConsumption, performedConsumption100km,
+                    performedRouteDistance, selectedVehicle.value?.second ?: -1)
+            },
             modifier = Modifier.padding(it)
         )
     }
@@ -317,6 +321,7 @@ fun MapBody(
     getScore: () -> Unit,
     sendFiles: () -> Unit,
     clearScore: () -> Unit,
+    updateFactor: (Double, Double, Double) -> Unit,
     modifier: Modifier = Modifier
 ) {
     // View which contains the map and its functions
@@ -701,7 +706,16 @@ fun MapBody(
 
             is MapUiState.CompleteScore -> {
                 ScoresResult(score = uiState.scores, isElectric = isElectric,
-                    sendFiles = sendFiles, clearScore = clearScore)
+                    sendFiles = sendFiles, clearScore = clearScore,
+                    needsConsumption = uiState.needsConsumption,
+                    updateFactor = {
+                        updateFactor(
+                            uiState.scores.performedRouteConsumption,
+                            it,
+                            uiState.scores.performedRouteDistance
+                        )
+                    }
+                )
             }
 
             else -> {}
@@ -731,7 +745,7 @@ fun MapBody(
 
             else -> {
                 scope.launch {
-                    while(destinationPoint.position.distanceToAsDouble(locationOverlay.myLocation) > 50.0) {
+                    while(destinationPoint.position.distanceToAsDouble(locationOverlay.myLocation) > 100.0) {
                         delay(DELAY_TIME_MILLIS.toLong())
                     }
                     canFinishRoute.value = true

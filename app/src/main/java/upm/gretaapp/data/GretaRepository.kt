@@ -3,7 +3,7 @@ package upm.gretaapp.data
 import upm.gretaapp.model.AppReview
 import upm.gretaapp.model.FeatureReview
 import upm.gretaapp.model.Route
-import upm.gretaapp.model.PerformanceRouteMetrics
+import upm.gretaapp.model.PerformedRouteMetrics
 import upm.gretaapp.model.InputPerformedRoute
 import upm.gretaapp.model.User
 import upm.gretaapp.model.UserRoute
@@ -45,7 +45,7 @@ interface GretaRepository {
 
     suspend fun calculatePerformedRouteMetrics(
         inputPerformedRoute: InputPerformedRoute
-    ): PerformanceRouteMetrics
+    ): PerformedRouteMetrics
 
     // User route methods
     suspend fun createUserRoute(userRoute: UserRoute): UserRoute

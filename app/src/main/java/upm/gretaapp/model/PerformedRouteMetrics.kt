@@ -4,7 +4,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class PerformanceRouteMetrics (
+data class PerformedRouteMetrics (
     @SerialName("PerformedRouteConsumption")
     val performedRouteConsumption: Double,
 

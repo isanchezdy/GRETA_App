@@ -93,7 +93,39 @@ fun decodePoly(encoded: String, precision: Int = 5): List<Pair<Double,Double>> {
     return poly
 }
 
-fun readFile(context: Context, filename: String): Pair<List<Double>, List<Double>> {
+fun encodePoly(coordinates: List<Pair<Double, Double>>, precision: Int = 5): String {
+    val encodedStringBuilder = StringBuilder()
+    var lastLat = 0
+    var lastLng = 0
+
+    for ((lat, lng) in coordinates) {
+        val latDiff = (lat * 10.0.pow(precision)).toInt() - lastLat
+        val lngDiff = (lng * 10.0.pow(precision)).toInt() - lastLng
+
+        encodeCoordinate(latDiff, encodedStringBuilder)
+        encodeCoordinate(lngDiff, encodedStringBuilder)
+
+        lastLat += latDiff
+        lastLng += lngDiff
+    }
+
+    return encodedStringBuilder.toString()
+}
+
+private fun encodeCoordinate(diff: Int, builder: StringBuilder) {
+    var value = diff shl 1
+    if (diff < 0) {
+        value = value.inv()
+    }
+    while (value >= 0x20) {
+        builder.append((0x20 or (value and 0x1f)) + 63)
+        value = value shr 5
+    }
+    builder.append(value + 63)
+}
+
+
+fun readFile(context: Context, filename: String): Triple<List<Double>, List<Double>, String> {
     val state = Environment.getExternalStorageState()
     if (Environment.MEDIA_MOUNTED == state) {
         // Get the app-specific directory on external storage
@@ -103,6 +135,7 @@ fun readFile(context: Context, filename: String): Pair<List<Double>, List<Double
         return file.useLines {
             val speeds = mutableListOf<Double>()
             val heights = mutableListOf<Double>()
+            val coordinates = mutableListOf<Pair<Double, Double>>()
             it.forEach { line ->
                 if (!line.contains(
                         "timestamp,latitude,longitude,altitude,speed_m_s," +
@@ -114,6 +147,7 @@ fun readFile(context: Context, filename: String): Pair<List<Double>, List<Double
                         if (values[3] != "null") {
                             heights.add(values[3].toDouble())
                             speeds.add(values[4].toDouble())
+                            coordinates.add(Pair(values[1].toDouble(), values[2].toDouble()))
                         }
                     }
                 }
@@ -121,10 +155,10 @@ fun readFile(context: Context, filename: String): Pair<List<Double>, List<Double
             Log.d("read_file", speeds.toString())
             Log.d("read_file", heights.toString())
 
-            Pair(speeds,heights)
+            Triple(speeds,heights, encodePoly(coordinates, precision = 6))
         }
     }
-    return Pair(emptyList(), emptyList())
+    return Triple(emptyList(), emptyList(), "")
 }
 
 fun writeState(context: Context, filename: String, state: String) {

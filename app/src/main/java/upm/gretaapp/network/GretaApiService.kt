@@ -9,7 +9,7 @@ import retrofit2.http.Query
 import upm.gretaapp.model.AppReview
 import upm.gretaapp.model.FeatureReview
 import upm.gretaapp.model.Route
-import upm.gretaapp.model.PerformanceRouteMetrics
+import upm.gretaapp.model.PerformedRouteMetrics
 import upm.gretaapp.model.InputPerformedRoute
 import upm.gretaapp.model.User
 import upm.gretaapp.model.UserRoute
@@ -26,7 +26,7 @@ interface GretaApiService {
     suspend fun getUserByEmail(
         @Query("email") email: String,
         @Query("api_key") apiKey: String
-    ) : User
+    ) : List<User>
 
     @POST("users")
     suspend fun createUser(
@@ -93,7 +93,7 @@ interface GretaApiService {
     suspend fun calculatePerformedRouteMetrics(
         @Body inputPerformedRoute: InputPerformedRoute,
         @Query("api_key") apiKey: String
-    ): PerformanceRouteMetrics
+    ): PerformedRouteMetrics
 
     // UserRoute methods
     @POST("user_routes")

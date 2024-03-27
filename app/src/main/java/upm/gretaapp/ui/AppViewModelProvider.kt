@@ -10,6 +10,7 @@ import upm.gretaapp.ui.home.HomeViewModel
 import upm.gretaapp.ui.map.MapViewModel
 import upm.gretaapp.ui.review.ReviewViewModel
 import upm.gretaapp.ui.route_history.RouteHistoryViewModel
+import upm.gretaapp.ui.stats.StatsViewModel
 import upm.gretaapp.ui.user.UserLoginViewModel
 import upm.gretaapp.ui.user.UserSignupViewModel
 import upm.gretaapp.ui.vehicle.UserVehicleAddViewModel
@@ -62,6 +63,13 @@ object AppViewModelProvider {
         // Initializer for ReviewViewModel
         initializer {
             ReviewViewModel(
+                gretaApplication().container.userSessionRepository,
+                gretaApplication().container.gretaRepository
+            )
+        }
+        // Initializer for StatsViewModel
+        initializer {
+            StatsViewModel(
                 gretaApplication().container.userSessionRepository,
                 gretaApplication().container.gretaRepository
             )

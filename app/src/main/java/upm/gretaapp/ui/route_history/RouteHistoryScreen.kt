@@ -186,7 +186,7 @@ private fun UserRouteItem( // TODO finish this!
             ) {
 
                 Text(
-                    text = userRoute.userVehicleId,
+                    text = userRoute.userVehicleId.toString(),
                     style = MaterialTheme.typography.titleMedium
                 )
 
