@@ -11,6 +11,7 @@ import kotlinx.coroutines.launch
 import upm.gretaapp.data.GretaRepository
 import upm.gretaapp.data.PhoneSessionRepository
 import upm.gretaapp.model.UserRoute
+import upm.gretaapp.model.Vehicle
 import java.net.ConnectException
 
 /**
@@ -46,16 +47,18 @@ class RouteHistoryViewModel(
     /**
      * Function to retrieve all the user routes of the current user to represent them in a list
      */
-    fun getUserRoutes() {
+    private fun getUserRoutes() {
         viewModelScope.launch {
             routesHistoryUiState = try {
                 // The RoutesHistory are retrieved
                 val routesHistory = gretaRepository.getRoutesHistoryUser(userId)
                 // For each UserVehicle, the corresponding Vehicle is associated
-                //
-                val list: MutableList<UserRoute> = mutableListOf()
+                val userVehicles = gretaRepository.getUserVehicles(userId)
+                val list: MutableList<Pair<UserRoute, Vehicle>> = mutableListOf()
                 for (route in routesHistory) {
-                    list.add(route)
+                    val userVehicle = userVehicles.find { it.id == route.userVehicleId }
+                    val vehicle = gretaRepository.getVehicle(userVehicle!!.vehicleId)
+                    list.add(Pair(route, vehicle))
                 }
                 // The ui is updated with the results
                 RoutesHistoryUiState.Success(list)
@@ -76,7 +79,7 @@ class RouteHistoryViewModel(
  * Ui State for UserVehicleListScreen
  */
 sealed interface RoutesHistoryUiState {
-    data class Success(val routeHistory: List<UserRoute>) : RoutesHistoryUiState
+    data class Success(val routeHistory: List<Pair<UserRoute, Vehicle>>) : RoutesHistoryUiState
     data class Error(val code: Int) : RoutesHistoryUiState
     data object Loading : RoutesHistoryUiState
 }

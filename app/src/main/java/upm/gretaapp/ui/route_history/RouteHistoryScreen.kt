@@ -21,22 +21,18 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.viewmodel.compose.viewModel
 import upm.gretaapp.GretaTopAppBar
 import upm.gretaapp.R
 import upm.gretaapp.model.UserRoute
+import upm.gretaapp.model.Vehicle
 import upm.gretaapp.ui.AppViewModelProvider
 import upm.gretaapp.ui.navigation.NavigationDestination
 import upm.gretaapp.ui.theme.GRETAAppTheme
@@ -64,15 +60,6 @@ fun RouteHistoryScreen(
             GretaTopAppBar(canUseMenu = true, openMenu = openMenu, navigateUp = { })
         }
     ) {
-        val lifecycle = LocalLifecycleOwner.current.lifecycle
-        val lifecycleObserver = rememberRoutesHistoryLifecycleObserver(viewModel = viewModel)
-        DisposableEffect(lifecycle) {
-            lifecycle.addObserver(lifecycleObserver)
-            onDispose {
-                lifecycle.removeObserver(lifecycleObserver)
-            }
-        }
-
         RoutesHistoryBody(
             uiState = routesHistoryUiState,
             modifier = Modifier.padding(it)
@@ -96,7 +83,7 @@ private fun RoutesHistoryBody(
             .fillMaxSize()
     ) {
         Text(
-            text = stringResource(R.string.my_vehicles), // TODO change strings
+            text = stringResource(R.string.route_history),
             textAlign = TextAlign.Center,
             style = MaterialTheme.typography.titleLarge,
             modifier = modifier.padding(16.dp)
@@ -131,7 +118,7 @@ private fun RoutesHistoryBody(
                 )
             } else if (routesHistoryList.isEmpty()) {
                 Text(
-                    text = stringResource(id = R.string.no_vehicle_description),
+                    text = stringResource(id = R.string.empty_route_history),
                     textAlign = TextAlign.Center,
                     style = MaterialTheme.typography.titleMedium,
                     modifier = modifier.padding(22.dp)
@@ -148,14 +135,15 @@ private fun RoutesHistoryBody(
 
 @Composable
 private fun RoutesHistoryList(
-    routesHistoryList: List<UserRoute>,
+    routesHistoryList: List<Pair<UserRoute, Vehicle>>,
     modifier: Modifier = Modifier
 ) {
     val listState = rememberLazyListState()
     LazyColumn(state = listState, modifier = modifier) {
-        items(items = routesHistoryList, key = { it.id }) { userRoute ->
+        items(items = routesHistoryList, key = { it.first.id }) { userRoute ->
             UserRouteItem(
-                userRoute = userRoute,
+                userRoute = userRoute.first,
+                vehicle = userRoute.second
             )
         }
     }
@@ -163,14 +151,9 @@ private fun RoutesHistoryList(
 
 @Composable
 private fun UserRouteItem( // TODO finish this!
-    userRoute: UserRoute
+    userRoute: UserRoute,
+    vehicle: Vehicle
 ) {
-    /*
-    vehicle.name.split("_-_").apply {
-        brand = this.first()
-        name = this.last()
-    }
-    */
     Card(
         modifier = Modifier.padding(8.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
@@ -180,11 +163,16 @@ private fun UserRouteItem( // TODO finish this!
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
 
+            Text(
+                text = userRoute.recordDate.replace("T", " "),
+                style = MaterialTheme.typography.titleMedium
+            )
+
             Row(
-                horizontalArrangement = Arrangement.SpaceAround,
+                horizontalArrangement = Arrangement.Center,
                 modifier = Modifier.fillMaxWidth()
             ) {
-
+                // Put name instead of ID
                 Text(
                     text = userRoute.userVehicleId.toString(),
                     style = MaterialTheme.typography.titleMedium
@@ -230,17 +218,6 @@ private fun UserRouteItem( // TODO finish this!
         }
     }
 }
-
-@Composable
-fun rememberRoutesHistoryLifecycleObserver(viewModel: RouteHistoryViewModel): LifecycleEventObserver =
-    remember(viewModel) {
-        LifecycleEventObserver { _, event ->
-            when (event) {
-                Lifecycle.Event.ON_RESUME -> viewModel.getUserRoutes()
-                else -> {}
-            }
-        }
-    }
 
 @Preview(showBackground = true, heightDp = 650)
 @Preview(

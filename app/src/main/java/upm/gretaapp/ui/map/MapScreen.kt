@@ -51,7 +51,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -73,18 +72,13 @@ import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import com.google.accompanist.permissions.shouldShowRationale
 import com.google.android.gms.location.LocationServices
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
 import org.osmdroid.events.MapEventsReceiver
 import org.osmdroid.util.BoundingBox
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.overlay.MapEventsOverlay
 import org.osmdroid.views.overlay.Marker
 import org.osmdroid.views.overlay.Polyline
-import upm.gretaapp.DELAY_TIME_MILLIS
 import upm.gretaapp.GretaTopAppBar
 import upm.gretaapp.R
 import upm.gretaapp.model.NominatimResult
@@ -159,7 +153,6 @@ fun MapScreen(
     val context = LocalContext.current
     // Function for centering the map when location is available
     val center: MutableState<(() -> Unit)?> = remember{ mutableStateOf(null) }
-    val canFinishRoute: MutableState<Boolean> = remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -167,11 +160,12 @@ fun MapScreen(
         },
         floatingActionButton = {
             Column {
-                if (canFinishRoute.value) {
+                val recordingUiState by viewModel.recordingUiState.collectAsState()
+                var isPaused by rememberSaveable{ mutableStateOf(false) }
+                if (recordingUiState is RecordingUiState.Loading) {
                     FloatingActionButton(
                         onClick = {
                             viewModel.finishRoute(context)
-                            canFinishRoute.value = false
                         },
                         shape = MaterialTheme.shapes.medium,
                         modifier = Modifier.padding(horizontal = 20.dp)
@@ -181,10 +175,6 @@ fun MapScreen(
                             contentDescription = null
                         )
                     }
-                }
-                val recordingUiState by viewModel.recordingUiState.collectAsState()
-                var isPaused by rememberSaveable{ mutableStateOf(false) }
-                if (recordingUiState is RecordingUiState.Loading) {
                     FloatingActionButton(
                         onClick = {
                             isPaused = if(isPaused) {
@@ -208,9 +198,9 @@ fun MapScreen(
                         )
                     }
                 }
-
                 // The buttons are shown only before starting a route
-                if (uiState is MapUiState.Start || uiState is MapUiState.Error) {
+                else if (uiState is MapUiState.Start || uiState is MapUiState.Error) {
+                    isPaused = false
                     // The button for centering the map is available only after accepting permissions
                     if( center.value != null) {
                         FloatingActionButton(
@@ -248,7 +238,6 @@ fun MapScreen(
             isElectric = isElectric.value,
             options = options,
             center = center,
-            canFinishRoute = canFinishRoute,
             search = {
                 viewModel.getDestination(it)
             },
@@ -312,7 +301,6 @@ fun MapBody(
     isElectric: Boolean,
     options: List<NominatimResult>,
     center: MutableState<(() -> Unit)?>,
-    canFinishRoute: MutableState<Boolean>,
     search: (String) -> Unit,
     clearOptions: () -> Unit,
     searchRoutes: (GeoPoint, GeoPoint) -> Unit,
@@ -723,7 +711,6 @@ fun MapBody(
 
     }
 
-    val scope = rememberCoroutineScope()
     // When the recording ends, the results are sent once
     LaunchedEffect(recordingUiState) {
         when (recordingUiState) {
@@ -738,18 +725,9 @@ fun MapBody(
             is RecordingUiState.Default -> {
                 locationOverlay.disableFollowLocation()
                 locationOverlay.enableAutoStop = true
-                if (scope.isActive) {
-                    scope.cancel()
-                }
             }
 
             else -> {
-                scope.launch {
-                    while(destinationPoint.position.distanceToAsDouble(locationOverlay.myLocation) > 100.0) {
-                        delay(DELAY_TIME_MILLIS.toLong())
-                    }
-                    canFinishRoute.value = true
-                }
             }
         }
     }

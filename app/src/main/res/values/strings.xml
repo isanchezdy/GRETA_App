@@ -213,4 +213,5 @@
     <string name="eco_distance">Traveled distance</string>
     <string name="eco_routes_num">Number of finished eco-routes</string>
     <string name="eco_time">Travel time</string>
+    <string name="empty_route_history">There are no routes registered with your account</string>
 </resources>

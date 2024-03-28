@@ -5,7 +5,6 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class UserRoute(
-    // TODO also fix this
     @SerialName("ID")
     val id: Long,
 

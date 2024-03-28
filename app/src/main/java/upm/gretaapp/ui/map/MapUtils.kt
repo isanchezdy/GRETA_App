@@ -93,35 +93,37 @@ fun decodePoly(encoded: String, precision: Int = 5): List<Pair<Double,Double>> {
     return poly
 }
 
-fun encodePoly(coordinates: List<Pair<Double, Double>>, precision: Int = 5): String {
-    val encodedStringBuilder = StringBuilder()
-    var lastLat = 0
-    var lastLng = 0
+fun encodePoly(points: List<Pair<Double, Double>>, precision: Int = 5): String {
+    val encodedPoly = StringBuilder()
+    val factor = 10.0.pow(precision.toDouble())
 
-    for ((lat, lng) in coordinates) {
-        val latDiff = (lat * 10.0.pow(precision)).toInt() - lastLat
-        val lngDiff = (lng * 10.0.pow(precision)).toInt() - lastLng
+    var prevLat = 0
+    var prevLng = 0
 
-        encodeCoordinate(latDiff, encodedStringBuilder)
-        encodeCoordinate(lngDiff, encodedStringBuilder)
+    for (point in points) {
+        val lat = (point.first * factor).toInt()
+        val lng = (point.second * factor).toInt()
 
-        lastLat += latDiff
-        lastLng += lngDiff
+        val dLat = lat - prevLat
+        val dLng = lng - prevLng
+
+        prevLat = lat
+        prevLng = lng
+
+        encodeCoordinate(dLat, encodedPoly)
+        encodeCoordinate(dLng, encodedPoly)
     }
 
-    return encodedStringBuilder.toString()
+    return encodedPoly.toString()
 }
 
-private fun encodeCoordinate(diff: Int, builder: StringBuilder) {
-    var value = diff shl 1
-    if (diff < 0) {
-        value = value.inv()
+private fun encodeCoordinate(value: Int, encodedPoly: StringBuilder) {
+    var v = if (value < 0) (value shl 1).inv() else value shl 1
+    while (v >= 0x20) {
+        encodedPoly.append((((v and 0x1f) or 0x20) + 63).toChar())
+        v = v shr 5
     }
-    while (value >= 0x20) {
-        builder.append((0x20 or (value and 0x1f)) + 63)
-        value = value shr 5
-    }
-    builder.append(value + 63)
+    encodedPoly.append((v + 63).toChar())
 }
 
 
@@ -154,6 +156,7 @@ fun readFile(context: Context, filename: String): Triple<List<Double>, List<Doub
             }
             Log.d("read_file", speeds.toString())
             Log.d("read_file", heights.toString())
+            Log.d("Debug_coordinates", coordinates.toString())
 
             Triple(speeds,heights, encodePoly(coordinates, precision = 6))
         }

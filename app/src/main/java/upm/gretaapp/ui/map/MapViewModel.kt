@@ -264,9 +264,10 @@ class MapViewModel(
                 } catch(connectException: ConnectException) {
                     // If there is a connection error, a message is shown
                     _uiState.value = MapUiState.Error(1)
-                } catch (_ : Throwable) {
+                } catch (throwable : Throwable) {
                     // If there is other kind of error, another message is shown
                     _uiState.value = MapUiState.Error(2)
+                    Log.e("Error_route", throwable.stackTraceToString())
                 }
             }
         }
