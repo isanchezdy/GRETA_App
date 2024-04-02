@@ -339,13 +339,23 @@ class MapViewModel(
         sendFiles(context, userId)
     }
 
+    /**
+     * Updates the consumption factor of the [Vehicle] with the given [vehicleId]
+     *
+     * @param recordedConsumption The consumption obtained from the score given to a recording
+     * @param performedConsumption100km The consumption indicated by a vehicle
+     * @param performedRouteDistance The distance obtained from a recording
+     * @param vehicleId The id of a certain vehicle of the database
+     */
     fun updateConsumptionFactor(
         recordedConsumption: Double,
         performedConsumption100km: Double,
         performedRouteDistance: Double,
         vehicleId: Long
     ) {
+        // The current vehicle factor is retrieved if it exists
         var vehicleFactor: VehicleFactor? = null
+        // The job is obtained to cancel it after finishing the update
         var retrieveJob: Job? = null
         viewModelScope.launch {
             retrieveJob = this.coroutineContext.job
@@ -354,9 +364,13 @@ class MapViewModel(
             }
         }
         viewModelScope.launch {
+            // The consumption is retrieved from the mean consumption every 100 km
             val performedConsumption =
                 (performedConsumption100km / 100000.0) * performedRouteDistance
+
+            // If the difference between consumptions is less than 0.1
             if (abs(performedConsumption - recordedConsumption) <= 0.1) {
+                // The flag needsConsumption is set to false
                 if(vehicleFactor == null) {
                     vehicleFactorRepository.insertVehicleFactor(
                         VehicleFactor(id = vehicleId, needsConsumption = false)
@@ -370,6 +384,7 @@ class MapViewModel(
                     }
                 }
             } else {
+                // The new consumption factor is calculated and updated
                 val newConsumptionFactor = (performedConsumption / recordedConsumption) *
                         (vehicleFactor?.factor ?: 1.0)
                 if(vehicleFactor == null) {
