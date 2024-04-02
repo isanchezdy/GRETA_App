@@ -2,6 +2,7 @@ package upm.gretaapp.ui
 
 import android.app.Application
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
@@ -24,60 +25,63 @@ object AppViewModelProvider {
         // Initializer for HomeViewModel
         initializer {
             HomeViewModel(
-                gretaApplication().container.userSessionRepository
+                gretaApplication().container.phoneSessionRepository
             )
         }
         // Initializer for UserLoginViewModel
         initializer {
             UserLoginViewModel(
                 gretaApplication().container.gretaRepository,
-                gretaApplication().container.userSessionRepository
+                gretaApplication().container.phoneSessionRepository
             )
         }
         // Initializer for UserSignupViewModel
         initializer {
             UserSignupViewModel(
                 gretaApplication().container.gretaRepository,
-                gretaApplication().container.userSessionRepository
+                gretaApplication().container.phoneSessionRepository
             )
         }
         // Initializer for VehicleListViewModel
         initializer {
-            UserVehicleListViewModel(gretaApplication().container.userSessionRepository,
+            UserVehicleListViewModel(gretaApplication().container.phoneSessionRepository,
                 gretaApplication().container.gretaRepository)
         }
         // Initializer to UserVehicleAddViewModel
         initializer {
             UserVehicleAddViewModel(gretaApplication().container.gretaRepository,
-                gretaApplication().container.userSessionRepository)
+                gretaApplication().container.phoneSessionRepository)
         }
         // Initializer for MapViewModel
         initializer {
+            val savedStateHandle = createSavedStateHandle()
             MapViewModel(
                 gretaApplication().container.nominatimRepository,
-                gretaApplication().container.userSessionRepository,
+                gretaApplication().container.phoneSessionRepository,
                 gretaApplication().container.gretaRepository,
-                gretaApplication().container.recordingRepository
+                gretaApplication().container.recordingRepository,
+                gretaApplication().container.vehicleFactorRepository,
+                savedStateHandle
             )
         }
         // Initializer for ReviewViewModel
         initializer {
             ReviewViewModel(
-                gretaApplication().container.userSessionRepository,
+                gretaApplication().container.phoneSessionRepository,
                 gretaApplication().container.gretaRepository
             )
         }
         // Initializer for StatsViewModel
         initializer {
             StatsViewModel(
-                gretaApplication().container.userSessionRepository,
+                gretaApplication().container.phoneSessionRepository,
                 gretaApplication().container.gretaRepository
             )
         }
         // Initializer for UserRouteViewModel
         initializer {
             RouteHistoryViewModel(
-                gretaApplication().container.userSessionRepository,
+                gretaApplication().container.phoneSessionRepository,
                 gretaApplication().container.gretaRepository
             )
         }

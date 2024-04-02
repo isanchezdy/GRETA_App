@@ -399,7 +399,9 @@ fun MapBody(
             // A window with a button to search the routes is added when clicking the marker
             this.infoWindow = MyInfoWindow(
                 view = MarkerWindowFragment(onClick = {
-                    searchRoutes(locationOverlay.myLocation, this.position)
+                    if(locationOverlay.myLocation != null) {
+                        searchRoutes(locationOverlay.myLocation, this.position)
+                    }
                 }).onCreateView(layoutInflater, null, null),
                 mapView = mapView
             )

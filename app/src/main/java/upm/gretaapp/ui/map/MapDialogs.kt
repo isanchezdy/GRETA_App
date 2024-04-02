@@ -237,10 +237,10 @@ fun ScoresResult(
             }
         }
     } else if(needsConsumption) {
-        RegisterRealConsumption {
-            updateFactor(it)
-            clearScore()
-        }
+        RegisterRealConsumption(
+            updateFactor = updateFactor,
+            clearScore = clearScore
+        )
     }
 }
 
@@ -393,7 +393,7 @@ fun RouteParams(
 }
 
 @Composable
-fun RegisterRealConsumption(updateFactor: (Double) -> Unit) {
+fun RegisterRealConsumption(updateFactor: (Double) -> Unit, clearScore: () -> Unit) {
     var visible by remember{ mutableStateOf(true) }
 
     if(visible) {
@@ -434,6 +434,7 @@ fun RegisterRealConsumption(updateFactor: (Double) -> Unit) {
                             visible = false
                             if(performedConsumption100km.isNotBlank())
                                 updateFactor(performedConsumption100km.toDouble())
+                            clearScore()
                         },
                         modifier = Modifier.padding(16.dp)
                     ) {

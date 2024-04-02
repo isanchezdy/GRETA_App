@@ -212,8 +212,6 @@ private fun UserRouteItem( // TODO finish this!
                     text = userRoute.selectedRouteDistance.toString(),
                     style = MaterialTheme.typography.titleMedium
                 )
-
-                // TODO continue here with UI improvement and adding other fields
             }
         }
     }

@@ -1,35 +1,46 @@
 package upm.gretaapp.ui.map
 
 import android.content.Context
+import android.os.Parcelable
 import android.util.Log
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.work.WorkInfo
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.last
+import kotlinx.coroutines.flow.lastOrNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.parcelize.Parcelize
 import org.osmdroid.util.GeoPoint
 import upm.gretaapp.data.GretaRepository
 import upm.gretaapp.data.NominatimRepository
 import upm.gretaapp.data.RecordingRepository
 import upm.gretaapp.data.PhoneSessionRepository
+import upm.gretaapp.data.VehicleFactorRepository
 import upm.gretaapp.model.NominatimResult
 import upm.gretaapp.model.Route
 import upm.gretaapp.model.PerformedRouteMetrics
 import upm.gretaapp.model.InputPerformedRoute
 import upm.gretaapp.model.UserVehicle
 import upm.gretaapp.model.Vehicle
+import upm.gretaapp.model.VehicleFactor
 import java.net.ConnectException
 import java.util.Date
 import kotlin.math.abs
+
+private const val MAP_UI_SAVED_STATE_KEY = "MapUiStateKey"
+private const val FILENAME_KEY = "FilenameKey"
+//private const val ROUTE_KEY = "RouteKey"
 
 /**
  * [ViewModel] that manages the current UI state of the Map Screen (search a destination, a route,
@@ -46,7 +57,9 @@ class MapViewModel(
     private val nominatimRepository: NominatimRepository,
     private val phoneSessionRepository: PhoneSessionRepository,
     private val gretaRepository: GretaRepository,
-    private val recordingRepository: RecordingRepository
+    private val recordingRepository: RecordingRepository,
+    private val vehicleFactorRepository: VehicleFactorRepository,
+    private val state: SavedStateHandle
 ): ViewModel() {
 
     // Current user
@@ -55,8 +68,6 @@ class MapViewModel(
     // List of vehicles of the current user
     private val _vehicleList = MutableStateFlow<List<Pair<UserVehicle, Vehicle>>>(emptyList())
     val vehicleList = _vehicleList.asStateFlow()
-
-    private var filename: String = ""
 
     init {
         viewModelScope.launch {
@@ -83,9 +94,25 @@ class MapViewModel(
         }
     }
 
-    // Variables that manage the current state of the ui, showing a read-only value to the screen
-    private val _uiState = MutableStateFlow<MapUiState>(MapUiState.Start)
-    val uiState = _uiState.asStateFlow()
+    // Variable that manage the current state of the ui, showing a read-only value to the screen
+    val uiState: StateFlow<MapUiState> = state.getStateFlow(MAP_UI_SAVED_STATE_KEY, MapUiState.Start)
+
+    private fun setMapUiState(uiState: MapUiState) {
+        state[MAP_UI_SAVED_STATE_KEY] = uiState
+    }
+
+    private val filename: StateFlow<String> = state.getStateFlow(FILENAME_KEY, "")
+
+    private fun setFilename(filename: String) {
+        state[FILENAME_KEY] = filename
+    }
+
+    /*
+    val currentRoute: StateFlow<Route?> = state.getStateFlow(ROUTE_KEY, null)
+
+    fun setCurrentRoute(route: Route?) {
+
+    }*/
 
     // Search results based on the user query
     private val _searchResults: MutableStateFlow<List<NominatimResult>> =
@@ -141,7 +168,7 @@ class MapViewModel(
      */
     fun clearOptions() {
         _searchResults.value = emptyList()
-        _uiState.value = MapUiState.Start
+        setMapUiState(MapUiState.Start)
     }
 
     /**
@@ -163,7 +190,7 @@ class MapViewModel(
         viewModelScope.launch {
             try{
                 // The ui is updated to show a loading screen
-                _uiState.value = MapUiState.LoadingRoute
+                setMapUiState(MapUiState.LoadingRoute)
 
                 // The routes are retrieved from the database
                 val routes = gretaRepository.getRoutes(
@@ -184,12 +211,12 @@ class MapViewModel(
                 ).map { (value, keys) -> keys to value }
 
                 // The routes are shown in the ui
-                _uiState.value = MapUiState.CompleteRoutes(routes = processedRoutes)
+                setMapUiState(MapUiState.CompleteRoutes(routes = processedRoutes))
             } catch(connectException: ConnectException) {
                 // If the app can't connect to the server
-                _uiState.value = MapUiState.Error(1)
+                setMapUiState(MapUiState.Error(1))
             } catch (throwable: Throwable) {
-                _uiState.value = MapUiState.Error(2)
+                setMapUiState(MapUiState.Error(2))
                 Log.e("Error_route", throwable.stackTraceToString())
             }
         }
@@ -202,10 +229,10 @@ class MapViewModel(
      * @param vehicleId The id of the vehicle performing the route
      */
     fun startRecording(context: Context, vehicleId: Long) {
-        filename = "user " + userId.toString() + " vehicle " + vehicleId.toString() +
-                " " + Date().toString()
+        setFilename("user " + userId.toString() + " vehicle " + vehicleId.toString() +
+                " " + Date().toString())
         continueRoute(context)
-        recordingRepository.recordRoute(userId = userId, vehicleId = vehicleId, filename)
+        recordingRepository.recordRoute(userId = userId, vehicleId = vehicleId, filename.value)
     }
 
     /**
@@ -213,7 +240,7 @@ class MapViewModel(
      */
     fun cancelRecording() {
         recordingRepository.cancelWork()
-        _uiState.value = MapUiState.Start
+        setMapUiState(MapUiState.Start)
     }
 
     /**
@@ -228,12 +255,21 @@ class MapViewModel(
         vehicleId: Long = -1,
         additionalMass: Long = 0
     ) {
+        var vehicleFactor: VehicleFactor? = null
+        var retrieveJob: Job? = null
+
+        viewModelScope.launch {
+            retrieveJob = this.coroutineContext.job
+            vehicleFactorRepository.getVehicleFactorStream(vehicleId).collectLatest {
+                vehicleFactor = it
+            }
+        }
         viewModelScope.launch {
             // If the recording finished successfully
             if(recordingUiState.value is RecordingUiState.Complete) {
                 try {
                     // The results are loading
-                    _uiState.value = MapUiState.LoadingRoute
+                    setMapUiState(MapUiState.LoadingRoute)
 
                     val recordingResults = withContext(Dispatchers.IO) {
                         return@withContext readFile(
@@ -255,34 +291,36 @@ class MapViewModel(
                     // The scores are retrieved and the ui is updated
                     var scores = gretaRepository.calculatePerformedRouteMetrics(input)
                     scores = scores.copy(performedRouteConsumption =
-                    scores.performedRouteConsumption
-                            * phoneSessionRepository.vehicleFactor(vehicleId).last())
-                    _uiState.value = MapUiState.CompleteScore(
+                        scores.performedRouteConsumption
+                            * (vehicleFactor?.factor ?: 1.0))
+                    setMapUiState(MapUiState.CompleteScore(
                         scores,
-                        phoneSessionRepository.needsConsumption(vehicleId).last()
-                    )
+                        vehicleFactor?.needsConsumption ?: true
+                    ))
                 } catch(connectException: ConnectException) {
                     // If there is a connection error, a message is shown
-                    _uiState.value = MapUiState.Error(1)
+                    setMapUiState(MapUiState.Error(1))
                 } catch (throwable : Throwable) {
                     // If there is other kind of error, another message is shown
-                    _uiState.value = MapUiState.Error(2)
+                    setMapUiState(MapUiState.Error(2))
                     Log.e("Error_route", throwable.stackTraceToString())
+                } finally {
+                    retrieveJob?.cancel()
                 }
             }
         }
     }
 
     fun finishRoute(context: Context) {
-        writeState(context, "$filename state.txt", "finished")
+        writeState(context, "${filename.value} state.txt", "finished")
     }
 
     fun pauseRoute(context: Context) {
-        writeState(context, "$filename state.txt", "paused")
+        writeState(context, "${filename.value} state.txt", "paused")
     }
 
     fun continueRoute(context: Context) {
-        writeState(context, "$filename state.txt", "started")
+        writeState(context, "${filename.value} state.txt", "started")
     }
 
     /**
@@ -307,19 +345,47 @@ class MapViewModel(
         performedRouteDistance: Double,
         vehicleId: Long
     ) {
+        var vehicleFactor: VehicleFactor? = null
+        var retrieveJob: Job? = null
+        viewModelScope.launch {
+            retrieveJob = this.coroutineContext.job
+            vehicleFactorRepository.getVehicleFactorStream(vehicleId).collectLatest {
+                vehicleFactor = it
+            }
+        }
         viewModelScope.launch {
             val performedConsumption =
                 (performedConsumption100km / 100000.0) * performedRouteDistance
             if (abs(performedConsumption - recordedConsumption) <= 0.1) {
-                phoneSessionRepository.saveNeedsConsumption(
-                    vehicleId,
-                    false
-                )
+                if(vehicleFactor == null) {
+                    vehicleFactorRepository.insertVehicleFactor(
+                        VehicleFactor(id = vehicleId, needsConsumption = false)
+                    )
+                }
+                else {
+                    vehicleFactor?.copy(needsConsumption = false)?.let {
+                        vehicleFactorRepository.updateVehicleFactor(
+                            it
+                        )
+                    }
+                }
             } else {
                 val newConsumptionFactor = (performedConsumption / recordedConsumption) *
-                        phoneSessionRepository.vehicleFactor(vehicleId).last()
-                phoneSessionRepository.saveVehicleFactor(vehicleId, newConsumptionFactor)
+                        (vehicleFactor?.factor ?: 1.0)
+                if(vehicleFactor == null) {
+                    vehicleFactorRepository.insertVehicleFactor(
+                        VehicleFactor(id = vehicleId, factor = newConsumptionFactor)
+                    )
+                }
+                else {
+                    vehicleFactor?.copy(factor = newConsumptionFactor)?.let {
+                        vehicleFactorRepository.updateVehicleFactor(
+                            it
+                        )
+                    }
+                }
             }
+            retrieveJob?.cancel()
         }
     }
 
@@ -328,11 +394,17 @@ class MapViewModel(
 /**
  * Interface that represents the different states of the screen
  */
-sealed interface MapUiState {
+@Parcelize
+sealed interface MapUiState : Parcelable {
+    @Parcelize
     data object Start: MapUiState
+    @Parcelize
     data object LoadingRoute: MapUiState
+    @Parcelize
     data class Error(val code: Int): MapUiState
+    @Parcelize
     data class CompleteRoutes(val routes: List<Pair<List<String>, Route>>): MapUiState
+    @Parcelize
     data class CompleteScore(val scores: PerformedRouteMetrics, val needsConsumption: Boolean): MapUiState
 }
 

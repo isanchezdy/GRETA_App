@@ -23,6 +23,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.work.CoroutineWorker
 import androidx.work.ForegroundInfo
+import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
 import kotlinx.coroutines.Dispatchers
@@ -119,9 +120,15 @@ class RecordingWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
             manager.createNotificationChannel(serviceChannel)
         }
 
+        // This PendingIntent can be used to cancel the worker
+        val intent = WorkManager.getInstance(applicationContext)
+            .createCancelPendingIntent(id)
+
         val notification = NotificationCompat.Builder(applicationContext, channelId)
             .setSmallIcon(R.mipmap.ic_launcher)
             .setContentTitle(applicationContext.getString(R.string.recording_route))
+            .addAction(android.R.drawable.ic_delete,
+                applicationContext.getString(R.string.cancel_route), intent)
             .build()
 
         val foregroundInfo = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {

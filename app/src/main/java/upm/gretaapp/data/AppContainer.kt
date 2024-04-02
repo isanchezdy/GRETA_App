@@ -19,10 +19,11 @@ import java.util.concurrent.TimeUnit
  */
 interface AppContainer {
 
-    val userSessionRepository: PhoneSessionRepository
+    val phoneSessionRepository: PhoneSessionRepository
     val recordingRepository: RecordingRepository
     val nominatimRepository: NominatimRepository
     val gretaRepository: GretaRepository
+    val vehicleFactorRepository: VehicleFactorRepository
 }
 
 /**
@@ -36,7 +37,7 @@ class AppDataContainer(private val context: Context) : AppContainer {
     /**
      * Implementation of [PhoneSessionRepository]
      */
-    override val userSessionRepository: PhoneSessionRepository =
+    override val phoneSessionRepository: PhoneSessionRepository =
         PhoneSessionRepository(context.dataStore)
 
     private val nominatimUrl = "https://nominatim.openstreetmap.org"
@@ -81,5 +82,9 @@ class AppDataContainer(private val context: Context) : AppContainer {
 
     override val gretaRepository: GretaRepository by lazy {
         OnlineGretaRepository(gretaApiService)
+    }
+
+    override val vehicleFactorRepository: VehicleFactorRepository by lazy {
+        OfflineVehicleFactorRepository(VehicleFactorDatabase.getDatabase(context).vehicleFactorDao())
     }
 }

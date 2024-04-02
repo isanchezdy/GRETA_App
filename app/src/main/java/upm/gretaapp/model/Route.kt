@@ -18,7 +18,7 @@ data class Route (
 
     @SerialName("Time")
     val time: Double
-)
+): java.io.Serializable
 
 val Route.processedRoute: List<Pair<Double,Double>>
     get() = decodePoly(encoded = this.route, precision = 6)
