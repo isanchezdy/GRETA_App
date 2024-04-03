@@ -4,7 +4,7 @@ import kotlinx.coroutines.flow.Flow
 import upm.gretaapp.model.VehicleFactor
 
 class OfflineVehicleFactorRepository(private val vehicleFactorDao: VehicleFactorDao): VehicleFactorRepository {
-    override fun getVehicleFactorStream(id: Long): Flow<VehicleFactor?> = vehicleFactorDao
+    override fun getVehicleFactorStream(id: Long): VehicleFactor? = vehicleFactorDao
         .getVehicleFactor(id)
 
     override suspend fun insertVehicleFactor(vehicleFactor: VehicleFactor) = vehicleFactorDao

@@ -1,12 +1,15 @@
 package upm.gretaapp.model
 
+import android.os.Parcelable
+import kotlinx.parcelize.Parcelize
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
+@Parcelize
 @Serializable
 data class UserRoute(
     @SerialName("ID")
-    val id: Long,
+    val id: Long? = null,
 
     @SerialName("UserID")
     val userId: Long,
@@ -70,4 +73,28 @@ data class UserRoute(
 
     @SerialName("DrivingAggressiveness")
     val drivingAggressiveness: Int
-)
+): Parcelable
+
+fun UserRoute.fillFromRoute(route: Route): UserRoute {
+
+    return this.copy(
+        selectedRoutePolyline = route.route,
+        selectedRouteConsumption = route.energyConsumption,
+        selectedRouteDistance = route.distance.toLong(),
+        selectedRouteTime = route.time.toLong(),
+    )
+}
+
+fun UserRoute.fillFromPerformedMetrics(performedRouteMetrics: PerformedRouteMetrics): UserRoute {
+    return this.copy(
+        performedRouteConsumption = performedRouteMetrics.performedRouteConsumption,
+        performedRouteTime = performedRouteMetrics.performedRouteTime.toLong(),
+        performedRouteDistance = performedRouteMetrics.performedRouteDistance.toLong(),
+        performedRouteEstimatedConsumption = performedRouteMetrics.performedRouteEstimatedConsumption,
+        performedRouteEstimatedTime = performedRouteMetrics.performedRouteEstimatedTime.toLong(),
+        performedRouteEstimatedDistance = performedRouteMetrics.performedRouteEstimatedDistance.toLong(),
+        numStopsKm = performedRouteMetrics.numStopsKm,
+        speedVariationNum = performedRouteMetrics.speedVariationNum,
+        drivingAggressiveness = performedRouteMetrics.drivingAggressiveness
+    )
+}

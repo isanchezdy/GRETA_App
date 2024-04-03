@@ -11,7 +11,7 @@ interface VehicleFactorRepository {
     /**
      * Retrieve a vehicle factor from the given data source that matches with the [id].
      */
-    fun getVehicleFactorStream(id: Long): Flow<VehicleFactor?>
+    fun getVehicleFactorStream(id: Long): VehicleFactor?
 
     /**
      * Insert vehicle factor in the data source

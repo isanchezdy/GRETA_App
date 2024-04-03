@@ -21,5 +21,5 @@ interface VehicleFactorDao {
     suspend fun delete(vehicleFactor: VehicleFactor)
 
     @Query("SELECT * from vehicles WHERE id = :id")
-    fun getVehicleFactor(id: Long): Flow<VehicleFactor>
+    fun getVehicleFactor(id: Long): VehicleFactor?
 }

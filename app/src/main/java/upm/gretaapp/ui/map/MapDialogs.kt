@@ -418,7 +418,7 @@ fun RegisterRealConsumption(updateFactor: (Double) -> Unit, clearScore: () -> Un
                     TextField(
                         value = performedConsumption100km,
                         onValueChange = {
-                            if(it.toDoubleOrNull() != null)
+                            if(it.toDoubleOrNull() != null || it == "")
                                 performedConsumption100km = it
                         },
                         singleLine = true,

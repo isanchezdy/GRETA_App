@@ -56,8 +56,12 @@ class RouteHistoryViewModel(
                 val userVehicles = gretaRepository.getUserVehicles(userId)
                 val list: MutableList<Pair<UserRoute, Vehicle>> = mutableListOf()
                 for (route in routesHistory) {
-                    val userVehicle = userVehicles.find { it.id == route.userVehicleId }
-                    val vehicle = gretaRepository.getVehicle(userVehicle!!.vehicleId)
+                    val vehicle = if(route.userVehicleId == (-1).toLong()) {
+                        gretaRepository.getVehicle((-1).toLong())
+                    } else {
+                        val userVehicle = userVehicles.find { it.id == route.userVehicleId }
+                        gretaRepository.getVehicle(userVehicle!!.vehicleId)
+                    }
                     list.add(Pair(route, vehicle))
                 }
                 // The ui is updated with the results

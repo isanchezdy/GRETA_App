@@ -34,6 +34,7 @@ import upm.gretaapp.R
 import upm.gretaapp.model.UserRoute
 import upm.gretaapp.model.Vehicle
 import upm.gretaapp.ui.AppViewModelProvider
+import upm.gretaapp.ui.map.Score
 import upm.gretaapp.ui.navigation.NavigationDestination
 import upm.gretaapp.ui.theme.GRETAAppTheme
 
@@ -96,7 +97,7 @@ private fun RoutesHistoryBody(
             } else {
                 Arrangement.Top
             },
-            modifier = modifier.padding(8.dp)
+            modifier = modifier.padding(8.dp).fillMaxWidth()
         ) {
 
             if (uiState is RoutesHistoryUiState.Error) {
@@ -139,8 +140,8 @@ private fun RoutesHistoryList(
     modifier: Modifier = Modifier
 ) {
     val listState = rememberLazyListState()
-    LazyColumn(state = listState, modifier = modifier) {
-        items(items = routesHistoryList, key = { it.first.id }) { userRoute ->
+    LazyColumn(state = listState, modifier = modifier.fillMaxWidth()) {
+        items(items = routesHistoryList, key = { it.first.id!! }) { userRoute ->
             UserRouteItem(
                 userRoute = userRoute.first,
                 vehicle = userRoute.second
@@ -155,64 +156,68 @@ private fun UserRouteItem( // TODO finish this!
     vehicle: Vehicle
 ) {
     Card(
-        modifier = Modifier.padding(8.dp),
+        modifier = Modifier.padding(8.dp).fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(
-            modifier = Modifier.padding(20.dp),
+            modifier = Modifier.padding(20.dp).fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
 
             Text(
                 text = userRoute.recordDate.replace("T", " "),
-                style = MaterialTheme.typography.titleMedium
+                textAlign = TextAlign.Center,
+                style = MaterialTheme.typography.titleLarge,
             )
 
-            Row(
-                horizontalArrangement = Arrangement.Center,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                // Put name instead of ID
-                Text(
-                    text = userRoute.userVehicleId.toString(),
-                    style = MaterialTheme.typography.titleMedium
-                )
+            Text(
+                text = vehicle.name.replace("_-_", " "),
+                textAlign = TextAlign.Center,
+                style = MaterialTheme.typography.titleMedium,
+            )
 
-                Text(
-                    text = userRoute.additionalMass.toString(),
-                    style = MaterialTheme.typography.titleMedium
-                )
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceAround) {
+                Text(text = "${userRoute.performedRouteDistance / 1000} km")
 
-                Text(
-                    text = userRoute.sourceCoords,
-                    style = MaterialTheme.typography.titleMedium
-                )
+                Text(text = "${userRoute.performedRouteTime/ 60} min")
 
-                Text(
-                    text = userRoute.destinationCoords,
-                    style = MaterialTheme.typography.titleMedium
-                )
-
-                Text(
-                    text = userRoute.selectedRouteType,
-                    style = MaterialTheme.typography.titleMedium
-                )
-
-                Text(
-                    text = userRoute.selectedRouteConsumption.toString(),
-                    style = MaterialTheme.typography.titleMedium
-                )
-
-                Text(
-                    text = userRoute.selectedRouteTime.toString(),
-                    style = MaterialTheme.typography.titleMedium
-                )
-
-                Text(
-                    text = userRoute.selectedRouteDistance.toString(),
-                    style = MaterialTheme.typography.titleMedium
+                Text(text = "${userRoute.performedRouteConsumption} " +
+                        if(vehicle.motorType == "ELECTRIC") {
+                            "kW/h"
+                        } else "l"
                 )
             }
+
+            Text(
+                text = stringResource(id = R.string.stops),
+                style = MaterialTheme.typography.bodyLarge,
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .padding(top = 8.dp)
+            )
+
+            Score(score = userRoute.numStopsKm)
+
+            Text(
+                text = stringResource(id = R.string.speeding),
+                style = MaterialTheme.typography.bodyLarge,
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .padding(top=8.dp)
+            )
+
+            Score(score = userRoute.drivingAggressiveness)
+
+            Text(
+                text = stringResource(id = R.string.slow_driving),
+                style = MaterialTheme.typography.bodyLarge,
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .padding(top=8.dp)
+            )
+
+            Score(score = userRoute.speedVariationNum)
         }
     }
 }

@@ -154,13 +154,18 @@ fun MapScreen(
     // Function for centering the map when location is available
     val center: MutableState<(() -> Unit)?> = remember{ mutableStateOf(null) }
 
+    val recordingUiState by viewModel.recordingUiState.collectAsState()
+
     Scaffold(
         topBar = {
-            GretaTopAppBar(canUseMenu = true, openMenu = openMenu, navigateUp = { })
+            GretaTopAppBar(
+                canUseMenu = recordingUiState !is RecordingUiState.Loading,
+                openMenu = openMenu,
+                navigateUp = { viewModel.cancelRecording() }
+            )
         },
         floatingActionButton = {
             Column {
-                val recordingUiState by viewModel.recordingUiState.collectAsState()
                 var isPaused by rememberSaveable{ mutableStateOf(false) }
                 if (recordingUiState is RecordingUiState.Loading) {
                     FloatingActionButton(
@@ -252,6 +257,7 @@ fun MapScreen(
                     additionalMass = (numberOfPersons.intValue * 75 + (numberOfBulks.value ?: 0) * 5).toLong()
                 )
             },
+            setCurrentRoute = viewModel::fillCurrentRoute,
             startRecording = {
                 viewModel.startRecording(context, selectedVehicle.value?.second ?: -1)
             },
@@ -304,6 +310,7 @@ fun MapBody(
     search: (String) -> Unit,
     clearOptions: () -> Unit,
     searchRoutes: (GeoPoint, GeoPoint) -> Unit,
+    setCurrentRoute: (Route, String) -> Unit,
     startRecording: () -> Unit,
     cancelRecording: () -> Unit,
     getScore: () -> Unit,
@@ -583,14 +590,20 @@ fun MapBody(
                     polyline.outlinePaint.strokeCap = Paint.Cap.ROUND
                     polyline.outlinePaint.strokeWidth = 20F
 
+                    val label: String
+
                     // The color is decided based on the most important label it contains
                     polyline.outlinePaint.color = if(route.first.contains("eco")) {
+                        label = "eco"
                         Color.GREEN
                     } else if(route.first.contains("fastest")) {
+                        label = "fastest"
                         Color.BLUE
                     } else if (route.first.contains("shortest")) {
+                        label = "shortest"
                         Color.MAGENTA
                     } else {
+                        label = "undefined"
                         Color.RED
                     }
 
@@ -607,6 +620,7 @@ fun MapBody(
                             route = route.second,
                             isElectric = isElectric,
                             onClick = {
+                                setCurrentRoute(route.second, label)
                                 // A recording starts and the map focuses on the location of the car
                                 startRecording()
                                 mapView.controller.setZoom(18.0)

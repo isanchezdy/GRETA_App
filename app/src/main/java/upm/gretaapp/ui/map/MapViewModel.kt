@@ -1,6 +1,7 @@
 package upm.gretaapp.ui.map
 
 import android.content.Context
+import android.icu.text.SimpleDateFormat
 import android.os.Parcelable
 import android.util.Log
 import androidx.lifecycle.SavedStateHandle
@@ -8,7 +9,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.work.WorkInfo
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -16,7 +16,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.parcelize.Parcelize
@@ -30,16 +29,21 @@ import upm.gretaapp.model.NominatimResult
 import upm.gretaapp.model.Route
 import upm.gretaapp.model.PerformedRouteMetrics
 import upm.gretaapp.model.InputPerformedRoute
+import upm.gretaapp.model.UserRoute
+import upm.gretaapp.model.UserStats
 import upm.gretaapp.model.UserVehicle
 import upm.gretaapp.model.Vehicle
 import upm.gretaapp.model.VehicleFactor
+import upm.gretaapp.model.fillFromPerformedMetrics
+import upm.gretaapp.model.fillFromRoute
 import java.net.ConnectException
 import java.util.Date
+import java.util.Locale
 import kotlin.math.abs
 
 private const val MAP_UI_SAVED_STATE_KEY = "MapUiStateKey"
 private const val FILENAME_KEY = "FilenameKey"
-//private const val ROUTE_KEY = "RouteKey"
+private const val ROUTE_KEY = "RouteKey"
 
 /**
  * [ViewModel] that manages the current UI state of the Map Screen (search a destination, a route,
@@ -68,11 +72,42 @@ class MapViewModel(
     private val _vehicleList = MutableStateFlow<List<Pair<UserVehicle, Vehicle>>>(emptyList())
     val vehicleList = _vehicleList.asStateFlow()
 
+    private val currentRoute: StateFlow<UserRoute> = state.getStateFlow(ROUTE_KEY,
+        UserRoute(
+            userId = userId,
+            userVehicleId = -1,
+            additionalMass = 0,
+            sourceCoords = "",
+            destinationCoords = "",
+            recordDate = "",
+            selectedRoutePolyline = "",
+            selectedRouteType = "",
+            selectedRouteConsumption = 0.0,
+            selectedRouteDistance = 0,
+            selectedRouteTime = 0,
+            performedRoutePolyline = "",
+            performedRouteConsumption = 0.0,
+            performedRouteTime = 0,
+            performedRouteDistance = 0,
+            performedRouteEstimatedConsumption = 0.0,
+            performedRouteEstimatedTime = 0,
+            performedRouteEstimatedDistance = 0,
+            numStopsKm = 0,
+            speedVariationNum = 0,
+            drivingAggressiveness = 0
+        )
+    )
+
+    private fun setCurrentRoute(route: UserRoute) {
+        state[ROUTE_KEY] = route
+    }
+
     init {
         viewModelScope.launch {
             // The current user is retrieved and updated
             phoneSessionRepository.user.collectLatest {
                 userId = it
+                setCurrentRoute(currentRoute.value.copy(userId = userId))
                 // All of its vehicles are retrieved
                 _vehicleList.value = try {
                     val userVehicles = gretaRepository.getUserVehicles(userId)
@@ -106,12 +141,9 @@ class MapViewModel(
         state[FILENAME_KEY] = filename
     }
 
-    /*
-    val currentRoute: StateFlow<Route?> = state.getStateFlow(ROUTE_KEY, null)
-
-    fun setCurrentRoute(route: Route?) {
-
-    }*/
+    fun fillCurrentRoute(route: Route, label: String) {
+        setCurrentRoute(currentRoute.value.fillFromRoute(route).copy(selectedRouteType = label))
+    }
 
     // Search results based on the user query
     private val _searchResults: MutableStateFlow<List<NominatimResult>> =
@@ -191,6 +223,15 @@ class MapViewModel(
                 // The ui is updated to show a loading screen
                 setMapUiState(MapUiState.LoadingRoute)
 
+                setCurrentRoute(currentRoute.value.copy(
+                    userVehicleId = vehicleList.value.find {
+                        it.first.vehicleId == vehicleId
+                    }?.first?.id ?: -1,
+                    additionalMass = additionalMass,
+                    sourceCoords = "${source.latitude};${source.longitude}",
+                    destinationCoords = "${destination.latitude};${destination.longitude}"
+                ))
+
                 // The routes are retrieved from the database
                 val routes = gretaRepository.getRoutes(
                     source = source.latitude.toFloat().toString() + ","
@@ -228,6 +269,10 @@ class MapViewModel(
      * @param vehicleId The id of the vehicle performing the route
      */
     fun startRecording(context: Context, vehicleId: Long) {
+        val date = Date()
+        setCurrentRoute(currentRoute.value.copy(
+            recordDate = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault()).format(date))
+        )
         setFilename("user " + userId.toString() + " vehicle " + vehicleId.toString() +
                 " " + Date().toString())
         continueRoute(context)
@@ -254,16 +299,12 @@ class MapViewModel(
         vehicleId: Long = -1,
         additionalMass: Long = 0
     ) {
-        var vehicleFactor: VehicleFactor? = null
-        var retrieveJob: Job? = null
-
         viewModelScope.launch {
-            retrieveJob = this.coroutineContext.job
-            vehicleFactorRepository.getVehicleFactorStream(vehicleId).collectLatest {
-                vehicleFactor = it
+            val vehicleFactor = withContext(Dispatchers.IO) {
+                // The current vehicle factor is retrieved if it exists
+                return@withContext vehicleFactorRepository.getVehicleFactorStream(vehicleId)
             }
-        }
-        viewModelScope.launch {
+
             // If the recording finished successfully
             if(recordingUiState.value is RecordingUiState.Complete) {
                 try {
@@ -287,6 +328,7 @@ class MapViewModel(
                                 },
                             routePolyline = recordingResults.third
                         )
+                    setCurrentRoute(currentRoute.value.copy(performedRoutePolyline = recordingResults.third))
                     // The scores are retrieved and the ui is updated
                     var scores = gretaRepository.calculatePerformedRouteMetrics(input)
                     scores = scores.copy(performedRouteConsumption =
@@ -296,6 +338,7 @@ class MapViewModel(
                         scores,
                         vehicleFactor?.needsConsumption ?: true
                     ))
+                    setCurrentRoute(currentRoute.value.fillFromPerformedMetrics(scores))
                 } catch(connectException: ConnectException) {
                     // If there is a connection error, a message is shown
                     setMapUiState(MapUiState.Error(1))
@@ -303,8 +346,6 @@ class MapViewModel(
                     // If there is other kind of error, another message is shown
                     setMapUiState(MapUiState.Error(2))
                     Log.e("Error_route", throwable.stackTraceToString())
-                } finally {
-                    retrieveJob?.cancel()
                 }
             }
         }
@@ -327,6 +368,36 @@ class MapViewModel(
      */
     fun clearResults() {
         recordingRepository.clearResults()
+        viewModelScope.launch {
+            try {
+                // If there are no user stats, an object is created
+                if(gretaRepository.getStatsUser(userId).isEmpty()) {
+                    gretaRepository.createUserStats(
+                        UserStats(
+                            consumptionSaving = currentRoute.value
+                                .performedRouteEstimatedConsumption
+                                    - currentRoute.value.performedRouteConsumption,
+                            driveRating = listOf(currentRoute.value.numStopsKm,
+                                currentRoute.value.drivingAggressiveness,
+                                currentRoute.value.speedVariationNum).average(),
+                            ecoDistance = if(currentRoute.value.selectedRouteType == "eco") {
+                                currentRoute.value.performedRouteDistance.toDouble()
+                            } else 0.0,
+                            ecoRoutesNum = if(currentRoute.value.selectedRouteType == "eco") {
+                                1
+                            } else 0,
+                            ecoTime = if(currentRoute.value.selectedRouteType == "eco") {
+                                currentRoute.value.performedRouteTime.toDouble()
+                            } else 0.0,
+                            userID = userId
+                        )
+                    )
+                }
+                gretaRepository.createUserRoute(currentRoute.value)
+            } catch (throwable: Throwable) {
+                Log.e("Clear_results", throwable.stackTraceToString())
+            }
+        }
     }
 
     /**
@@ -352,17 +423,12 @@ class MapViewModel(
         performedRouteDistance: Double,
         vehicleId: Long
     ) {
-        // The current vehicle factor is retrieved if it exists
-        var vehicleFactor: VehicleFactor? = null
-        // The job is obtained to cancel it after finishing the update
-        var retrieveJob: Job? = null
         viewModelScope.launch {
-            retrieveJob = this.coroutineContext.job
-            vehicleFactorRepository.getVehicleFactorStream(vehicleId).collectLatest {
-                vehicleFactor = it
+            val vehicleFactor = withContext(Dispatchers.IO) {
+                // The current vehicle factor is retrieved if it exists
+                return@withContext vehicleFactorRepository.getVehicleFactorStream(vehicleId)
             }
-        }
-        viewModelScope.launch {
+
             // The consumption is retrieved from the mean consumption every 100 km
             val performedConsumption =
                 (performedConsumption100km / 100000.0) * performedRouteDistance
@@ -376,7 +442,7 @@ class MapViewModel(
                     )
                 }
                 else {
-                    vehicleFactor?.copy(needsConsumption = false)?.let {
+                    vehicleFactor.copy(needsConsumption = false).let {
                         vehicleFactorRepository.updateVehicleFactor(
                             it
                         )
@@ -392,14 +458,13 @@ class MapViewModel(
                     )
                 }
                 else {
-                    vehicleFactor?.copy(factor = newConsumptionFactor)?.let {
+                    vehicleFactor.copy(factor = newConsumptionFactor).let {
                         vehicleFactorRepository.updateVehicleFactor(
                             it
                         )
                     }
                 }
             }
-            retrieveJob?.cancel()
         }
     }
 
