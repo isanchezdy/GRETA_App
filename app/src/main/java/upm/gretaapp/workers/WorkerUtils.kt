@@ -84,6 +84,13 @@ fun writeRecordingToCsv(context: Context, recording: Recording, filePath: String
     }
 }
 
+/**
+ * Reads data of the state of the recording from a file
+ *
+ * @param [context] Application context
+ * @param [filePath] Directory where the file is stored
+ * @return The current state of the recording
+ */
 fun readState(context: Context, filePath: String): String {
     val state = Environment.getExternalStorageState()
     if (Environment.MEDIA_MOUNTED == state) {
@@ -91,6 +98,7 @@ fun readState(context: Context, filePath: String): String {
         val dir = context.getExternalFilesDir(null)
         val file = File(dir, filePath)
 
+        // Returns the first line of the file
         return file.readLines().first()
     }
     return ""

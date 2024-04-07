@@ -75,6 +75,12 @@ data class UserRoute(
     val drivingAggressiveness: Int
 ): Parcelable
 
+/**
+ * Function that fills fields from the object using a [Route] instance
+ *
+ * @param route The route from which the values are extracted
+ * @return The [UserRoute] with the corresponding values replaced
+ */
 fun UserRoute.fillFromRoute(route: Route): UserRoute {
 
     return this.copy(
@@ -85,6 +91,12 @@ fun UserRoute.fillFromRoute(route: Route): UserRoute {
     )
 }
 
+/**
+ * Function that fills fields from the object using a [PerformedRouteMetrics] instance
+ *
+ * @param performedRouteMetrics The [PerformedRouteMetrics] from which the values are extracted
+ * @return The [UserRoute] with the corresponding values replaced
+ */
 fun UserRoute.fillFromPerformedMetrics(performedRouteMetrics: PerformedRouteMetrics): UserRoute {
     return this.copy(
         performedRouteConsumption = performedRouteMetrics.performedRouteConsumption,

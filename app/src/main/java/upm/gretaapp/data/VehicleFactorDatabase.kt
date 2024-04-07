@@ -6,6 +6,9 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import upm.gretaapp.model.VehicleFactor
 
+/**
+ * This class defines the options of the database that will store [VehicleFactor] objects
+ */
 @Database(entities = [VehicleFactor::class], version = 1, exportSchema = false)
 abstract class VehicleFactorDatabase : RoomDatabase() {
     abstract fun vehicleFactorDao(): VehicleFactorDao

@@ -45,6 +45,9 @@ import upm.gretaapp.ui.AppViewModelProvider
 import upm.gretaapp.ui.navigation.NavigationDestination
 import upm.gretaapp.ui.theme.GRETAAppTheme
 
+/**
+ * Object that represents the route of the User Login screen
+ */
 object LoginDestination : NavigationDestination {
     override val route = "login"
     override val titleRes = R.string.login
@@ -64,6 +67,7 @@ fun UserLoginScreen(
     modifier: Modifier = Modifier,
     viewModel: UserLoginViewModel = viewModel(factory = AppViewModelProvider.Factory)
 ) {
+    // The state of the ui is retrieved
     val uiState by viewModel.uiState.collectAsState()
     Scaffold(
         topBar = {
@@ -85,6 +89,13 @@ fun UserLoginScreen(
     }
 }
 
+/**
+ * Body of the user login screen
+ *
+ * @param uiState Object that represents the state of the ui (loading, error, complete)
+ * @param onLogin Function to log in a user with its email and password
+ * @param onNavigate Function to go to the next screen when the login is complete
+ */
 @Composable
 fun UserLoginBody(
     uiState: LoginUiState,
@@ -108,6 +119,7 @@ fun UserLoginBody(
             verticalArrangement = Arrangement.Center,
             modifier = Modifier.padding(all = 48.dp)
         ) {
+            // Field for introducing the email
             var email by remember{ mutableStateOf("") }
             TextField(
                 value = email,
@@ -119,7 +131,9 @@ fun UserLoginBody(
                 label = { Text(stringResource(id = R.string.email)) },
                 modifier = Modifier.padding(8.dp)
             )
+            // Field for introducing the password
             var password by remember{ mutableStateOf("") }
+            // Field for showing the password if the correspondig button is pressed
             var passwordVisible by remember { mutableStateOf(false) }
             TextField(
                 value = password,
@@ -128,6 +142,7 @@ fun UserLoginBody(
                 isError = uiState is LoginUiState.Error,
                 enabled = uiState != LoginUiState.Loading && uiState != LoginUiState.Complete,
                 label = { Text(stringResource(id = R.string.password)) },
+                // Filter applied depending if the password is shown or not
                 visualTransformation = if (passwordVisible)
                     VisualTransformation.None
                 else PasswordVisualTransformation(),
@@ -145,6 +160,7 @@ fun UserLoginBody(
                         onLogin(email, password)
                     }
                 ),
+                // Icon for showing or hiding the password
                 trailingIcon = {
                     IconButton(onClick = { passwordVisible = !passwordVisible }) {
                         Icon(
@@ -167,6 +183,7 @@ fun UserLoginBody(
                 modifier = Modifier.padding(8.dp)
             )
 
+            // Error message
             if(uiState is LoginUiState.Error) {
                 Text(
                     text = stringResource(id = if(uiState.code == 2) {
@@ -178,6 +195,7 @@ fun UserLoginBody(
                 )
             }
 
+            // Indicator while the login process is loading
             if(uiState is LoginUiState.Loading) {
                 CircularProgressIndicator(
                     modifier = Modifier
@@ -185,6 +203,7 @@ fun UserLoginBody(
                 )
             }
             else {
+                // Button to log in the app
                 Button(
                     onClick = {
                         onLogin(email, password)
@@ -200,6 +219,7 @@ fun UserLoginBody(
                 }
             }
 
+            // The app goes to the next screen if the login was successful
             LaunchedEffect(uiState) {
                 if(uiState is LoginUiState.Complete) {
                     onNavigate()

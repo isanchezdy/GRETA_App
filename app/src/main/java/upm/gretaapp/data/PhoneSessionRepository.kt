@@ -11,6 +11,9 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 import java.io.IOException
 
+/**
+ * Repository to obtain values from the internal [DataStore] of the phone
+ */
 class PhoneSessionRepository(
     private val dataStore: DataStore<Preferences>
 ) {
@@ -19,6 +22,9 @@ class PhoneSessionRepository(
         const val TAG = "PhoneSessionRepo"
     }
 
+    /**
+     * Flow to retrieve the current user logged in the app
+     */
     val user: Flow<Long> = dataStore.data
         .catch {
             if (it is IOException) {
@@ -32,13 +38,20 @@ class PhoneSessionRepository(
             preferences[USER] ?: -1
         }
 
-
+    /**
+     * Method to change the current user logged in the app
+     *
+     * @param userId The id of the current user logged in
+     */
     suspend fun saveUserPreference(userId: Long) {
         dataStore.edit { preferences ->
             preferences[USER] = userId
         }
     }
 
+    /**
+     * Method to exit session for current user
+     */
     suspend fun logout() {
         dataStore.edit { preferences ->
             preferences[USER] = -1

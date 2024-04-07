@@ -12,6 +12,9 @@ import upm.gretaapp.model.UserVehicle
 import upm.gretaapp.model.Vehicle
 import upm.gretaapp.network.GretaApiService
 
+/**
+ * Implementation of [GretaRepository] to retrieve and store results of the app using [GretaApiService]
+ */
 class OnlineGretaRepository(
     private val gretaApiService: GretaApiService
 ) : GretaRepository {

@@ -15,6 +15,12 @@ import upm.gretaapp.data.PhoneSessionRepository
 import upm.gretaapp.model.UserStats
 import java.net.ConnectException
 
+/**
+ * ViewModel to retrieve all stats from user in the database.
+ *
+ * @param phoneSessionRepository Repository for obtaining the current user of the app
+ * @param gretaRepository Repository for obtaining all stats of the current user and show them
+ */
 class StatsViewModel(
     phoneSessionRepository: PhoneSessionRepository,
     private val gretaRepository: GretaRepository
@@ -28,21 +34,30 @@ class StatsViewModel(
             // The id of the current user is retrieved
             phoneSessionRepository.user.collectLatest {
                 userId = it
+                // The stats are retrieved for the current user
                 getStats()
             }
         }
     }
 
+    /**
+     * Variable for representing the current state of the ui, starting with a loading screen
+     */
     var statsUiState: StatsUiState by mutableStateOf(StatsUiState.Loading)
         private set
 
+    /**
+     * Function to retrieve all the stats of the current user to represent them
+     */
     @OptIn(ExperimentalSerializationApi::class)
     private fun getStats() {
         viewModelScope.launch {
             statsUiState = try {
+                // The stats are retrieved and the ui is updated
                 val userStats = gretaRepository.getStatsUser(userId).last()
                 StatsUiState.Success(userStats)
             } catch(missingFieldException: MissingFieldException) {
+                // If the stats are blank
                 StatsUiState.Success(null)
             } catch(connectException: ConnectException) {
                 // A message is shown for a connection error
@@ -56,6 +71,9 @@ class StatsViewModel(
     }
 }
 
+/**
+ * Ui State for Stats Screen
+ */
 sealed interface StatsUiState {
     data class Success(val userStats: UserStats?): StatsUiState
     data object Loading: StatsUiState

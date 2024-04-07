@@ -47,11 +47,20 @@ import upm.gretaapp.ui.AppViewModelProvider
 import upm.gretaapp.ui.navigation.NavigationDestination
 import upm.gretaapp.ui.theme.GRETAAppTheme
 
+/**
+ * Object that represents the route of the User Vehicle Add screen
+ */
 object UserVehicleAddDestination : NavigationDestination {
     override val route = "add_vehicle"
     override val titleRes = R.string.add_vehicle
 }
 
+/**
+ * Composable that represents the User Vehicle Add Screen
+ *
+ * @param navigateBack Function to go back to the User Vehicle List screen
+ * @param onNavigateUp Function to go back to the previous screen through the top bar button
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UserVehicleAddScreen(
@@ -65,6 +74,7 @@ fun UserVehicleAddScreen(
             GretaTopAppBar(canUseMenu = false, navigateUp = onNavigateUp)
         }
     ) { paddingValues ->
+        // The state of the ui is retrieved
         val uiState by viewModel.vehicleUiState.collectAsState()
         UserVehicleEntryBody(
             navigateBack = navigateBack,
@@ -76,6 +86,14 @@ fun UserVehicleAddScreen(
     }
 }
 
+/**
+ * Body of the User Vehicle Add Screen
+ *
+ * @param navigateBack Function to go back to the previous screen
+ * @param uiState Object with the current state of the ui (vehicles to search for)
+ * @param onCreate Function to create a user vehicle using its brand id, age and km travelled
+ * @param search Function to search vehicles by name and brand
+ */
 @Composable
 fun UserVehicleEntryBody(
     navigateBack: () -> Unit,
@@ -105,6 +123,14 @@ fun UserVehicleEntryBody(
     }
 }
 
+/**
+ * Form for introducing data about the vehicle the user wants to add
+ *
+ * @param navigateBack Function to go back to the previous screen
+ * @param uiState Object with the current state of the ui (vehicles to search for)
+ * @param onCreate Function to create a user vehicle using its brand id, age and km travelled
+ * @param search Function to search vehicles by name and brand
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UserVehicleInputForm(
@@ -120,9 +146,13 @@ fun UserVehicleInputForm(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = modifier.padding(16.dp)
     ) {
+        // Value of the selected item from the default vehicles
         var selectedDefaultVehicle by rememberSaveable { mutableIntStateOf(-1) }
+        // Search string for the search bar
         var searchVehicle by rememberSaveable { mutableStateOf("") }
+        // Id of the current selected vehicle to add
         var selectedVehicleID: Long? by rememberSaveable { mutableStateOf(null) }
+        // Labels for default vehicle
         val defaultLabels = listOf(
             stringResource(id = R.string.segment_b), stringResource(id = R.string.segment_c),
             stringResource(id = R.string.segment_d), stringResource(id = R.string.segment_e)
@@ -134,6 +164,7 @@ fun UserVehicleInputForm(
             modifier = modifier.padding(top = 16.dp)
         )
 
+        // For each 2 labels, a row with both is placed
         for (i in 0..3 step 2) {
             Row(
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -187,6 +218,7 @@ fun UserVehicleInputForm(
             }
         }
 
+        // Flag to control the dropdown menu view
         var expanded by remember { mutableStateOf(false) }
 
         Text(
@@ -195,11 +227,13 @@ fun UserVehicleInputForm(
             modifier = modifier.padding(8.dp)
         )
 
+        // Menu for selecting a vehicle with the search bar
         ExposedDropdownMenuBox(
             expanded = expanded,
             onExpandedChange = { expanded = !expanded },
             modifier = Modifier.padding(16.dp)
         ) {
+            // Search field
             TextField(
                 modifier = Modifier.menuAnchor(),
                 label = { Text(stringResource(id = R.string.brand_model)) },
@@ -219,6 +253,7 @@ fun UserVehicleInputForm(
                 expanded = expanded,
                 onDismissRequest = { expanded = false }
             ) {
+                // For each vehicle, an item of the menu appears
                 uiState.forEach {
                         DropdownMenuItem(
                             text = { Text(it.name) },
@@ -239,6 +274,7 @@ fun UserVehicleInputForm(
             modifier = modifier.padding(8.dp)
         )
 
+        // Field to select the age of the vehicle in years
         var age: Long? by remember { mutableStateOf(null) }
         TextField(
             value = if (age == null) {
@@ -264,6 +300,7 @@ fun UserVehicleInputForm(
             modifier = Modifier.padding(8.dp)
         )
 
+        // Field to select the km of the vehicle
         var kmUsed: Long? by remember { mutableStateOf(null) }
         TextField(
             value = if (kmUsed == null) {
@@ -286,13 +323,16 @@ fun UserVehicleInputForm(
             modifier = Modifier.padding(8.dp)
         )
 
-
+        // Button to send the information and add the vehicle
         Button(
             onClick = {
+                // The selected vehicle is created
                 selectedVehicleID?.let { onCreate(it, age, kmUsed) }
+                // The screen goes back to the previous one
                 navigateBack()
             },
             shape = MaterialTheme.shapes.small,
+            // Enabled when the id is selected
             enabled = (selectedVehicleID != null),
             modifier = modifier
                 .fillMaxWidth()
@@ -317,22 +357,3 @@ fun UserVehicleAddScreenPreview() {
             navigateBack = {})
     }
 }
-
-/*@Composable
-fun ItemsVehicle(
-    vehicle: String,
-    onSelect: (String) -> Unit
-) {
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable {
-                onSelect(vehicle)
-            }
-            .padding(10.dp)
-    ) {
-        Text(text = vehicle, fontSize = 16.sp)
-    }
-
-}*/

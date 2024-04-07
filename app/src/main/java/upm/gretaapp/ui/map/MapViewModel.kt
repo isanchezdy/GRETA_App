@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.parcelize.Parcelize
+import kotlinx.serialization.SerializationException
 import org.osmdroid.util.GeoPoint
 import upm.gretaapp.data.GretaRepository
 import upm.gretaapp.data.NominatimRepository
@@ -55,6 +56,8 @@ private const val ROUTE_KEY = "RouteKey"
  *  information contained in the phone
  *  @param gretaRepository Repository class to retrieve information from the dedicated server
  *  @param recordingRepository Repository class to start recording a route when selected
+ *  @param vehicleFactorRepository Repository class to manage consumption data about the vehicles
+ *  @param state Object to safely store information in a persistent volume of the state of the UI
  */
 class MapViewModel(
     private val nominatimRepository: NominatimRepository,
@@ -72,6 +75,7 @@ class MapViewModel(
     private val _vehicleList = MutableStateFlow<List<Pair<UserVehicle, Vehicle>>>(emptyList())
     val vehicleList = _vehicleList.asStateFlow()
 
+    // Data recollected from the current route to send when it finishes
     private val currentRoute: StateFlow<UserRoute> = state.getStateFlow(ROUTE_KEY,
         UserRoute(
             userId = userId,
@@ -98,6 +102,11 @@ class MapViewModel(
         )
     )
 
+    /**
+     * Method to update the current [UserRoute] stored in [SavedStateHandle]
+     *
+     * @param route [UserRoute] to store
+     */
     private fun setCurrentRoute(route: UserRoute) {
         state[ROUTE_KEY] = route
     }
@@ -107,6 +116,7 @@ class MapViewModel(
             // The current user is retrieved and updated
             phoneSessionRepository.user.collectLatest {
                 userId = it
+                // The current route's user is updated
                 setCurrentRoute(currentRoute.value.copy(userId = userId))
                 // All of its vehicles are retrieved
                 _vehicleList.value = try {
@@ -128,19 +138,36 @@ class MapViewModel(
         }
     }
 
-    // Variable that manage the current state of the ui, showing a read-only value to the screen
+    // Variable that manages the current state of the ui, showing a read-only value to the screen
     val uiState: StateFlow<MapUiState> = state.getStateFlow(MAP_UI_SAVED_STATE_KEY, MapUiState.Start)
 
+    /**
+     * Method to update the current [MapUiState] stored in [SavedStateHandle]
+     *
+     * @param uiState [MapUiState] to store
+     */
     private fun setMapUiState(uiState: MapUiState) {
         state[MAP_UI_SAVED_STATE_KEY] = uiState
     }
 
+    // Variable that stores the current name of the file of the recording
     private val filename: StateFlow<String> = state.getStateFlow(FILENAME_KEY, "")
 
+    /**
+     * Method to update the current filename stored in [SavedStateHandle]
+     *
+     * @param filename The filename to update
+     */
     private fun setFilename(filename: String) {
         state[FILENAME_KEY] = filename
     }
 
+    /**
+     * Method to update the current route using the fields of a [Route] and its label
+     *
+     * @param route [Route] with the fields to fill the current route
+     * @param label Label of the current route being recorded
+     */
     fun fillCurrentRoute(route: Route, label: String) {
         setCurrentRoute(currentRoute.value.fillFromRoute(route).copy(selectedRouteType = label))
     }
@@ -223,6 +250,12 @@ class MapViewModel(
                 // The ui is updated to show a loading screen
                 setMapUiState(MapUiState.LoadingRoute)
 
+                // Previous results are cleaned if an error happened to prevent inconsistencies
+                if(recordingUiState.value is RecordingUiState.Complete) {
+                    recordingRepository.clearResults()
+                }
+
+                // Saving data of the current route such as the coordinates or the vehicle used
                 setCurrentRoute(currentRoute.value.copy(
                     userVehicleId = vehicleList.value.find {
                         it.first.vehicleId == vehicleId
@@ -266,16 +299,21 @@ class MapViewModel(
     /**
      * Function to start recording a route
      *
+     * @param context [Context] to initialize the state of the route
      * @param vehicleId The id of the vehicle performing the route
      */
     fun startRecording(context: Context, vehicleId: Long) {
+        // The current date is retrieved and formatted
         val date = Date()
         setCurrentRoute(currentRoute.value.copy(
-            recordDate = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault()).format(date))
+            recordDate = SimpleDateFormat("yyyy-MM-Ya dd'T'HH:mm:ss", Locale.getDefault()).format(date))
         )
+        // The filename of the recording is stored
         setFilename("user " + userId.toString() + " vehicle " + vehicleId.toString() +
                 " " + Date().toString())
-        continueRoute(context)
+        // The state of the recording process is initialized
+        updateStateRoute(context, "started")
+        // The recording process is started
         recordingRepository.recordRoute(userId = userId, vehicleId = vehicleId, filename.value)
     }
 
@@ -311,6 +349,7 @@ class MapViewModel(
                     // The results are loading
                     setMapUiState(MapUiState.LoadingRoute)
 
+                    // The data is retrieved from the record file
                     val recordingResults = withContext(Dispatchers.IO) {
                         return@withContext readFile(
                             context,
@@ -318,6 +357,7 @@ class MapViewModel(
                         )
                     }
 
+                    // The input for the request is initialized
                     val input =
                         InputPerformedRoute(vehicleId = vehicleId,
                             additionalMass = additionalMass,
@@ -328,16 +368,22 @@ class MapViewModel(
                                 },
                             routePolyline = recordingResults.third
                         )
+                    // The information about the route polyline is updated in the current route
                     setCurrentRoute(currentRoute.value.copy(performedRoutePolyline = recordingResults.third))
+
                     // The scores are retrieved and the ui is updated
                     var scores = gretaRepository.calculatePerformedRouteMetrics(input)
+                    // The consumption applies the stored factor for the vehicle if it exists
                     scores = scores.copy(performedRouteConsumption =
                         scores.performedRouteConsumption
                             * (vehicleFactor?.factor ?: 1.0))
+                    // The ui is updated with the results
                     setMapUiState(MapUiState.CompleteScore(
                         scores,
                         vehicleFactor?.needsConsumption ?: true
                     ))
+
+                    // The current route updates its data about the scores obtained
                     setCurrentRoute(currentRoute.value.fillFromPerformedMetrics(scores))
                 } catch(connectException: ConnectException) {
                     // If there is a connection error, a message is shown
@@ -351,16 +397,14 @@ class MapViewModel(
         }
     }
 
-    fun finishRoute(context: Context) {
-        writeState(context, "${filename.value} state.txt", "finished")
-    }
-
-    fun pauseRoute(context: Context) {
-        writeState(context, "${filename.value} state.txt", "paused")
-    }
-
-    fun continueRoute(context: Context) {
-        writeState(context, "${filename.value} state.txt", "started")
+    /**
+     * Function to update the state of a route being recorded
+     *
+     * @param context [Context] to write the file
+     * @param state New state to apply to the recording (started, paused, finished)
+     */
+    fun updateStateRoute(context: Context, state: String) {
+        writeState(context, "${filename.value} state.txt", state)
     }
 
     /**
@@ -369,30 +413,41 @@ class MapViewModel(
     fun clearResults() {
         recordingRepository.clearResults()
         viewModelScope.launch {
+            // The user stats are created if there are none for the current user
+            var userStats: UserStats? = null
+            try{
+                gretaRepository.getStatsUser(userId)
+            } catch(serializationException: SerializationException) {
+                // If an empty object is returned, an object is inserted
+                userStats = UserStats(
+                    consumptionSaving = currentRoute.value
+                        .performedRouteEstimatedConsumption
+                            - currentRoute.value.performedRouteConsumption,
+                    driveRating = listOf(currentRoute.value.numStopsKm,
+                        currentRoute.value.drivingAggressiveness,
+                        currentRoute.value.speedVariationNum).average(),
+                    ecoDistance = if(currentRoute.value.selectedRouteType == "eco") {
+                        currentRoute.value.performedRouteDistance.toDouble()
+                    } else 0.0,
+                    ecoRoutesNum = if(currentRoute.value.selectedRouteType == "eco") {
+                        1
+                    } else 0,
+                    ecoTime = if(currentRoute.value.selectedRouteType == "eco") {
+                        currentRoute.value.performedRouteTime.toDouble()
+                    } else 0.0,
+                    userID = userId
+                )
+            } catch (_: Throwable) {
+
+            }
             try {
                 // If there are no user stats, an object is created
-                if(gretaRepository.getStatsUser(userId).isEmpty()) {
+                if(userStats != null) {
                     gretaRepository.createUserStats(
-                        UserStats(
-                            consumptionSaving = currentRoute.value
-                                .performedRouteEstimatedConsumption
-                                    - currentRoute.value.performedRouteConsumption,
-                            driveRating = listOf(currentRoute.value.numStopsKm,
-                                currentRoute.value.drivingAggressiveness,
-                                currentRoute.value.speedVariationNum).average(),
-                            ecoDistance = if(currentRoute.value.selectedRouteType == "eco") {
-                                currentRoute.value.performedRouteDistance.toDouble()
-                            } else 0.0,
-                            ecoRoutesNum = if(currentRoute.value.selectedRouteType == "eco") {
-                                1
-                            } else 0,
-                            ecoTime = if(currentRoute.value.selectedRouteType == "eco") {
-                                currentRoute.value.performedRouteTime.toDouble()
-                            } else 0.0,
-                            userID = userId
-                        )
+                        userStats
                     )
                 }
+                // A user route is added to the history
                 gretaRepository.createUserRoute(currentRoute.value)
             } catch (throwable: Throwable) {
                 Log.e("Clear_results", throwable.stackTraceToString())
@@ -433,8 +488,8 @@ class MapViewModel(
             val performedConsumption =
                 (performedConsumption100km / 100000.0) * performedRouteDistance
 
-            // If the difference between consumptions is less than 0.1
-            if (abs(performedConsumption - recordedConsumption) <= 0.1) {
+            // If the difference between consumptions is less than 0.05
+            if (abs(performedConsumption - recordedConsumption) <= 0.05) {
                 // The flag needsConsumption is set to false
                 if(vehicleFactor == null) {
                     vehicleFactorRepository.insertVehicleFactor(

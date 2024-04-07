@@ -6,9 +6,11 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
-import kotlinx.coroutines.flow.Flow
 import upm.gretaapp.model.VehicleFactor
 
+/**
+ * Interface to define the operations in the database for managing [VehicleFactor] objects
+ */
 @Dao
 interface VehicleFactorDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)

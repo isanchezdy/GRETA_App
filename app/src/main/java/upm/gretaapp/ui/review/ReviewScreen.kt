@@ -47,12 +47,20 @@ import upm.gretaapp.ui.AppViewModelProvider
 import upm.gretaapp.ui.navigation.NavigationDestination
 import upm.gretaapp.ui.theme.GRETAAppTheme
 
+/**
+ * Object that represents the route of the Review screen
+ */
 object ReviewDestination : NavigationDestination {
     override val route = "review"
     override val titleRes = R.string.review
     override val icon: ImageVector = Icons.Filled.StarRate
 }
 
+/**
+ * Composable that represents the screen to send reviews of the app
+ *
+ * @param openMenu Function to open the menu of the app
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ReviewScreen(
@@ -73,6 +81,12 @@ fun ReviewScreen(
     }
 }
 
+/**
+ * Body of the review screen with all the input boxes and functions
+ *
+ * @param uiState Object that represents the current state of the ui
+ * @param sendScores Function to send the scores of the reviews to the server
+ */
 @Composable
 fun ReviewBody(
     uiState: ReviewUiState,
@@ -93,6 +107,7 @@ fun ReviewBody(
 
         Column(horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier.fillMaxWidth()) {
+            // List of labels to evaluate
             val scoreLabels = listOf(
                 stringResource(id = R.string.accesibility),
                 stringResource(id = R.string.response_time),
@@ -104,6 +119,7 @@ fun ReviewBody(
                 stringResource(id = R.string.global_score)
             )
 
+            // Values for each score
             val scores = remember {
                 mutableStateListOf(
                     Pair(0,""),
@@ -121,6 +137,7 @@ fun ReviewBody(
                 .padding(16.dp)
                 .padding(bottom = 8.dp)
                 .weight(0.9f)) {
+                // For each label, a score section is added
                 itemsIndexed(items = scoreLabels) { index, it ->
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
@@ -133,6 +150,7 @@ fun ReviewBody(
                             modifier = Modifier.padding(top = if (index == 0) 0.dp else 32.dp)
                         )
 
+                        // The individual rating of each label
                         var rating by rememberSaveable { mutableFloatStateOf((0.0f)) }
                         RatingBar(
                             rating = rating,
@@ -142,15 +160,19 @@ fun ReviewBody(
                             }
                         )
 
+                        // A comment box to add suggestions or opinions
                         val comment = remember { mutableStateOf("") }
                         CommentBox(comment)
+                        // Every time a comment changes, it gets updated
                         LaunchedEffect(comment.value) {
                             scores[index] = scores[index].copy(second = comment.value)
                         }
                     }
                 }
             }
+            // Depending of the state of the ui, the contents of the screen change
             when (uiState) {
+                // When the sending process is loading, a circular indicator appears
                 is ReviewUiState.Loading -> {
                     CircularProgressIndicator(
                         modifier = Modifier
@@ -159,7 +181,7 @@ fun ReviewBody(
                     )
 
                 }
-
+                // When the review has been sent, a message appears
                 is ReviewUiState.Complete -> {
                     Text(
                         text = stringResource(R.string.review_sent),
@@ -169,6 +191,7 @@ fun ReviewBody(
                 }
 
                 else -> {
+                    // If an error happens, an error message is shown
                     if(uiState is ReviewUiState.Error) {
                         Text(
                             text = stringResource(id = if(uiState.code == 2) {
@@ -179,6 +202,7 @@ fun ReviewBody(
                             modifier = Modifier.padding(8.dp)
                         )
                     }
+                    // Button to send the reviews
                     Button(
                         onClick = { sendScores(scores) },
                         shape = MaterialTheme.shapes.small,
@@ -195,6 +219,13 @@ fun ReviewBody(
     }
 }
 
+/**
+ * Composable that represents a clickable rating bar with 5 stars
+ *
+ * @param rating The number of stars to highlight the score
+ * @param maxRating The maximum number of starts used to rate, default 5
+ * @param onRatingChanged Function to update the [rating] when clicking a star with the score
+ */
 @Composable
 fun RatingBar(
     rating: Float,
@@ -211,6 +242,11 @@ fun RatingBar(
     }
 }
 
+/**
+ * Composable that represents a text box to introduce comments
+ *
+ * @param c Comment introduced in the text box
+ */
 @Composable
 fun CommentBox (c: MutableState<String>) {
     var content by rememberSaveable { c }

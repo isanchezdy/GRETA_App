@@ -108,6 +108,7 @@ class RecordingWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
     private val handlerThread = HandlerThread("LocationThread")
 
     override suspend fun doWork(): Result {
+        // A channel is created for notifications
         val channelId = "greta_channel"
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -124,6 +125,7 @@ class RecordingWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
         val intent = WorkManager.getInstance(applicationContext)
             .createCancelPendingIntent(id)
 
+        // The notification is created
         val notification = NotificationCompat.Builder(applicationContext, channelId)
             .setSmallIcon(R.mipmap.ic_launcher)
             .setContentTitle(applicationContext.getString(R.string.recording_route))
@@ -131,6 +133,7 @@ class RecordingWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
                 applicationContext.getString(R.string.cancel_route), intent)
             .build()
 
+        // The worker is set as a foreground process
         val foregroundInfo = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             ForegroundInfo(1, notification, FOREGROUND_SERVICE_TYPE_LOCATION)
         } else {
@@ -151,8 +154,8 @@ class RecordingWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
                 initializeSensors()
                 initializeLocation()
 
-                // Start timer to stop in case of error
                 val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+                // Start timer to stop in case of error
                 while(timer > 0) {
                     var hasReachedDestination = readState(applicationContext, stateFile)
 
@@ -160,6 +163,7 @@ class RecordingWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
                     if(hasReachedDestination == "finished") {
                         break
                     } else if(hasReachedDestination == "paused") {
+                        // Data stops being recorded while paused
                         closeSensors(false)
                         while(hasReachedDestination == "paused") {
                             delay(DELAY_TIME_MILLIS.toLong())
@@ -258,6 +262,9 @@ class RecordingWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
         }
     }
 
+    /**
+     * Initialize all the location data used
+     */
     private fun initializeLocation() {
         // Get location manager
         locationManager = applicationContext.getSystemService(Context.LOCATION_SERVICE)
@@ -274,6 +281,7 @@ class RecordingWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
             }
         }
 
+        // A handler is started for retrieving the coordinates
         if(!handlerThread.isAlive) {
             handlerThread.start()
         }
@@ -288,6 +296,7 @@ class RecordingWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
         ) {
             return
         }
+        // Request satellite updates
         locationManager.registerGnssStatusCallback(gnssStatusCallback, handler)
         // Request location updates with the previously define listener
         locationManager.requestLocationUpdates(
@@ -297,6 +306,8 @@ class RecordingWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
 
     /**
      * Close all sensors to optimize performance
+     *
+     * @param quitThread Flag to kill the thread for location updates
      */
     private fun closeSensors(quitThread: Boolean) {
         sensorManager.unregisterListener(sensorEventListener, linearAccelerometer)

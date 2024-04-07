@@ -164,6 +164,7 @@ fun GretaTopAppBar(
  * Navigation drawer for the app to select screens
  *
  * @param onNavigate Function to go to the next screen and clear all backstack
+ * @param skipsLogin State that represents if the login screen should be skipped
  */
 @Composable
 fun GretaNavigationDrawer(

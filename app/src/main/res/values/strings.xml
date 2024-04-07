@@ -214,4 +214,10 @@
     <string name="eco_routes_num">Number of finished eco-routes</string>
     <string name="eco_time">Travel time</string>
     <string name="empty_route_history">There are no routes registered with your account</string>
+    <string name="reverse_list">Reorder list</string>
+    <string name="stars">stars</string>
+    <string name="finish_route">Finish route</string>
+    <string name="pause_route">Pause route</string>
+    <string name="continue_route">Continue route</string>
+    <string name="unmark_vehicle">Unmark vehicle</string>
 </resources>

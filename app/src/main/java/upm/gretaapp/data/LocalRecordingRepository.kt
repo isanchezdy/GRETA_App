@@ -32,6 +32,9 @@ class LocalRecordingRepository(private val context: Context): RecordingRepositor
     /**
      * Function to record a route until it finishes to calculate consumption values
      *
+     * @param userId The id of the user recording a route
+     * @param vehicleId The id of the vehicle used to record a route
+     * @param filename Name that the recording file will have
      */
     override fun recordRoute(userId: Long, vehicleId: Long, filename: String) {
         // Constraints of the worker to assure it functions
@@ -40,6 +43,7 @@ class LocalRecordingRepository(private val context: Context): RecordingRepositor
             .setRequiresBatteryNotLow(true)
             .build()
 
+        // The header of the file is written once
         writeCsvHeader(context = context, "$filename.csv")
 
         // Builder for requesting the work one time
@@ -77,6 +81,9 @@ class LocalRecordingRepository(private val context: Context): RecordingRepositor
         return workDataOf(KEY_FILENAME to filename)
     }
 
+    /**
+     * Function to clear results stored from previous works to prevent them to appear more than once
+     */
     override fun clearResults() {
         workManager.pruneWork()
     }

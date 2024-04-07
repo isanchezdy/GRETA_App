@@ -33,6 +33,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
@@ -58,8 +60,10 @@ import kotlin.math.ceil
 fun LoadingRouteDialog(ecoDrivingPhrases: List<String> =
                            stringArrayResource(id = R.array.eco_driving_messages).toList()){
 
+    // One phrase is picked at random position
     var currentPhrase by remember { mutableStateOf(ecoDrivingPhrases.random()) }
 
+    // Function to update the current phrase with a new one
     val calculateNewPhrase = { var newPhrase = ecoDrivingPhrases.random()
         while (newPhrase == currentPhrase) {
             newPhrase = ecoDrivingPhrases.random()
@@ -67,6 +71,7 @@ fun LoadingRouteDialog(ecoDrivingPhrases: List<String> =
         currentPhrase = newPhrase
     }
 
+    // Counter to update the phrase every 10 seconds
     LaunchedEffect(currentPhrase) {
         delay(10000)
         calculateNewPhrase()
@@ -140,9 +145,12 @@ fun ErrorMessage(code: Int) {
  * The results shown when the route is finished
  *
  * @param score The [PerformedRouteMetrics] with all the results to show
+ * @param isElectric Flag to check if the result is shown in liters or kW/h
  * @param sendFiles The function for sending the recording files through another app
  * @param clearScore Clears the information of the results from the phone to avoid them from being
  * shown multiple times
+ * @param needsConsumption Flag to check if the app needs the consumption to adjust results
+ * @param updateFactor Function to update the consumption factor of the vehicle if it is required
  */
 @Composable
 fun ScoresResult(
@@ -154,8 +162,10 @@ fun ScoresResult(
     updateFactor: (Double) -> Unit
 ) {
     var visible by remember{ mutableStateOf(true) }
+    // Function to close the view
     val close = {
         visible = false
+        // The score is cleared if the consumption is not required, otherwise the next popup manages that
         if(!needsConsumption) {
             clearScore()
         }
@@ -237,6 +247,7 @@ fun ScoresResult(
             }
         }
     } else if(needsConsumption) {
+        // The consumption of the vehicle is asked to adjust the values if required
         RegisterRealConsumption(
             updateFactor = updateFactor,
             clearScore = clearScore
@@ -245,13 +256,14 @@ fun ScoresResult(
 }
 
 /**
- * Function to show a score with starts
+ * Function to show a score with stars
  *
  * @param score The score to represent
  */
 @Composable
 fun Score(score: Int) {
-    Row {
+    val stars = stringResource(id = R.string.stars)
+    Row(modifier = Modifier.semantics { contentDescription = "$score $stars" }) {
         for (i in (1..score)) {
             Icon(
                 imageVector = Icons.Filled.StarRate,
@@ -263,7 +275,14 @@ fun Score(score: Int) {
 }
 
 /**
- * Popup to introduce
+ * Popup to introduce data for calculating the routes
+ *
+ * @param visible Flag to show the popup only when the button has been pressed
+ * @param vehicles Vehicles from the current user to select for the routes
+ * @param selectedVehicle Current vehicle for the routes to estimate consumption
+ * @param isElectric Flag to change the unit of the result if the vehicle is electric
+ * @param numberOfPersons Number of persons inside the car
+ * @param numberOfBulks Number of bags or luggage inside the car
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -275,6 +294,7 @@ fun RouteParams(
     numberOfPersons: MutableState<Int>,
     numberOfBulks: MutableState<Int?>
 ) {
+    // Function to close the view
     val close = {
         visible.value = false
     }
@@ -296,8 +316,10 @@ fun RouteParams(
                             .padding(16.dp)
                     )
 
+                    // Variable to check if the vehicle list is expanded or not
                     var expanded by remember { mutableStateOf(false) }
 
+                    // Menu with all the vehicles of the user
                     ExposedDropdownMenuBox(
                         expanded = expanded,
                         onExpandedChange = { expanded = !expanded },
@@ -305,6 +327,7 @@ fun RouteParams(
                             .padding(vertical = 16.dp)
                             .fillMaxWidth(0.8f)
                     ) {
+                        // Field to show the current selection and update it from selecting in the list
                         TextField(
                             modifier = Modifier.menuAnchor(),
                             readOnly = true,
@@ -321,15 +344,19 @@ fun RouteParams(
                             colors = ExposedDropdownMenuDefaults.textFieldColors(),
                         )
 
+                        // Menu with all the vehicles of the user as options
                         ExposedDropdownMenu(
                             expanded = expanded,
                             onDismissRequest = { expanded = false },
                         ) {
+                            // For each vehicle, an option is added
                             vehicles.forEach {
                                 DropdownMenuItem(
                                     text = { Text(it.second.name.replace("_-_", " ")) },
                                     onClick = {
+                                        // The selected vehicle for the route is updated
                                         selectedVehicle.value = Pair(it.first.id!!, it.second.vehicleID)
+                                        // Checks if the vehicle is electric when the result is shown
                                         isElectric.value = it.second.motorType == "ELECTRIC"
                                         expanded = false
                                     }
@@ -338,6 +365,7 @@ fun RouteParams(
                         }
                     }
 
+                    // Field to check the number of persons inside the car
                     TextField(
                         value = if(numberOfPersons.value == 0) "" else numberOfPersons.value.toString(),
                         onValueChange = { if(it.length < 2) {
@@ -359,6 +387,7 @@ fun RouteParams(
                             .padding(8.dp)
                     )
 
+                    // Field to introduce the number of bags or luggage inside the car
                     TextField(
                         value = if(numberOfBulks.value == null) "" else numberOfBulks.value.toString(),
                         onValueChange = { if(it.length <= 2) {
@@ -383,6 +412,7 @@ fun RouteParams(
                             .padding(8.dp)
                     )
 
+                    // Button to select current options
                     Button(onClick = close, modifier = Modifier.padding(16.dp)) {
                         Text(stringResource(id = R.string.accept))
                     }
@@ -392,6 +422,13 @@ fun RouteParams(
     }
 }
 
+/**
+ * Popup screen that registers consumption of the vehicle to adjust results
+ *
+ * @param updateFactor Function to update the consumption factor of the vehicle if it is required
+ * @param clearScore Clears the information of the results from the phone to avoid them from being
+ * shown multiple times
+ */
 @Composable
 fun RegisterRealConsumption(updateFactor: (Double) -> Unit, clearScore: () -> Unit) {
     var visible by remember{ mutableStateOf(true) }
@@ -414,6 +451,7 @@ fun RegisterRealConsumption(updateFactor: (Double) -> Unit, clearScore: () -> Un
                             .padding(16.dp)
                     )
 
+                    // Value of the consumption
                     var performedConsumption100km by remember{ mutableStateOf("") }
                     TextField(
                         value = performedConsumption100km,
@@ -429,11 +467,14 @@ fun RegisterRealConsumption(updateFactor: (Double) -> Unit, clearScore: () -> Un
                             .padding(8.dp)
                     )
 
+                    // Button to save results
                     Button(
                         onClick = {
                             visible = false
+                            // Updates the factor only if the result was not blank
                             if(performedConsumption100km.isNotBlank())
                                 updateFactor(performedConsumption100km.toDouble())
+                            // Clears the results of previous routes to avoid inconsistencies
                             clearScore()
                         },
                         modifier = Modifier.padding(16.dp)

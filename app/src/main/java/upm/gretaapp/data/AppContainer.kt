@@ -40,6 +40,10 @@ class AppDataContainer(private val context: Context) : AppContainer {
     override val phoneSessionRepository: PhoneSessionRepository =
         PhoneSessionRepository(context.dataStore)
 
+
+    /**
+     * Link to nominatim service
+     */
     private val nominatimUrl = "https://nominatim.openstreetmap.org"
 
     private val nominatimRetrofit: Retrofit = Retrofit.Builder()
@@ -47,6 +51,9 @@ class AppDataContainer(private val context: Context) : AppContainer {
         .baseUrl(nominatimUrl)
         .build()
 
+    /**
+     * Implementation of [NominatimApiService] using [Retrofit]
+     */
     private val nominatimService: NominatimApiService by lazy {
         nominatimRetrofit.create(NominatimApiService::class.java)
     }
@@ -63,6 +70,9 @@ class AppDataContainer(private val context: Context) : AppContainer {
         .client(client)
         .build()
 
+    /**
+     * Implementation of [GretaApiService] using [Retrofit]
+     */
     private val gretaApiService: GretaApiService by lazy {
         gretaRetrofit.create(GretaApiService::class.java)
     }
@@ -80,10 +90,16 @@ class AppDataContainer(private val context: Context) : AppContainer {
         NetworkNominatimRepository(nominatimService)
     }
 
+    /**
+     * Implementation for [GretaRepository]
+     */
     override val gretaRepository: GretaRepository by lazy {
         OnlineGretaRepository(gretaApiService)
     }
 
+    /**
+     * Implementation for [VehicleFactorRepository]
+     */
     override val vehicleFactorRepository: VehicleFactorRepository by lazy {
         OfflineVehicleFactorRepository(VehicleFactorDatabase.getDatabase(context).vehicleFactorDao())
     }

@@ -20,5 +20,8 @@ data class Route (
     val time: Double
 ): java.io.Serializable
 
+/**
+ * Property that provides direct access to the route coordinates
+ */
 val Route.processedRoute: List<Pair<Double,Double>>
     get() = decodePoly(encoded = this.route, precision = 6)

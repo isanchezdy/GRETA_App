@@ -1,8 +1,10 @@
 package upm.gretaapp.data
 
-import kotlinx.coroutines.flow.Flow
 import upm.gretaapp.model.VehicleFactor
 
+/**
+ * Implementation of [VehicleFactorRepository] to retrieve and store results using [VehicleFactorDao]
+ */
 class OfflineVehicleFactorRepository(private val vehicleFactorDao: VehicleFactorDao): VehicleFactorRepository {
     override fun getVehicleFactorStream(id: Long): VehicleFactor? = vehicleFactorDao
         .getVehicleFactor(id)

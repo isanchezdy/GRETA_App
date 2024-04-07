@@ -111,10 +111,11 @@ fun MapScreen(
     val vehicles by viewModel.vehicleList.collectAsState()
     // The favourite one is set as default
     var favouriteVehicle: Pair<UserVehicle, Vehicle>?
+    // Stores the current vehicle used for the route, or null if there are no eligible vehicles
     val selectedVehicle: MutableState<Pair<Long, Long>?> = rememberSaveable {
         mutableStateOf(null)
     }
-
+    // Checks if the current vehicle is electric to show correct units for the results
     val isElectric = rememberSaveable {
         mutableStateOf(false)
     }
@@ -153,11 +154,12 @@ fun MapScreen(
     val context = LocalContext.current
     // Function for centering the map when location is available
     val center: MutableState<(() -> Unit)?> = remember{ mutableStateOf(null) }
-
+    // Current state of the recording process
     val recordingUiState by viewModel.recordingUiState.collectAsState()
 
     Scaffold(
         topBar = {
+            // The menu can only be used when a route is not being recorded
             GretaTopAppBar(
                 canUseMenu = recordingUiState !is RecordingUiState.Loading,
                 openMenu = openMenu,
@@ -166,27 +168,32 @@ fun MapScreen(
         },
         floatingActionButton = {
             Column {
+                // Current state of the pause button
                 var isPaused by rememberSaveable{ mutableStateOf(false) }
+                // Buttons shown only when a route is being recorded
                 if (recordingUiState is RecordingUiState.Loading) {
+                    // Button to finish the route
                     FloatingActionButton(
                         onClick = {
-                            viewModel.finishRoute(context)
+                            viewModel.updateStateRoute(context, "finished")
+                            isPaused = false
                         },
                         shape = MaterialTheme.shapes.medium,
                         modifier = Modifier.padding(horizontal = 20.dp)
                     ) {
                         Icon(
                             imageVector = Icons.Filled.Flag,
-                            contentDescription = null
+                            contentDescription = stringResource(id = R.string.finish_route)
                         )
                     }
+                    // Button to stop or continue the route
                     FloatingActionButton(
                         onClick = {
                             isPaused = if(isPaused) {
-                                viewModel.continueRoute(context)
+                                viewModel.updateStateRoute(context, "started")
                                 false
                             } else {
-                                viewModel.pauseRoute(context)
+                                viewModel.updateStateRoute(context, "paused")
                                 true
                             }
                         },
@@ -199,11 +206,15 @@ fun MapScreen(
                             } else {
                                 Icons.Filled.Pause
                             },
-                            contentDescription = null
+                            contentDescription = if(isPaused) {
+                                stringResource(id = R.string.continue_route)
+                            } else {
+                                stringResource(id = R.string.pause_route)
+                            }
                         )
                     }
                 }
-                // The buttons are shown only before starting a route
+                // These buttons are shown only before starting a route
                 else if (uiState is MapUiState.Start || uiState is MapUiState.Error) {
                     isPaused = false
                     // The button for centering the map is available only after accepting permissions
@@ -220,6 +231,7 @@ fun MapScreen(
                         }
                     }
 
+                    // Button to configure the options for the route
                     FloatingActionButton(
                         onClick = { visible.value = true },
                         shape = MaterialTheme.shapes.medium,
@@ -290,13 +302,15 @@ fun MapScreen(
  * @param center A function to center the screen when the location permission is obtained
  * @param search Function to update results based on a location query
  * @param clearOptions Function to remove results when one is selected
- * @param searchRoutes Function to search the routes from an origin to a destination [GeoPoint],
+ * @param searchRoutes Function to search the routes from an origin to a destination [GeoPoint]
+ * @param setCurrentRoute Function to register the current route once it is selected
  * @param startRecording Function to start recording a route
  * @param cancelRecording Function to cancel a route recording in course
  * @param getScore Function to get the score of a route using the data obtained from the records
  * @param sendFiles Function to send all the recording files from the phone through another app
  * @param clearScore Function to clear the information of the results from the phone to avoid
  *  showing them multiple times
+ * @param updateFactor Function to update the consumption factor after the route if needed
  */
 @SuppressLint("MissingPermission")
 @OptIn(ExperimentalPermissionsApi::class)
@@ -333,6 +347,7 @@ fun MapBody(
         null
     }*/
 
+    // The layout inflater is retrieved to generate popup windows for routes and markers
     val context = LocalContext.current
     val layoutInflater = LayoutInflater.from(context)
 
@@ -406,6 +421,7 @@ fun MapBody(
             // A window with a button to search the routes is added when clicking the marker
             this.infoWindow = MyInfoWindow(
                 view = MarkerWindowFragment(onClick = {
+                    // Checks if the location is available to avoid crash
                     if(locationOverlay.myLocation != null) {
                         searchRoutes(locationOverlay.myLocation, this.position)
                     }
@@ -415,6 +431,7 @@ fun MapBody(
         })
     }
 
+    // Box with the elements of the map
     Box(
         modifier = modifier.fillMaxSize()
     ) {
@@ -590,6 +607,7 @@ fun MapBody(
                     polyline.outlinePaint.strokeCap = Paint.Cap.ROUND
                     polyline.outlinePaint.strokeWidth = 20F
 
+                    // Most important label of the route
                     val label: String
 
                     // The color is decided based on the most important label it contains
@@ -620,6 +638,7 @@ fun MapBody(
                             route = route.second,
                             isElectric = isElectric,
                             onClick = {
+                                // The data of the current route is stored
                                 setCurrentRoute(route.second, label)
                                 // A recording starts and the map focuses on the location of the car
                                 startRecording()
@@ -798,6 +817,7 @@ fun RoutesLegend(
             legend.forEachIndexed { index, (color, label) ->
                 Row(
                     modifier = Modifier
+                        .fillMaxWidth()
                         .padding(horizontal = 32.dp, vertical = 8.dp)
                         .clickable { onClick(index) }
                 ) {

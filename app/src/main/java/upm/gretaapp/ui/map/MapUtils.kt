@@ -93,6 +93,13 @@ fun decodePoly(encoded: String, precision: Int = 5): List<Pair<Double,Double>> {
     return poly
 }
 
+/**
+ * Function to encode a polyline to a [String]
+ *
+ * @param points List of points to encode
+ * @param precision Parameter of the precision of the process
+ * @return The [String] obtained from the process of encoding [points]
+ */
 fun encodePoly(points: List<Pair<Double, Double>>, precision: Int = 5): String {
     val encodedPoly = StringBuilder()
     val factor = 10.0.pow(precision.toDouble())
@@ -117,6 +124,12 @@ fun encodePoly(points: List<Pair<Double, Double>>, precision: Int = 5): String {
     return encodedPoly.toString()
 }
 
+/**
+ * Function to store a point inside the encoded string
+ *
+ * @param value The value to encode
+ * @param encodedPoly [StringBuilder] that contains the current encoded string
+ */
 private fun encodeCoordinate(value: Int, encodedPoly: StringBuilder) {
     var v = if (value < 0) (value shl 1).inv() else value shl 1
     while (v >= 0x20) {
@@ -126,7 +139,13 @@ private fun encodeCoordinate(value: Int, encodedPoly: StringBuilder) {
     encodedPoly.append((v + 63).toChar())
 }
 
-
+/**
+ * Function to retrieve results from a recording file
+ *
+ * @param context The [Context] used to read the file
+ * @param filename The name of the file to read from
+ * @return The lists of speeds, heights and coordinates obtained from the recording
+ */
 fun readFile(context: Context, filename: String): Triple<List<Double>, List<Double>, String> {
     val state = Environment.getExternalStorageState()
     if (Environment.MEDIA_MOUNTED == state) {
@@ -134,10 +153,12 @@ fun readFile(context: Context, filename: String): Triple<List<Double>, List<Doub
         val dir = context.getExternalFilesDir(null)
         val file = File(dir, filename)
 
+        // Reading the lines of the file
         return file.useLines {
             val speeds = mutableListOf<Double>()
             val heights = mutableListOf<Double>()
             val coordinates = mutableListOf<Pair<Double, Double>>()
+            // For each non-null line, the data is retrieved
             it.forEach { line ->
                 if (!line.contains(
                         "timestamp,latitude,longitude,altitude,speed_m_s," +
@@ -145,6 +166,7 @@ fun readFile(context: Context, filename: String): Triple<List<Double>, List<Doub
                     )
                 ) {
                     val values = line.split(",")
+                    // If the line is complete, the data is stored
                     if (values.size == 10) {
                         if (values[3] != "null") {
                             heights.add(values[3].toDouble())
@@ -158,12 +180,22 @@ fun readFile(context: Context, filename: String): Triple<List<Double>, List<Doub
             Log.d("read_file", heights.toString())
             Log.d("Debug_coordinates", coordinates.toString())
 
+            // The data is returned
             Triple(speeds,heights, encodePoly(coordinates, precision = 6))
         }
     }
+
+    // Default values if the file is not found
     return Triple(emptyList(), emptyList(), "")
 }
 
+/**
+ * Function to change the state of a recording (started, paused, finished)
+ *
+ * @param context The [Context] used to write the file
+ * @param filename The name of the file to write
+ * @param state The new state of the recording
+ */
 fun writeState(context: Context, filename: String, state: String) {
     val storageState = Environment.getExternalStorageState()
     if (Environment.MEDIA_MOUNTED == storageState) {
@@ -171,6 +203,7 @@ fun writeState(context: Context, filename: String, state: String) {
         val dir = context.getExternalFilesDir(null)
         val file = File(dir, filename)
         val writer = PrintWriter(file)
+        // The state is written
         writer.use {
             it.print(state)
         }
@@ -250,6 +283,11 @@ fun sendFiles(context: Context, userId: Long) {
     }
 }
 
+/**
+ * Function to remove all recording files from the phone
+ *
+ * @param context The [Context] used to retrieve the files
+ */
 fun clearFiles(context: Context) {
     // Get file directory files
     val filePath = context.getExternalFilesDir(null)

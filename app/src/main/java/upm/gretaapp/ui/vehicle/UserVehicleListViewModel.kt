@@ -52,13 +52,18 @@ class UserVehicleListViewModel(
             userVehicleListUiState = try {
                 // The UserVehicles are retrieved
                 val userVehicles = gretaRepository.getUserVehicles(userId)
+                // The userRoutes
+                val userRoutes = gretaRepository.getRoutesHistoryUser(userId)
                 // For each UserVehicle, the corresponding Vehicle is associated
-                val list: MutableList<Pair<UserVehicle, Vehicle>> = mutableListOf()
+                val list: MutableList<Triple<UserVehicle, Vehicle, Boolean>> = mutableListOf()
                 for (userVehicle in userVehicles) {
+                    // For each vehicle, its model is retrieved and if it can be deleted
                     list.add(
-                        Pair(
+                        Triple(
                             userVehicle,
-                            gretaRepository.getVehicle(userVehicle.vehicleId)
+                            gretaRepository.getVehicle(userVehicle.vehicleId),
+                            // The user vehicle can be deleted if it not appears in user routes
+                            userRoutes.none { it.userVehicleId == userVehicle.id }
                         )
                     )
                 }
@@ -111,16 +116,25 @@ class UserVehicleListViewModel(
         }
     }
 
+    /**
+     * Function to delete a [UserVehicle] from the list of the current user
+     *
+     * @param id The identifier of the [UserVehicle] to remove
+     */
     fun deleteVehicle(id: Long) {
         viewModelScope.launch {
             try {
+                // If the vehicles from the user have been retrieved
                 if (userVehicleListUiState is UserVehicleListUiState.Success) {
+                    // The vehicle is removed from the view
                     userVehicleListUiState =
                         UserVehicleListUiState.Success((userVehicleListUiState as UserVehicleListUiState.Success)
                             .vehicleList.filter { it.first.id != id })
+                    // The vehicle is removed from the database
                     gretaRepository.deleteUserVehicle(id)
                 }
             } catch(connectException: ConnectException) {
+                // If the server can't be reached, a message appears
                 UserVehicleListUiState.Error(1)
             } catch (throwable: Throwable) {
                 Log.e("Error_vehicles", throwable.stackTraceToString())
@@ -134,7 +148,7 @@ class UserVehicleListViewModel(
  * Ui State for UserVehicleListScreen
  */
 sealed interface UserVehicleListUiState {
-    data class Success(val vehicleList: List<Pair<UserVehicle, Vehicle>>) : UserVehicleListUiState
+    data class Success(val vehicleList: List<Triple<UserVehicle, Vehicle, Boolean>>) : UserVehicleListUiState
     data class Error(val code: Int) : UserVehicleListUiState
     data object Loading : UserVehicleListUiState
 }

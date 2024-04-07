@@ -47,6 +47,9 @@ data class Vehicle (
     val vehicleID: Long
 )
 
+/**
+ * Function that translates the category of the vehicle into comprehensible text to show in the UI
+ */
 fun Vehicle.getMotorType(): Int {
     return when(this.motorType) {
         "DIESEL" -> R.string.diesel

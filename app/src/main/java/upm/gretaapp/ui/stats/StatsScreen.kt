@@ -1,6 +1,5 @@
 package upm.gretaapp.ui.stats
 
-import android.annotation.SuppressLint
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -27,13 +26,20 @@ import upm.gretaapp.ui.AppViewModelProvider
 import upm.gretaapp.ui.navigation.NavigationDestination
 import kotlin.math.ceil
 
+/**
+ * Object that represents the route of the Stats screen
+ */
 object StatsDestination : NavigationDestination {
     override val route = "stats"
     override val titleRes = R.string.stats
     override val icon: ImageVector = Icons.Filled.QueryStats
 }
 
-@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
+/**
+ * Composable that represents the Stats screen
+ *
+ * @param openMenu Function to open the menu of the app
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun StatsScreen(
@@ -49,8 +55,14 @@ fun StatsScreen(
     }
 }
 
+/**
+ * Body of the Stats Screen
+ *
+ * @param uiState Object that represents the state of the screen (loading, error, etc)
+ */
 @Composable
 fun StatsBody(uiState: StatsUiState, modifier: Modifier = Modifier) {
+    // The stats are retrieved for showing
     val userStats = if(uiState is StatsUiState.Success) {
         uiState.userStats
     } else {
@@ -74,6 +86,7 @@ fun StatsBody(uiState: StatsUiState, modifier: Modifier = Modifier) {
             verticalArrangement = Arrangement.Center,
             modifier = modifier.padding(8.dp)
         ) {
+            // Error message when the retrieving method fails
             if (uiState is StatsUiState.Error) {
                 Text(
                     text = stringResource(
@@ -87,11 +100,13 @@ fun StatsBody(uiState: StatsUiState, modifier: Modifier = Modifier) {
                     modifier = modifier.padding(22.dp)
                 )
             } else if (uiState is StatsUiState.Loading) {
+                // Indicator while loading
                 CircularProgressIndicator(
                     modifier = Modifier
                         .padding(8.dp)
                 )
             } else if (userStats == null) {
+                // If there are no stats for the current user
                 Text(
                     text = stringResource(id = R.string.empty_stats),
                     textAlign = TextAlign.Center,
@@ -99,6 +114,7 @@ fun StatsBody(uiState: StatsUiState, modifier: Modifier = Modifier) {
                     modifier = modifier.padding(22.dp)
                 )
             } else {
+                // A field for every parameter is shown
                 Text(stringResource(id = R.string.consumption_saving) + ": " +
                         String.format("%.3f",userStats.consumptionSaving) + "%", modifier = Modifier.padding(16.dp))
 
@@ -111,10 +127,11 @@ fun StatsBody(uiState: StatsUiState, modifier: Modifier = Modifier) {
                 Text(stringResource(id = R.string.eco_routes_num) + ": " +
                         userStats.ecoRoutesNum, modifier = Modifier.padding(16.dp))
 
+                // Time is calculated in hours or minutes
                 val time = if(userStats.ecoTime >= 3600.0) {
-                    ceil(userStats.ecoTime/3600).toInt().toString() + " h"
+                    ceil(userStats.ecoTime/3600.0).toInt().toString() + " h"
                 } else {
-                    ceil(userStats.ecoTime/60).toInt().toString() + " min"
+                    ceil(userStats.ecoTime/60.0).toInt().toString() + " min"
                 }
                 Text(stringResource(id = R.string.eco_time) + ": " +
                         time, modifier = Modifier.padding(16.dp))

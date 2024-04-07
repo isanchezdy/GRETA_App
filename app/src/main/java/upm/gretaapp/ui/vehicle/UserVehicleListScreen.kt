@@ -56,6 +56,9 @@ import upm.gretaapp.ui.AppViewModelProvider
 import upm.gretaapp.ui.navigation.NavigationDestination
 import upm.gretaapp.ui.theme.GRETAAppTheme
 
+/**
+ * Object that represents the route of the User Vehicle List screen
+ */
 object VehicleListDestination : NavigationDestination {
     override val route = "vehicles"
     override val titleRes = R.string.my_vehicles
@@ -63,7 +66,10 @@ object VehicleListDestination : NavigationDestination {
 }
 
 /**
- * Composable that represents the Vehicle List screen
+ * Composable that represents the User Vehicle List screen
+ *
+ * @param onVehicleAdd Function to add a vehicle to the list
+ * @param openMenu Function to open the menu of the app
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -78,6 +84,7 @@ fun VehicleListScreen(
             GretaTopAppBar(canUseMenu = true, openMenu = openMenu, navigateUp = { })
         },
         floatingActionButton = {
+            // Button to add new vehicles to the list
             FloatingActionButton(
                 onClick = onVehicleAdd,
                 shape = MaterialTheme.shapes.medium,
@@ -90,6 +97,7 @@ fun VehicleListScreen(
             }
         }
     ) {
+        // Observer to reload vehicles in case a new one is added with the button
         val lifecycle = LocalLifecycleOwner.current.lifecycle
         val lifecycleObserver = rememberVehiclesLifecycleObserver(viewModel = viewModel)
         DisposableEffect(lifecycle) {
@@ -108,6 +116,13 @@ fun VehicleListScreen(
     }
 }
 
+/**
+ * Body of the user vehicle list
+ *
+ * @param uiState State of the screen, containing the information about its elements
+ * @param onVehicleDelete Function to delete vehicles from the list with a button
+ * @param onVehicleFav Function to select a vehicle as favourite with a button
+ */
 @Composable
 private fun VehicleListBody(
     uiState: UserVehicleListUiState,
@@ -115,6 +130,7 @@ private fun VehicleListBody(
     onVehicleFav: (UserVehicle) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    // The vehicles are loaded if the loading process completed
     val vehicleList = if(uiState is UserVehicleListUiState.Success) {
         uiState.vehicleList
     } else {
@@ -142,6 +158,7 @@ private fun VehicleListBody(
             modifier = modifier.padding(8.dp)
         ) {
 
+            // A message shows if an error happened
             if(uiState is UserVehicleListUiState.Error) {
                 Text(
                     text = stringResource(id = if(uiState.code == 2) {
@@ -154,6 +171,7 @@ private fun VehicleListBody(
                 )
             }
 
+            // Indicator while vehicles are loading
             else if(uiState is UserVehicleListUiState.Loading) {
                 CircularProgressIndicator(
                     modifier = Modifier
@@ -161,6 +179,7 @@ private fun VehicleListBody(
                 )
             }
 
+            // Message when there are no vehicles in the list
             else if (vehicleList.isEmpty()) {
                 Text(
                     text = stringResource(id = R.string.no_vehicle_description),
@@ -180,19 +199,29 @@ private fun VehicleListBody(
     }
 }
 
+/**
+ * List with all the user vehicles represented
+ *
+ * @param vehicleList List of the user vehicles with details about the model and if it should be
+ * deleted
+ * @param onVehicleDelete Function to delete one of the vehicles of the list
+ * @param onVehicleFav Function to set one of the vehicles of the list as favourite
+ */
 @Composable
 private fun VehicleList(
-    vehicleList: List<Pair<UserVehicle,Vehicle>>,
+    vehicleList: List<Triple<UserVehicle,Vehicle, Boolean>>,
     onVehicleDelete: (Long) -> Unit,
     onVehicleFav: (UserVehicle) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val listState = rememberLazyListState()
     LazyColumn(state = listState, modifier = modifier) {
+        // For each user vehicle, an element of the list is displayed
         items(items = vehicleList, key = { it.first.id!! }) { vehicle ->
             VehicleItem(
                 vehicle = vehicle.second,
                 userVehicle = vehicle.first,
+                canDelete = vehicle.third,
                 onVehicleDelete = onVehicleDelete,
                 onVehicleFav = onVehicleFav,
             )
@@ -200,18 +229,31 @@ private fun VehicleList(
     }
 }
 
+/**
+ * Composable that represents a user vehicle of the list
+ *
+ * @param vehicle Model and details of the vehicle
+ * @param userVehicle Details about the vehicle owned by the user
+ * @param canDelete Flag that indicates if the vehicle should be capable of being removed from the list
+ * @param onVehicleDelete Function to delete the vehicle if the button is pressed
+ * @param onVehicleFav Function to set the vehicle as favourite if the button is pressed
+ */
 @Composable
 private fun VehicleItem(
     vehicle: Vehicle,
     userVehicle: UserVehicle,
+    canDelete: Boolean,
     onVehicleDelete: (Long) -> Unit,
     onVehicleFav: (UserVehicle) -> Unit,
 ) {
+    // The brand and name are obtained from splitting the name
     var brand: String
     var name: String
     vehicle.name.split("_-_").apply {
         brand = this.first()
         name = this.last()
+        // If they did not split, only one of them is shown
+        if (brand == name) name = ""
     }
     Card(
         modifier = Modifier.padding(8.dp),
@@ -224,11 +266,13 @@ private fun VehicleItem(
             Row(
                 modifier = Modifier.fillMaxWidth()
             ) {
+                // The image of the vehicle is loaded from the URL
                 AsyncImage(
                     model = ImageRequest.Builder(context = LocalContext.current)
                         .data(vehicle.imageURL)
                         .crossfade(true)
                         .build(),
+                    // If if could not be loaded, a default image shows
                     error = painterResource(R.drawable.car_model),
                     placeholder = painterResource(R.drawable.loading_img),
                     contentDescription = stringResource(R.string.vehicle_photo),
@@ -247,7 +291,10 @@ private fun VehicleItem(
                         .aspectRatio(1.4f)
                 ) {
                     Text(text = brand, style = MaterialTheme.typography.titleMedium)
-                    Text(text = name,  style = MaterialTheme.typography.titleMedium)
+                    // Only the brand is shown if the name did not split
+                    if(name.isNotBlank()) {
+                        Text(text = name, style = MaterialTheme.typography.titleMedium)
+                    }
                 }
             }
             
@@ -255,6 +302,7 @@ private fun VehicleItem(
                 horizontalArrangement = Arrangement.SpaceAround,
                 modifier = Modifier.fillMaxWidth()
             ) {
+                // The age is shown only if it was introduced
                 if(userVehicle.age != null) {
                     Text(
                         text = userVehicle.age.toString() + " " + stringResource(id = R.string.years),
@@ -269,13 +317,17 @@ private fun VehicleItem(
                 horizontalArrangement = Arrangement.SpaceAround,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                IconButton(onClick = { onVehicleDelete(userVehicle.id!!) }) {
-                    Icon(
-                        imageVector = Icons.Filled.Delete,
-                        contentDescription = stringResource(id = R.string.delete_vehicle)
-                    )
+                // If it can be deleted, the delete button is shown
+                if(canDelete) {
+                    IconButton(onClick = { onVehicleDelete(userVehicle.id!!) }) {
+                        Icon(
+                            imageVector = Icons.Filled.Delete,
+                            contentDescription = stringResource(id = R.string.delete_vehicle)
+                        )
+                    }
                 }
 
+                // The button changed depending if it is already the favourite or not
                 IconButton(onClick = { onVehicleFav(userVehicle) }) {
                     Icon(
                         imageVector = if(userVehicle.isFav == 0) {
@@ -283,7 +335,9 @@ private fun VehicleItem(
                         } else {
                             Icons.Filled.Favorite
                         },
-                        contentDescription = stringResource(id = R.string.mark_vehicle)
+                        contentDescription = if(userVehicle.isFav == 0) {
+                            stringResource(id = R.string.mark_vehicle)
+                        } else stringResource(id = R.string.unmark_vehicle)
                     )
                 }
             }
@@ -291,6 +345,12 @@ private fun VehicleItem(
     }
 }
 
+/**
+ * Composable to enable reloading the list when the view is focused again after a change of screen
+ *
+ * @param viewModel Object to retrieve the vehicles and reload the list
+ * @return A [LifecycleEventObserver] that reloads the list on resume
+ */
 @Composable
 fun rememberVehiclesLifecycleObserver(viewModel: UserVehicleListViewModel): LifecycleEventObserver =
     remember(viewModel) {

@@ -44,6 +44,8 @@ object HomeDestination : NavigationDestination {
  *
  * @param navigateToLogin Function to go to the Login screen
  * @param navigateToSignup Function to go to the Signup screen
+ * @param skipsLogin Flag that checks whether this screen can be skipped or not
+ * @param onSkip Function to skip to the map screen if the user is already logged in
  */
 @Composable
 fun HomeScreen(
@@ -54,6 +56,7 @@ fun HomeScreen(
     onSkip: () -> Unit,
     viewModel: HomeViewModel = viewModel(factory = AppViewModelProvider.Factory),
 ) {
+    // Checks if the screen can be skipped or the user needs to logout
     LaunchedEffect(true) {
         delay(100.toLong())
         if(skipsLogin && viewModel.isUserLoggedIn())
@@ -66,6 +69,12 @@ fun HomeScreen(
         modifier = modifier)
 }
 
+/**
+ * Body of the screen containing the buttons and functions to log in the app
+ *
+ * @param navigateToLogin Function to navigate to the login screen if the button is pressed
+ * @param navigateToSignup Function to navigate to the signup screen if the button is pressed
+ */
 @Composable
 fun HomeBody(
     navigateToLogin: () -> Unit,

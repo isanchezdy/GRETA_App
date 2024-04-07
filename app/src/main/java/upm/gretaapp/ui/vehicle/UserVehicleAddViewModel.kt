@@ -68,14 +68,20 @@ class UserVehicleAddViewModel(private val gretaRepository: GretaRepository,
     }
 
     /**
+     * Saves a User Vehicle for the current user
      *
+     * @param vehicleId Id of the [Vehicle] that will be added to the list
+     * @param age Age of the vehicle if years, optional
+     * @param kmTravelled Km travelled using the vehicle, optional
      */
     fun saveVehicle(vehicleId: Long, age: Long?, kmTravelled: Long?) {
+        // A UserVehicle object is created with the data
         val userVehicle = UserVehicle(
             userId = userId,
             vehicleId = vehicleId,
             age = age,
             kmUsed = kmTravelled,
+            // If there are no other vehicles for the user, it is set as favourite by default
             isFav = if(userVehiclesCount > 0) {
                 0
             } else {
@@ -84,6 +90,7 @@ class UserVehicleAddViewModel(private val gretaRepository: GretaRepository,
         )
         viewModelScope.launch {
             try{
+                // The vehicle is added for the user
                 gretaRepository.createUserVehicle(userVehicle)
             } catch(throwable: Throwable) {
                 Log.e("Error_add_vehicles", throwable.stackTraceToString())

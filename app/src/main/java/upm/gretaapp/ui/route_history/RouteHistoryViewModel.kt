@@ -17,11 +17,11 @@ import java.net.ConnectException
 /**
  * ViewModel to retrieve all vehicles from user in the database.
  *
- * @param userSessionRepository Repository for obtaining the current user of the app
+ * @param phoneSessionRepository Repository for obtaining the current user of the app
  * @param gretaRepository Repository for obtaining all user routes of the current user and show them
  */
 class RouteHistoryViewModel(
-    userSessionRepository: PhoneSessionRepository,
+    phoneSessionRepository: PhoneSessionRepository,
     private val gretaRepository: GretaRepository
 ) : ViewModel() {
 
@@ -31,7 +31,7 @@ class RouteHistoryViewModel(
     init {
         viewModelScope.launch {
             // The id of the current user is retrieved
-            userSessionRepository.user.collectLatest {
+            phoneSessionRepository.user.collectLatest {
                 userId = it
                 getUserRoutes()
             }

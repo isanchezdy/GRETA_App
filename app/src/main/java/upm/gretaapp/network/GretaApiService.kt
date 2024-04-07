@@ -72,7 +72,7 @@ interface GretaApiService {
         @Query("api_key") apiKey: String
     ): UserVehicle
 
-    @DELETE("user_vehicles/{id}")
+    @DELETE("user_vehicles")
     suspend fun deleteUserVehicle(
         @Query("user_vehicle_id") userVehicleId: Long,
         @Query("api_key") apiKey: String

@@ -215,4 +215,10 @@
     <string name="eco_routes_num">Número de eco-rutas finalizadas</string>
     <string name="eco_time">Tiempo de viaje</string>
     <string name="empty_route_history">No hay rutas registradas con tu cuenta</string>
+    <string name="reverse_list">Reordenar lista</string>
+    <string name="stars">estrellas</string>
+    <string name="finish_route">Finalizar ruta</string>
+    <string name="pause_route">Pausar ruta</string>
+    <string name="continue_route">Continuar ruta</string>
+    <string name="unmark_vehicle">Desmarcar vehículo</string>
 </resources>
