@@ -221,4 +221,5 @@
     <string name="pause_route">Pausar ruta</string>
     <string name="continue_route">Continuar ruta</string>
     <string name="unmark_vehicle">Desmarcar vehículo</string>
+    <string name="select_vehicle">Selecciona un vehículo</string>
 </resources>

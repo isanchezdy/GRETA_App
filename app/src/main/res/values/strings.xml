@@ -220,4 +220,5 @@
     <string name="pause_route">Pause route</string>
     <string name="continue_route">Continue route</string>
     <string name="unmark_vehicle">Unmark vehicle</string>
+    <string name="select_vehicle">Select a vehicle</string>
 </resources>

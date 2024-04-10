@@ -136,7 +136,7 @@ fun MapScreen(
     // Values of the route
     val numberOfPersons = rememberSaveable{ mutableIntStateOf(1) }
     val numberOfBulks: MutableState<Int?> = rememberSaveable{ mutableStateOf(null) }
-    val visible = rememberSaveable{ mutableStateOf(false) }
+    val visible = rememberSaveable{ mutableStateOf(true) }
 
     // Current state of the ui
     val uiState by viewModel.uiState.collectAsState()
@@ -255,6 +255,10 @@ fun MapScreen(
             isElectric = isElectric.value,
             options = options,
             center = center,
+            isVehicleSelected = when(selectedVehicle.value) { 
+                 null -> false
+                 else -> true
+            },
             search = {
                 viewModel.getDestination(it)
             },
@@ -321,6 +325,7 @@ fun MapBody(
     isElectric: Boolean,
     options: List<NominatimResult>,
     center: MutableState<(() -> Unit)?>,
+    isVehicleSelected: Boolean,
     search: (String) -> Unit,
     clearOptions: () -> Unit,
     searchRoutes: (GeoPoint, GeoPoint) -> Unit,
@@ -496,7 +501,9 @@ fun MapBody(
                     clearOptions()
                 },
                 singleLine = true,
-                label = { Text(stringResource(id = R.string.destination)) },
+                enabled = isVehicleSelected,
+                label = { if(isVehicleSelected) Text(stringResource(id = R.string.destination))
+                        else Text(stringResource(id = R.string.select_vehicle))},
                 trailingIcon = {
                     // Button to remove the contents of the search bar and the marker
                     if (destination.isNotBlank()) {
