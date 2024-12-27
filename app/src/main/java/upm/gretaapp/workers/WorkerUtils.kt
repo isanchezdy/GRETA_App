@@ -32,7 +32,7 @@ fun writeCsvHeader(context: Context, filePath: String) {
         try {
             // Define header
             val header =
-                "timestamp,latitude,longitude,altitude,speed_m_s," +
+                "timestamp,latitude,longitude,altitude,speed_km_h," +
                         "acceleration,ax,ay,az,numSatellites\n"
             // Write the data to the file
             bufferedWriter.write(header)

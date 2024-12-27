@@ -5,6 +5,7 @@ import android.annotation.SuppressLint
 import android.app.AlertDialog
 import android.graphics.Color
 import android.graphics.Paint
+import android.os.Build
 import android.view.LayoutInflater
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
@@ -32,6 +33,7 @@ import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Videocam
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
@@ -72,6 +74,7 @@ import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import com.google.accompanist.permissions.shouldShowRationale
 import com.google.android.gms.location.LocationServices
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.StateFlow
 import org.osmdroid.events.MapEventsReceiver
 import org.osmdroid.util.BoundingBox
@@ -122,6 +125,10 @@ fun MapScreen(
 
     // The favourite is selected when the list is retrieved
     LaunchedEffect(vehicles) {
+        // If this event is thrown again, the vehicle is not changed
+        if(selectedVehicle.value != null) {
+            return@LaunchedEffect
+        }
         favouriteVehicle = vehicles.find {
             it.first.isFav == 1
         }
@@ -140,6 +147,8 @@ fun MapScreen(
 
     // Current state of the ui
     val uiState by viewModel.uiState.collectAsState()
+    // Context to access the recordings of the app
+    val context = LocalContext.current
 
     // The screen for selecting parameters is shown only when the button is pressed
     RouteParams(
@@ -148,10 +157,10 @@ fun MapScreen(
         selectedVehicle = selectedVehicle,
         numberOfPersons = numberOfPersons,
         numberOfBulks = numberOfBulks,
-        isElectric = isElectric
+        isElectric = isElectric,
+        sendFiles = { viewModel.sendFiles(context) }
     )
 
-    val context = LocalContext.current
     // Function for centering the map when location is available
     val center: MutableState<(() -> Unit)?> = remember{ mutableStateOf(null) }
     // Current state of the recording process
@@ -235,12 +244,37 @@ fun MapScreen(
                     FloatingActionButton(
                         onClick = { visible.value = true },
                         shape = MaterialTheme.shapes.medium,
-                        modifier = Modifier.padding(20.dp)
+                        modifier = Modifier
+                            .padding(top = 20.dp)
+                            .padding(horizontal = 20.dp)
                     ) {
                         Icon(
                             imageVector = Icons.Filled.DirectionsCar,
                             contentDescription = stringResource(id = R.string.route_options)
                         )
+                    }
+
+                    // Button to start recording the route, only if a vehicle is selected
+                    if(selectedVehicle.value != null) {
+                        FloatingActionButton(
+                            onClick = {
+                                viewModel.startRecording(
+                                    context,
+                                    selectedVehicle.value!!.second,
+                                    selectedVehicle.value!!.first,
+                                    (numberOfPersons.intValue * 75 + (numberOfBulks.value ?: 0) * 5)
+                                        .toLong()
+                                )
+                                viewModel.setDefaultRoute()
+                            },
+                            shape = MaterialTheme.shapes.medium,
+                            modifier = Modifier.padding(20.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Videocam,
+                                contentDescription = null
+                            )
+                        }
                     }
                 }
             }
@@ -275,14 +309,17 @@ fun MapScreen(
             },
             setCurrentRoute = viewModel::fillCurrentRoute,
             startRecording = {
-                viewModel.startRecording(context, selectedVehicle.value?.second ?: -1)
+                viewModel.startRecording(
+                    context,
+                    selectedVehicle.value?.second ?: -1,
+                    selectedVehicle.value?.first ?: -1,
+                    (numberOfPersons.intValue * 75 + (numberOfBulks.value ?: 0) * 5).toLong()
+                )
             },
             cancelRecording = viewModel::cancelRecording,
             getScore = {
                 viewModel.getScore(
                     context = context,
-                    vehicleId = selectedVehicle.value?.second ?: -1,
-                    additionalMass = (numberOfPersons.intValue * 75 + (numberOfBulks.value ?: 0) * 5).toLong()
                 )
             },
             sendFiles = { viewModel.sendFiles(context) },
@@ -302,8 +339,12 @@ fun MapScreen(
  * @param uiState The current state of the ui(start, loading, showing routes, on navigation, etc...)
  * @param recordingUiStateFlow The [StateFlow] that observes the current state of a route recording
  * to show results when finished
+ * @param isElectric Flag to detect if the current vehicle is electric to show the result in the
+ * corresponding units
  * @param options List of results to choose one with the search bar
  * @param center A function to center the screen when the location permission is obtained
+ * @param isVehicleSelected A flag to detect if a vehicle has been selected to deny queries without
+ * a proper vehicle
  * @param search Function to update results based on a location query
  * @param clearOptions Function to remove results when one is selected
  * @param searchRoutes Function to search the routes from an origin to a destination [GeoPoint]
@@ -346,11 +387,11 @@ fun MapBody(
     // Location permission in case it is required to show a message
     val fineLocationPermissionState = rememberPermissionState(Manifest.permission.ACCESS_FINE_LOCATION)
     val coarseLocationPermissionState = rememberPermissionState(Manifest.permission.ACCESS_COARSE_LOCATION)
-    /*val backgroundLocationState = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+    val backgroundLocationState = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
         rememberPermissionState(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
     } else {
         null
-    }*/
+    }
 
     // The layout inflater is retrieved to generate popup windows for routes and markers
     val context = LocalContext.current
@@ -359,17 +400,20 @@ fun MapBody(
     // Overlay to show the current position on the map
     val locationOverlay = rememberLocationOverlayWithLifecycle(mapView)
 
+    // Save the position of the destination point
+    var destinationPointPosition by rememberSaveable { mutableStateOf<GeoPoint?>(null) }
+
     // Asks permission to use location from the phone
     LaunchedEffect(
         fineLocationPermissionState.status.isGranted,
         coarseLocationPermissionState.status.isGranted,
-        //backgroundLocationState?.status?.isGranted
+        backgroundLocationState?.status?.isGranted
     ) {
         // Asks only if they are not granted
         if(
             (!fineLocationPermissionState.status.isGranted
-            && !coarseLocationPermissionState.status.isGranted) /*||
-            (backgroundLocationState != null && !backgroundLocationState.status.isGranted)*/
+            && !coarseLocationPermissionState.status.isGranted) ||
+            (backgroundLocationState != null && !backgroundLocationState.status.isGranted)
         ) {
             // If the state of the permissions is changed, the position is removed from the map
             locationOverlay.disableMyLocation()
@@ -386,21 +430,21 @@ fun MapBody(
                 builder.setMessage(R.string.enable_location_text)
                 builder.setPositiveButton("OK") { _, _ ->
                     fineLocationPermissionState.launchPermissionRequest()
-                    //backgroundLocationState?.launchPermissionRequest()
+                    backgroundLocationState?.launchPermissionRequest()
                 }
                 builder.show()
             }
             // The permissions are requested otherwise
             else {
                 fineLocationPermissionState.launchPermissionRequest()
-                //backgroundLocationState?.launchPermissionRequest()
+                backgroundLocationState?.launchPermissionRequest()
             }
         // If the location is granted, the screen is centered towards the current position
         } else {
             val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
             fusedLocationClient.lastLocation
                 .addOnSuccessListener {
-                    if ((it != null)) {
+                    if ((it != null) && destinationPointPosition == null) {
                         mapView.controller.setCenter(GeoPoint(it))
                     }
                 }
@@ -421,8 +465,8 @@ fun MapBody(
     }
 
     // Marker which represents the destination point on the map
-    val destinationPoint by remember {
-        mutableStateOf(Marker(mapView).apply {
+    val destinationPoint = remember {
+        Marker(mapView).apply {
             // A window with a button to search the routes is added when clicking the marker
             this.infoWindow = MyInfoWindow(
                 view = MarkerWindowFragment(onClick = {
@@ -433,7 +477,19 @@ fun MapBody(
                 }).onCreateView(layoutInflater, null, null),
                 mapView = mapView
             )
-        })
+
+            // Set the position if it was saved
+            destinationPointPosition?.let {
+                position = it
+                mapView.overlayManager.add(this)
+                if(uiState is MapUiState.Start) {
+                    mapView.controller.setCenter(position)
+                    this.showInfoWindow()
+                }
+
+                mapView.invalidate()
+            }
+        }
     }
 
     // Box with the elements of the map
@@ -453,10 +509,12 @@ fun MapBody(
 
         // Events receiver to add markers on click
         val mReceive: MapEventsReceiver = object : MapEventsReceiver {
+            @SuppressLint("DefaultLocale")
             override fun singleTapConfirmedHelper(p: GeoPoint): Boolean {
                 // The position of the previous marker is updated
                 mapView.overlayManager.remove(destinationPoint)
                 destinationPoint.position = p
+                destinationPointPosition = p
                 mapView.overlayManager.add(destinationPoint)
 
                 // The map centers to the marker with an animation
@@ -478,6 +536,17 @@ fun MapBody(
         // A layer is attached to the map to allow selection of destination points with a click
         val overlayEvents = remember{ MapEventsOverlay(mReceive) }
 
+        // The layer for selecting destination is added or removed based on the vehicle selection
+        LaunchedEffect(isVehicleSelected) {
+            if(isVehicleSelected) {
+                if(!mapView.overlays.contains(overlayEvents)) {
+                    mapView.overlays.add(overlayEvents)
+                }
+            } else {
+                mapView.overlays.remove(overlayEvents)
+            }
+        }
+
         // A flag to remember if the options from the search are shown
         var searchExpanded by rememberSaveable { mutableStateOf(false) }
         // Manager to remove focus from the search bar when an option is selected
@@ -485,6 +554,9 @@ fun MapBody(
 
         // List with the routes represented on the map
         val routeOverlays: MutableList<Polyline> = remember { mutableListOf() }
+
+        // The current route selected, being the index of the list of polylines
+        var selectedRoute by rememberSaveable { mutableIntStateOf(0) }
 
         // Search bar with address options to select from
         Column(
@@ -502,6 +574,7 @@ fun MapBody(
                 },
                 singleLine = true,
                 enabled = isVehicleSelected,
+                readOnly = recordingUiState is RecordingUiState.Loading,
                 label = { if(isVehicleSelected) Text(stringResource(id = R.string.destination))
                         else Text(stringResource(id = R.string.select_vehicle))},
                 trailingIcon = {
@@ -514,6 +587,7 @@ fun MapBody(
                                 searchExpanded = false
                                 if(mapView.overlayManager.remove(destinationPoint)) {
                                     destinationPoint.closeInfoWindow()
+                                    destinationPointPosition = null
                                     for(route in routeOverlays) {
                                         route.closeInfoWindow()
                                     }
@@ -566,6 +640,7 @@ fun MapBody(
                                     it.lat,
                                     it.lon
                                 )
+                                destinationPointPosition = destinationPoint.position
                                 // The info window is closed and the destination gets updated
                                 destinationPoint.closeInfoWindow()
                                 mapView.controller.setCenter(destinationPoint.position)
@@ -591,6 +666,91 @@ fun MapBody(
                     }
                 }
             }
+
+            // When the recording ends, the results are sent once
+            LaunchedEffect(recordingUiState) {
+                when (recordingUiState) {
+                    is RecordingUiState.Complete -> {
+                        // The map stops following the phone position
+                        locationOverlay.disableFollowLocation()
+                        locationOverlay.enableAutoStop = true
+                        mapView.mapOrientation = 0F
+                        // Enable clicking on markers to calculate routes
+                        destinationPoint.setOnMarkerClickListener(null)
+                        // The scores are obtained and the ui updates
+                        getScore()
+                    }
+
+                    is RecordingUiState.Default -> {
+                        // The map stops following the phone position
+                        locationOverlay.disableFollowLocation()
+                        locationOverlay.enableAutoStop = true
+                        mapView.mapOrientation = 0F
+
+                        // Enable clicking on markers to calculate routes
+                        destinationPoint.setOnMarkerClickListener(null)
+
+                        // The layer to select destination with a click is added
+                        if(!mapView.overlays.contains(overlayEvents)) {
+                            if(isVehicleSelected) {
+                                mapView.overlays.add(overlayEvents)
+                            }
+                        }
+                    }
+
+                    // If a recording is taking place
+                    else -> {
+                        // The map follows the position of the phone
+                        locationOverlay.enableFollowLocation()
+                        locationOverlay.enableAutoStop = false
+                        mapView.controller.setZoom(18.0)
+
+                        // The window of the marker is closed and click is disabled to avoid errors
+                        destinationPoint.closeInfoWindow()
+                        destinationPoint.setOnMarkerClickListener { _, _ ->  true}
+
+                        // Markers cannot be placed during a route
+                        if(mapView.overlays.contains(overlayEvents))
+                            mapView.overlays.remove(overlayEvents)
+
+                        // The current route is drawn, removing others
+                        if(uiState is MapUiState.CompleteRoutes) {
+                            // If the screen resets, routes are drawn again to restore it
+                            while (routeOverlays.isEmpty()) {
+                                delay(1000)
+                            }
+                            mapView.overlayManager.removeAll(routeOverlays)
+                            val polyline = routeOverlays[selectedRoute]
+                            routeOverlays.clear()
+                            routeOverlays.add(polyline)
+                            mapView.insertPolyline(polyline)
+
+                            mapView.invalidate()
+                        }
+
+                        // The screen rotates based on the current orientation of the car
+                        while (!locationOverlay.enableAutoStop) {
+                            // If the location is not available, the loop is skipped
+                            if (locationOverlay.lastFix == null) {
+                                delay(1000)
+                                continue
+                            }
+                            val bearing: Float = locationOverlay.lastFix.bearing
+
+                            var t = (360 - bearing)
+                            if (t < 0) {
+                                t += 360f
+                            }
+                            if (t > 360) {
+                                t -= 360f
+                            }
+
+                            mapView.mapOrientation = t
+                            delay(1000)
+                        }
+                    }
+                }
+            }
         }
 
         // If there is a change on the ui, the routes on the map change
@@ -602,12 +762,16 @@ fun MapBody(
 
                 // The bounds are computed to focus the screen with all the routes visible
                 var bounds = destinationPoint.bounds
+                // If the location is not available, it waits until it is
+                while (locationOverlay.lastFix == null) {
+                    delay(1000)
+                }
                 bounds = bounds.concat(BoundingBox.fromGeoPoints(
                     listOf(locationOverlay.myLocation))
                 )
 
                 // For each route
-                for(route in uiState.routes) {
+                for((index, route) in uiState.routes.withIndex()) {
                     // A polyline is drawn with its parameters
                     val polyline = Polyline(mapView)
 
@@ -647,18 +811,9 @@ fun MapBody(
                             onClick = {
                                 // The data of the current route is stored
                                 setCurrentRoute(route.second, label)
+                                selectedRoute = index
                                 // A recording starts and the map focuses on the location of the car
                                 startRecording()
-                                mapView.controller.setZoom(18.0)
-                                // The map follows the position of the phone
-                                locationOverlay.enableFollowLocation()
-                                locationOverlay.enableAutoStop = false
-
-                                // The other routes get removed from the map
-                                mapView.overlayManager.removeAll(routeOverlays)
-                                routeOverlays.clear()
-                                routeOverlays.add(polyline)
-                                mapView.insertPolyline(polyline)
 
                                 mapView.invalidate()
                             },
@@ -671,7 +826,9 @@ fun MapBody(
                     bounds = bounds.concat(polyline.bounds)
 
                     // The route is drawn keeping the markers as the head objects from the map
-                    mapView.insertPolyline(polyline)
+                    if(recordingUiState is RecordingUiState.Default) {
+                        mapView.insertPolyline(polyline)
+                    }
                     routeOverlays.add(polyline)
                 }
                 // The map view is updated with the new changes, and it zooms to the new routes
@@ -683,7 +840,9 @@ fun MapBody(
             else if (uiState is MapUiState.Start || uiState is MapUiState.LoadingRoute) {
                 // The layer to select destination with a click is added
                 if(!mapView.overlays.contains(overlayEvents)) {
-                    mapView.overlays.add(overlayEvents)
+                    if(isVehicleSelected && recordingUiState is RecordingUiState.Default) {
+                        mapView.overlays.add(overlayEvents)
+                    }
                 }
                 // All the routes from the map are removed if they existed previously
                 if(routeOverlays.isNotEmpty()) {
@@ -751,27 +910,6 @@ fun MapBody(
             else -> {}
         }
 
-    }
-
-    // When the recording ends, the results are sent once
-    LaunchedEffect(recordingUiState) {
-        when (recordingUiState) {
-            is RecordingUiState.Complete -> {
-                // The map stops following the phone position
-                locationOverlay.disableFollowLocation()
-                locationOverlay.enableAutoStop = true
-                // The scores are obtained and the ui updates
-                getScore()
-            }
-
-            is RecordingUiState.Default -> {
-                locationOverlay.disableFollowLocation()
-                locationOverlay.enableAutoStop = true
-            }
-
-            else -> {
-            }
-        }
     }
 }
 

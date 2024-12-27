@@ -1,5 +1,6 @@
 package upm.gretaapp.ui.map
 
+import android.annotation.SuppressLint
 import android.content.res.Configuration
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
@@ -19,6 +20,7 @@ import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
@@ -110,7 +112,7 @@ fun LoadingRouteDialog(ecoDrivingPhrases: List<String> =
 fun ErrorMessage(code: Int) {
     var visible by remember{ mutableStateOf(true) }
     var timeLeft by remember{ mutableIntStateOf(5) }
-    // It lasts 10 seconds
+    // It lasts 5 seconds
     LaunchedEffect(visible) {
         while(timeLeft > 0) {
             delay(1000L)
@@ -126,9 +128,13 @@ fun ErrorMessage(code: Int) {
                 .fillMaxWidth(0.8f)
             ) {
                 Text(
-                    text = stringResource(id = if(code == 2) {
-                        R.string.error_signup
-                    } else R.string.server_available),
+                    text = stringResource(
+                        id = when(code) {
+                            3 -> R.string.long_route
+                            2 -> R.string.error_signup
+                            else -> R.string.server_available
+                        }
+                    ),
                     style = MaterialTheme.typography.bodyLarge,
                     textAlign = TextAlign.Justify,
                     color = MaterialTheme.colorScheme.error,
@@ -152,6 +158,7 @@ fun ErrorMessage(code: Int) {
  * @param needsConsumption Flag to check if the app needs the consumption to adjust results
  * @param updateFactor Function to update the consumption factor of the vehicle if it is required
  */
+@SuppressLint("DefaultLocale")
 @Composable
 fun ScoresResult(
     score: PerformedRouteMetrics,
@@ -159,9 +166,14 @@ fun ScoresResult(
     sendFiles: () -> Unit,
     clearScore: () -> Unit,
     needsConsumption: Boolean,
-    updateFactor: (Double) -> Unit
+    updateFactor: (Double) -> Unit,
+    speedVariationPhrases: List<String> =
+        stringArrayResource(id = R.array.speed_variation_phrases).toList(),
+    drivingSmoothnessPhrases: List<String> =
+        stringArrayResource(id = R.array.driving_smoothness_phrases).toList()
 ) {
     var visible by remember{ mutableStateOf(true) }
+
     // Function to close the view
     val close = {
         visible = false
@@ -188,17 +200,7 @@ fun ScoresResult(
                     )
 
                     Text(
-                        text = stringResource(id = R.string.stops),
-                        style = MaterialTheme.typography.bodyLarge,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier
-                            .padding(8.dp)
-                    )
-
-                    Score(score = score.numStopsKm)
-
-                    Text(
-                        text = stringResource(id = R.string.speeding),
+                        text = stringResource(id = R.string.slow_driving),
                         style = MaterialTheme.typography.bodyLarge,
                         textAlign = TextAlign.Center,
                         modifier = Modifier
@@ -208,7 +210,20 @@ fun ScoresResult(
                     Score(score = score.drivingAggressiveness)
 
                     Text(
-                        text = stringResource(id = R.string.slow_driving),
+                        when(score.drivingAggressiveness) {
+                            1, 2 -> drivingSmoothnessPhrases[0]
+                            3 -> drivingSmoothnessPhrases[1]
+                            4, 5 -> drivingSmoothnessPhrases[2]
+                            else -> drivingSmoothnessPhrases[1]
+                        },
+                        style = MaterialTheme.typography.bodyMedium,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
+                            .padding(8.dp)
+                    )
+
+                    Text(
+                        text = stringResource(id = R.string.speeding),
                         style = MaterialTheme.typography.bodyLarge,
                         textAlign = TextAlign.Center,
                         modifier = Modifier
@@ -218,29 +233,51 @@ fun ScoresResult(
                     Score(score = score.speedVariationNum)
 
                     Text(
+                        when(score.speedVariationNum) {
+                            1, 2 -> speedVariationPhrases[0]
+                            3 -> speedVariationPhrases[1]
+                            4, 5 -> speedVariationPhrases[2]
+                            else -> speedVariationPhrases[1]
+                        },
+                        style = MaterialTheme.typography.bodyMedium,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
+                            .padding(top = 8.dp, bottom = 24.dp)
+                    )
+
+
+                    Text(
                         text = stringResource(id = R.string.distance) + ": " +
                                 String.format("%.3f", (score.performedRouteDistance/1000.0) )
                                 + " km",
-                        modifier = Modifier.padding(16.dp)
+                        modifier = Modifier.padding(top = 24.dp, bottom = 8.dp)
                     )
                     Text(
                         text = stringResource(id = R.string.time) + ": " +
                                 ceil(score.performedRouteTime/60).toInt().toString()
                                 + " min",
-                        modifier = Modifier.padding(16.dp)
+                        modifier = Modifier.padding(8.dp)
                     )
+                    // Consumption / 100km is calculated only if the vehicle is not electric
                     Text(
                         text = stringResource(id = R.string.consumption) + ": "
-                                + String.format("%.3f", score.performedRouteConsumption)
-                                + if(isElectric) " kW/h" else " l",
-                        modifier = Modifier.padding(16.dp)
+                                + if(isElectric) {
+                                    String.format("%.3f", score.performedRouteConsumption) + " kW/h"
+                                } else {
+                                    String.format("%.1f",score.performedRouteConsumption * 100.0 /
+                                    (score.performedRouteDistance/1000.0)) + " l/100km\n(" +
+                                            String.format("%.3f", score.performedRouteConsumption) + " l)"
+
+                                },
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(8.dp)
                     )
 
-                    Button(onClick = sendFiles, modifier = Modifier.padding(16.dp)) {
+                    Button(onClick = sendFiles, modifier = Modifier.padding(top = 16.dp, bottom = 4.dp)) {
                         Text(stringResource(id = R.string.send_results))
                     }
 
-                    Button(onClick = close, modifier = Modifier.padding(16.dp)) {
+                    Button(onClick = close, modifier = Modifier.padding(top = 4.dp, bottom = 16.dp)) {
                         Text(stringResource(id = R.string.accept))
                     }
                 }
@@ -283,6 +320,7 @@ fun Score(score: Int) {
  * @param isElectric Flag to change the unit of the result if the vehicle is electric
  * @param numberOfPersons Number of persons inside the car
  * @param numberOfBulks Number of bags or luggage inside the car
+ * @param sendFiles Function to send the recording files through another app
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -292,7 +330,8 @@ fun RouteParams(
     selectedVehicle: MutableState<Pair<Long, Long>?>,
     isElectric: MutableState<Boolean>,
     numberOfPersons: MutableState<Int>,
-    numberOfBulks: MutableState<Int?>
+    numberOfBulks: MutableState<Int?>,
+    sendFiles: () -> Unit
 ) {
     // Function to close the view
     val close = {
@@ -329,7 +368,7 @@ fun RouteParams(
                     ) {
                         // Field to show the current selection and update it from selecting in the list
                         TextField(
-                            modifier = Modifier.menuAnchor(),
+                            modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryEditable),
                             readOnly = true,
                             value = if(selectedVehicle.value == null) {
                                 ""
@@ -412,6 +451,11 @@ fun RouteParams(
                             .padding(8.dp)
                     )
 
+                    // Button to send the recording files
+                    Button(onClick = sendFiles, modifier = Modifier.padding(top = 16.dp)) {
+                        Text(stringResource(id = R.string.send_results))
+                    }
+
                     // Button to select current options
                     Button(onClick = close, modifier = Modifier.padding(16.dp)) {
                         Text(stringResource(id = R.string.accept))
@@ -467,6 +511,18 @@ fun RegisterRealConsumption(updateFactor: (Double) -> Unit, clearScore: () -> Un
                             .padding(8.dp)
                     )
 
+                    Button(
+                        onClick = {
+                            visible = false
+
+                            // Clears the results of previous routes to avoid inconsistencies
+                            clearScore()
+                        },
+                        modifier = Modifier.padding(top = 16.dp)
+                    ) {
+                        Text(stringResource(id = R.string.cancel))
+                    }
+
                     // Button to save results
                     Button(
                         onClick = {
@@ -503,5 +559,15 @@ fun LoadingRouteDialogPreview(){
 fun ErrorMessagePreview() {
     GRETAAppTheme {
         ErrorMessage(1)
+    }
+}
+
+@Preview(showBackground = true, heightDp = 480, widthDp = 320)
+@Preview(showBackground = true, heightDp = 480, widthDp = 320, uiMode = Configuration.UI_MODE_NIGHT_YES, locale = "es")
+@Composable
+fun RegisterRealConsumptionPreview() {
+    GRETAAppTheme {
+        RegisterRealConsumption({}) {
+        }
     }
 }

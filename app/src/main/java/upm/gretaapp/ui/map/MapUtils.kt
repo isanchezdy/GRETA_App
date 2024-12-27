@@ -15,6 +15,9 @@ import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.PrintWriter
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 import kotlin.math.pow
@@ -144,9 +147,9 @@ private fun encodeCoordinate(value: Int, encodedPoly: StringBuilder) {
  *
  * @param context The [Context] used to read the file
  * @param filename The name of the file to read from
- * @return The lists of speeds, heights and coordinates obtained from the recording
+ * @return The lists of speeds, heights, times and coordinates obtained from the recording
  */
-fun readFile(context: Context, filename: String): Triple<List<Double>, List<Double>, String> {
+fun readFile(context: Context, filename: String): Triple<List<Double>, List<Double>, Pair<List<Double>,String>> {
     val state = Environment.getExternalStorageState()
     if (Environment.MEDIA_MOUNTED == state) {
         // Get the app-specific directory on external storage
@@ -155,38 +158,68 @@ fun readFile(context: Context, filename: String): Triple<List<Double>, List<Doub
 
         // Reading the lines of the file
         return file.useLines {
+            // List of parameters
             val speeds = mutableListOf<Double>()
             val heights = mutableListOf<Double>()
             val coordinates = mutableListOf<Pair<Double, Double>>()
+            val timestamps = mutableListOf<Double>()
+
+            // Parser for obtaining dates of the file
+            val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss:SSSS", Locale.getDefault())
+            // Previous registered date for comparing
+            var previousDate: Date? = null
+
             // For each non-null line, the data is retrieved
-            it.forEach { line ->
-                if (!line.contains(
-                        "timestamp,latitude,longitude,altitude,speed_m_s," +
-                                "acceleration,ax,ay,az,numSatellites"
-                    )
-                ) {
-                    val values = line.split(",")
-                    // If the line is complete, the data is stored
-                    if (values.size == 10) {
-                        if (values[3] != "null") {
-                            heights.add(values[3].toDouble())
-                            speeds.add(values[4].toDouble())
-                            coordinates.add(Pair(values[1].toDouble(), values[2].toDouble()))
+            it.filter{ line ->
+                !line.contains(
+                    "timestamp,latitude,longitude,altitude,speed_km_h," +
+                            "acceleration,ax,ay,az,numSatellites"
+                )
+            }.forEach { line ->
+                val values = line.split(",")
+                // If the line is complete, the data is stored
+                if (values.size == 10) {
+                    if (values[3] != "null") {
+                        heights.add(values[3].toDouble())
+                        speeds.add(values[4].toDouble())
+                        coordinates.add(Pair(values[1].toDouble(), values[2].toDouble()))
+
+                        // The date is retrieved
+                        val date = dateFormat.parse(values[0])
+
+                        // If there is no previous date, the list is initialized
+                        if(previousDate == null) {
+                            if(timestamps.isEmpty()) {
+                                timestamps.add(1.0)
+                            }
+                        } else {
+                            val time = (date!!.time - previousDate!!.time) / 1000.0
+
+                            // If the route was paused, the real difference is ignored
+                            if(time > 3.0) {
+                                timestamps.add(timestamps.last() + 1.0)
+                            } else {
+                                timestamps.add(timestamps.last() + time)
+                            }
                         }
+
+                        // The previous date is registered
+                        previousDate = date
                     }
                 }
             }
             Log.d("read_file", speeds.toString())
             Log.d("read_file", heights.toString())
             Log.d("Debug_coordinates", coordinates.toString())
+            Log.d("Debug_times", timestamps.toString())
 
             // The data is returned
-            Triple(speeds,heights, encodePoly(coordinates, precision = 6))
+            Triple(speeds,heights, Pair(timestamps, encodePoly(coordinates, precision = 6)))
         }
     }
 
     // Default values if the file is not found
-    return Triple(emptyList(), emptyList(), "")
+    return Triple(emptyList(), emptyList(), Pair(emptyList(), ""))
 }
 
 /**
@@ -228,14 +261,23 @@ fun sendFiles(context: Context, userId: Long) {
     // Deletes zip file if already exists
     if (zipFile.exists()){
         zipFile.delete()
-        // Removes zip from directory to prevent recursive zipping
-        if (files != null) {
-            files = files.filter { !it.contains(".zip") && it != "osmdroid" }.toTypedArray()
-        }
     }
 
     // Creates zip file when there is at least one file
     if (files != null) {
+        // Removes all states from previous recordings
+        for (file in files.filter { it.endsWith(".txt") }) {
+            val f = File(filePath, file)
+            if(f.exists()) {
+                f.delete()
+            }
+        }
+
+        // Removes zip from directory to prevent recursive zipping and other files
+        files = files.filter {
+            !it.endsWith(".zip") && !it.endsWith(".txt") && it != "osmdroid"
+        }.toTypedArray()
+
         if (files.isNotEmpty()) {
             // Stream for writing compressed contents
             val zipOutputStream = ZipOutputStream(FileOutputStream(zipFile))

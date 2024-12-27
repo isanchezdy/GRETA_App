@@ -24,6 +24,7 @@ import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.Surface
@@ -219,7 +220,7 @@ fun UserEntryBody(
                         modifier = Modifier.padding(vertical = 16.dp)
                     ) {
                         TextField(
-                            modifier = Modifier.menuAnchor(),
+                            modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryEditable),
                             readOnly = true,
                             value = if(userUiState.userDetails.gender == -1) {
                                 ""

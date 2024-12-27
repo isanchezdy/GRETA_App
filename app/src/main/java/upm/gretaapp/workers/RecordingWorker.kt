@@ -86,7 +86,7 @@ class RecordingWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
     private val locationListener = LocationListener { newLocation ->
         val speed = when {
             // Retrieve speed if available
-            newLocation.hasSpeed() -> newLocation.speed.toDouble()
+            newLocation.hasSpeed() -> newLocation.speed.toDouble() * 3.6
             // If there is previous location info calculate it
             location.value != null -> {
                 // Convert milliseconds to seconds
@@ -154,7 +154,7 @@ class RecordingWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
                 initializeSensors()
                 initializeLocation()
 
-                val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+                val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss:SSSS", Locale.getDefault())
                 // Start timer to stop in case of error
                 while(timer > 0) {
                     var hasReachedDestination = readState(applicationContext, stateFile)
@@ -164,13 +164,13 @@ class RecordingWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
                         break
                     } else if(hasReachedDestination == "paused") {
                         // Data stops being recorded while paused
-                        closeSensors(false)
+                        // closeSensors(false)
                         while(hasReachedDestination == "paused") {
                             delay(DELAY_TIME_MILLIS.toLong())
                             hasReachedDestination = readState(applicationContext, stateFile)
                         }
-                        initializeLocation()
-                        initializeSensors()
+                        /* initializeLocation()
+                        initializeSensors() */
                     }
 
                     // The recording is updated
@@ -249,17 +249,6 @@ class RecordingWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
         sensorManager.registerListener(
             sensorEventListener, linearAccelerometer, DELAY_TIME_MICRO
         )
-
-        if (ActivityCompat.checkSelfPermission(
-                applicationContext,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
-                applicationContext,
-                Manifest.permission.ACCESS_COARSE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            return
-        }
     }
 
     /**
@@ -292,6 +281,9 @@ class RecordingWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
         if (ActivityCompat.checkSelfPermission(
                 applicationContext,
                 Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+                applicationContext,
+                Manifest.permission.ACCESS_COARSE_LOCATION
             ) != PackageManager.PERMISSION_GRANTED
         ) {
             return

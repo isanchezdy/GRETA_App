@@ -221,4 +221,17 @@
     <string name="continue_route">Continue route</string>
     <string name="unmark_vehicle">Unmark vehicle</string>
     <string name="select_vehicle">Select a vehicle</string>
+    <array name="speed_variation_phrases">
+        <item>To improve, focus on maintaining a constant speed.</item>
+        <item>Keep it up, but strive to maintain a steady speed whenever possible.</item>
+        <item>Well done! You maintain a consistent speed for most of the journey.</item>
+    </array>
+    <array name="driving_smoothness_phrases">
+        <item>To enhance your driving, always minimize sudden braking and acceleration.</item>
+        <item>Good job, but there’s room for improvement. Try to avoid abrupt braking or acceleration.</item>
+        <item>Excellent! You’re driving without sudden braking or acceleration.</item>
+    </array>
+    <string name="accept_without_saving">Accept without saving</string>
+    <string name="cancel">Cancel</string>
+    <string name="long_route">This route is too long to process it properly</string>
 </resources>

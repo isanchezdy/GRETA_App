@@ -1,6 +1,5 @@
 package upm.gretaapp.data
 
-import kotlinx.coroutines.flow.Flow
 import upm.gretaapp.model.VehicleFactor
 
 /**

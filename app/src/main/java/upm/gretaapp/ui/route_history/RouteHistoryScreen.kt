@@ -253,17 +253,7 @@ private fun UserRouteItem(
 
             // Finally, the scores obtained during the route are shown
             Text(
-                text = stringResource(id = R.string.stops),
-                style = MaterialTheme.typography.bodyLarge,
-                textAlign = TextAlign.Center,
-                modifier = Modifier
-                    .padding(top = 8.dp)
-            )
-
-            Score(score = userRoute.numStopsKm)
-
-            Text(
-                text = stringResource(id = R.string.speeding),
+                text = stringResource(id = R.string.slow_driving),
                 style = MaterialTheme.typography.bodyLarge,
                 textAlign = TextAlign.Center,
                 modifier = Modifier
@@ -273,7 +263,7 @@ private fun UserRouteItem(
             Score(score = userRoute.drivingAggressiveness)
 
             Text(
-                text = stringResource(id = R.string.slow_driving),
+                text = stringResource(id = R.string.speeding),
                 style = MaterialTheme.typography.bodyLarge,
                 textAlign = TextAlign.Center,
                 modifier = Modifier

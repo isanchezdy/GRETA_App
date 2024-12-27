@@ -1,5 +1,6 @@
 package upm.gretaapp.ui.map
 
+import android.annotation.SuppressLint
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -51,6 +52,7 @@ class RouteWindowFragment(
     private val onCancel: () -> Unit,
 ): Fragment() {
 
+    @SuppressLint("DefaultLocale")
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,

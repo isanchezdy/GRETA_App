@@ -222,4 +222,17 @@
     <string name="continue_route">Continuar ruta</string>
     <string name="unmark_vehicle">Desmarcar vehículo</string>
     <string name="select_vehicle">Selecciona un vehículo</string>
+    <array name="speed_variation_phrases">
+        <item>Para mejorar, trata de mantener la velocidad constante siempre que puedas.</item>
+        <item>Muy bien, pero aún puedes mejorar. Trata de mantener la velocidad constante siempre que puedas.</item>
+        <item>¡Muy bien! Conduces manteniendo la velocidad la mayor parte del trayecto.</item>
+    </array>
+    <array name="driving_smoothness_phrases">
+        <item>Para mejorar, evita siempre que puedas frenazos y acelerones.</item>
+        <item>Muy bien, pero aún puedes mejorar. Evita frenazos y acelerones.</item>
+        <item>¡Muy bien! Conduces sin frenazos ni acelerones.</item>
+    </array>
+    <string name="accept_without_saving">Aceptar sin guardar</string>
+    <string name="cancel">Cancelar</string>
+    <string name="long_route">Esta ruta es demasiado larga para procesarla correctamente</string>
 </resources>

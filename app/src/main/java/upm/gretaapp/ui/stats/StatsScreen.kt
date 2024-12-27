@@ -1,5 +1,6 @@
 package upm.gretaapp.ui.stats
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -24,7 +25,6 @@ import upm.gretaapp.GretaTopAppBar
 import upm.gretaapp.R
 import upm.gretaapp.ui.AppViewModelProvider
 import upm.gretaapp.ui.navigation.NavigationDestination
-import kotlin.math.ceil
 
 /**
  * Object that represents the route of the Stats screen
@@ -60,6 +60,7 @@ fun StatsScreen(
  *
  * @param uiState Object that represents the state of the screen (loading, error, etc)
  */
+@SuppressLint("DefaultLocale")
 @Composable
 fun StatsBody(uiState: StatsUiState, modifier: Modifier = Modifier) {
     // The stats are retrieved for showing
@@ -116,25 +117,20 @@ fun StatsBody(uiState: StatsUiState, modifier: Modifier = Modifier) {
             } else {
                 // A field for every parameter is shown
                 Text(stringResource(id = R.string.consumption_saving) + ": " +
-                        String.format("%.3f",userStats.consumptionSaving) + "%", modifier = Modifier.padding(16.dp))
+                        String.format("%.1f",userStats.consumptionSaving) + "%", modifier = Modifier.padding(16.dp))
 
                 Text(stringResource(id = R.string.drive_rating) + ": " +
                         String.format("%.1f",userStats.driveRating) + " / 5", modifier = Modifier.padding(16.dp))
 
                 Text(stringResource(id = R.string.eco_distance) + ": " +
-                        String.format("%.3f",userStats.ecoDistance / 1000.0) + " km", modifier = Modifier.padding(16.dp))
+                        String.format("%.1f",userStats.ecoDistance) + " %", modifier = Modifier.padding(16.dp))
 
                 Text(stringResource(id = R.string.eco_routes_num) + ": " +
-                        userStats.ecoRoutesNum, modifier = Modifier.padding(16.dp))
+                        userStats.ecoRoutesNum + " %", modifier = Modifier.padding(16.dp))
 
-                // Time is calculated in hours or minutes
-                val time = if(userStats.ecoTime >= 3600.0) {
-                    ceil(userStats.ecoTime/3600.0).toInt().toString() + " h"
-                } else {
-                    ceil(userStats.ecoTime/60.0).toInt().toString() + " min"
-                }
+
                 Text(stringResource(id = R.string.eco_time) + ": " +
-                        time, modifier = Modifier.padding(16.dp))
+                        String.format("%.1f", userStats.ecoTime) + " %", modifier = Modifier.padding(16.dp))
             }
         }
     }
